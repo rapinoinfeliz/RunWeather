@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="en">
 
@@ -13,14 +12,9 @@
             --text-primary: #e6edf3;
             --text-secondary: #8b949e;
             --accent-color: #58a6ff;
-            --accent-hover: #1f6feb;
             --border-color: #30363d;
-            --success-color: #238636;
-            --warning-color: #d29922;
-            --danger-color: #f85149;
             --font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             --lactate-color: #ec4899;
-            /* Pink/Purple for lactate info */
         }
 
         * {
@@ -42,7 +36,7 @@
 
         .container {
             width: 100%;
-            max-width: 600px;
+            max-width: 500px;
             background-color: var(--card-bg);
             border: 1px solid var(--border-color);
             border-radius: 12px;
@@ -58,23 +52,29 @@
         }
 
         h1 {
-            font-size: 1.5rem;
+            font-size: 1.4rem;
             font-weight: 600;
-            background: linear-gradient(90deg, #58a6ff, #a371f7);
+            background: linear-gradient(90deg, #58a6ff, #ec4899);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             margin: 0;
+        }
+
+        .subtitle {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 2px;
         }
 
         .copy-btn {
             background-color: #21262d;
             border: 1px solid var(--border-color);
             color: var(--text-primary);
-            padding: 8px 12px;
+            padding: 6px 10px;
             border-radius: 6px;
             cursor: pointer;
-            font-size: 0.85rem;
-            transition: all 0.2s;
+            font-size: 0.8rem;
+            transition: background 0.2s;
             display: flex;
             align-items: center;
             gap: 6px;
@@ -94,28 +94,23 @@
             padding: 16px;
             border-radius: 8px;
             border: 1px solid var(--border-color);
-            margin-bottom: 24px;
+            margin-bottom: 20px;
         }
 
         .input-row {
             display: flex;
-            gap: 16px;
-            margin-bottom: 12px;
+            gap: 12px;
         }
 
         .input-group {
             flex: 1;
         }
 
-        .input-group:last-child {
-            margin-bottom: 0;
-        }
-
         label {
             display: block;
             margin-bottom: 6px;
             color: var(--text-secondary);
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             font-weight: 500;
         }
 
@@ -127,10 +122,10 @@
             border: 1px solid var(--border-color);
             border-radius: 6px;
             color: var(--text-primary);
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             outline: none;
             transition: border-color 0.2s;
-            appearance: none;
+            -webkit-appearance: none;
         }
 
         select:focus,
@@ -138,25 +133,45 @@
             border-color: var(--accent-color);
         }
 
-        .results-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-        }
-
-        .card {
-            background-color: rgba(13, 17, 23, 0.5);
-            border: 1px solid var(--border-color);
+        .vdot-box {
+            background: linear-gradient(135deg, rgba(88, 166, 255, 0.08), rgba(236, 72, 153, 0.08));
+            border: 1px solid rgba(88, 166, 255, 0.2);
+            text-align: center;
+            padding: 10px;
             border-radius: 8px;
-            padding: 16px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-left: 20px;
+            padding-right: 20px;
         }
 
-        .card-full {
-            grid-column: span 2;
+        .vdot-info {
+            text-align: left;
+        }
+
+        .vdot-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .vdot-sub {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        .vdot-val {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #fff;
         }
 
         .card-title {
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             text-transform: uppercase;
             letter-spacing: 0.5px;
             color: var(--text-secondary);
@@ -164,22 +179,47 @@
             font-weight: 700;
             border-bottom: 1px solid var(--border-color);
             padding-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .card-header-note {
+            font-size: 0.7rem;
+            color: var(--lactate-color);
+            text-transform: none;
+            font-weight: 500;
         }
 
         .data-row {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: 10px;
-            font-size: 0.95rem;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px dashed rgba(48, 54, 61, 0.3);
         }
 
         .data-row:last-child {
             margin-bottom: 0;
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .data-label-group {
+            display: flex;
+            flex-direction: column;
         }
 
         .data-label {
-            color: var(--text-secondary);
+            color: var(--text-primary);
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .lactate-est {
+            font-size: 0.75rem;
+            color: var(--lactate-color);
+            margin-top: 2px;
         }
 
         .data-value-group {
@@ -189,6 +229,7 @@
         .data-value {
             font-weight: 600;
             color: var(--text-primary);
+            font-size: 1rem;
         }
 
         .data-sub {
@@ -198,66 +239,39 @@
             margin-top: 2px;
         }
 
-        .highlight {
-            color: var(--accent-color);
-        }
-
-        .vdot-box {
-            background: linear-gradient(135deg, rgba(88, 166, 255, 0.1), rgba(163, 113, 247, 0.1));
-            border: 1px solid rgba(88, 166, 255, 0.3);
-            text-align: center;
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 16px;
-        }
-
-        .vdot-label {
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-        }
-
-        .vdot-val {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: #fff;
-        }
-
-        /* Tags for Zones */
+        /* Distinct Tags */
         .tag {
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             padding: 1px 6px;
             border-radius: 4px;
-            margin-right: 6px;
+            margin-left: 6px;
             font-weight: 600;
             display: inline-block;
             vertical-align: middle;
+            text-transform: uppercase;
         }
 
-        .tag-E {
-            background: rgba(59, 130, 246, 0.2);
-            color: #60a5fa;
+        .tag-30kp {
+            background: rgba(35, 134, 54, 0.2);
+            color: #3fb950;
+            border: 1px solid rgba(35, 134, 54, 0.3);
         }
 
-        .tag-M {
-            background: rgba(16, 185, 129, 0.2);
-            color: #34d399;
+        /* Green */
+        .tag-hmp {
+            background: rgba(56, 139, 253, 0.2);
+            color: #58a6ff;
+            border: 1px solid rgba(56, 139, 253, 0.3);
         }
 
-        .tag-T {
-            background: rgba(245, 158, 11, 0.2);
-            color: #fbbf24;
+        /* Blue */
+        .tag-15kp {
+            background: rgba(210, 153, 34, 0.2);
+            color: #d29922;
+            border: 1px solid rgba(210, 153, 34, 0.3);
         }
 
-        .tag-I {
-            background: rgba(239, 68, 68, 0.2);
-            color: #f87171;
-        }
-
-        .tag-R {
-            background: rgba(139, 92, 246, 0.2);
-            color: #a78bfa;
-        }
+        /* Orange */
     </style>
 </head>
 
@@ -265,8 +279,11 @@
 
     <div class="container">
         <div class="header">
-            <h1>Pacing Calculator</h1>
-            <button class="copy-btn" onclick="copyResults()">
+            <div>
+                <h1>NSA Calculator</h1>
+                <div class="subtitle">Norwegian Singles Approach</div>
+            </div>
+            <button class="copy-btn" id="copy-btn" title="Copy results to clipboard">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
                     <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
@@ -278,13 +295,13 @@
         <div class="input-section">
             <label>Time Trial Input</label>
             <div class="input-row">
-                <div class="input-group" style="flex: 1.5;">
+                <div class="input-group" style="flex: 1.2;">
                     <select id="dist-preset">
-                        <option value="custom">Custom Dist.</option>
+                        <option value="custom">Custom</option>
                         <option value="3000">3000m</option>
-                        <option value="5000">5K (5000m)</option>
-                        <option value="10000">10K (10000m)</option>
-                        <option value="21097">Half Marathon</option>
+                        <option value="5000">5K</option>
+                        <option value="10000">10K</option>
+                        <option value="21097">Half Mar.</option>
                         <option value="42195">Marathon</option>
                     </select>
                 </div>
@@ -298,262 +315,218 @@
         </div>
 
         <div class="vdot-box">
-            <div class="vdot-label">Estimated VDOT</div>
+            <div class="vdot-info">
+                <div class="vdot-label">Estimated VDOT</div>
+                <div class="vdot-sub">Based on 5k: <span id="pred-5k" style="color:#e6edf3;">--:--</span></div>
+            </div>
             <div class="vdot-val" id="vdot-val">--</div>
-            <div style="font-size: 0.8rem; color: #8b949e; margin-top:4px;">Based on predicted 5k: <span id="pred-5k"
-                    style="color:#e6edf3;">--:--</span></div>
         </div>
 
-        <div class="results-grid">
-            <!-- Sub-T Reps -->
-            <div class="card card-full">
-                <div class="card-title">Sub-T Repetitions</div>
+        <div class="card">
+            <div class="card-title">
+                Key Workouts
+                <span class="card-header-note">Sub-T Focus</span>
+            </div>
 
-                <div class="data-row">
-                    <span class="data-label">3 min rep <span class="tag tag-T">15KP</span></span>
-                    <div class="data-value-group">
-                        <div class="data-value" id="pace-3min">--:--/km</div>
-                        <div class="data-sub" id="dist-3min">-- m</div>
-                    </div>
+            <div class="data-row">
+                <div class="data-label-group">
+                    <span class="data-label">10 min rep <span class="tag tag-30kp">30KP</span></span>
+                    <span class="lactate-est">G.3- (~2.0 - 2.5 mmol)</span>
                 </div>
-
-                <div class="data-row">
-                    <span class="data-label">6 min rep <span class="tag tag-T">HMP</span></span>
-                    <div class="data-value-group">
-                        <div class="data-value" id="pace-6min">--:--/km</div>
-                        <div class="data-sub" id="dist-6min">-- m</div>
-                    </div>
-                </div>
-
-                <div class="data-row">
-                    <span class="data-label">10 min rep <span class="tag tag-T">30KP</span></span>
-                    <div class="data-value-group">
-                        <div class="data-value" id="pace-10min">--:--/km</div>
-                        <div class="data-sub" id="dist-10min">-- m</div>
-                    </div>
+                <div class="data-value-group">
+                    <div class="data-value" id="pace-10min">--:--/km</div>
+                    <div class="data-sub" id="dist-10min">-- m</div>
                 </div>
             </div>
 
-            <!-- Training Zones -->
-            <div class="card card-full">
-                <div class="card-title">Training Zones (Daniels Approx)</div>
-
-                <div class="data-row">
-                    <span class="data-label"><span class="tag tag-E">E</span> Easy Pace</span>
-                    <div class="data-value" id="zone-easy">--:--/km</div>
+            <div class="data-row">
+                <div class="data-label-group">
+                    <span class="data-label">6 min rep <span class="tag tag-hmp">HMP</span></span>
+                    <span class="lactate-est">G.3 (~2.5 - 3.2 mmol)</span>
                 </div>
-
-                <div class="data-row">
-                    <span class="data-label"><span class="tag tag-M">M</span> Marathon Pace</span>
-                    <div class="data-value" id="zone-marathon">--:--/km</div>
+                <div class="data-value-group">
+                    <div class="data-value" id="pace-6min">--:--/km</div>
+                    <div class="data-sub" id="dist-6min">-- m</div>
                 </div>
+            </div>
 
-                <div class="data-row">
-                    <span class="data-label"><span class="tag tag-T">T</span> Threshold Pace</span>
-                    <div class="data-value" id="zone-threshold">--:--/km</div>
+            <div class="data-row">
+                <div class="data-label-group">
+                    <span class="data-label">3 min rep <span class="tag tag-15kp">15KP</span></span>
+                    <span class="lactate-est">G.3+ (~3.2 - 3.8 mmol)</span>
                 </div>
-
-                <div class="data-row">
-                    <span class="data-label"><span class="tag tag-I">I</span> Interval Pace</span>
-                    <div class="data-value" id="zone-interval">--:--/km</div>
-                </div>
-
-                <div class="data-row">
-                    <span class="data-label"><span class="tag tag-R">R</span> Repetition Pace</span>
-                    <div class="data-value" id="zone-rep">--:--/km</div>
+                <div class="data-value-group">
+                    <div class="data-value" id="pace-3min">--:--/km</div>
+                    <div class="data-sub" id="dist-3min">-- m</div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // --- Configuration & Tables ---
-        // Simplified VDOT Table (5k Time Minutes -> VDOT)
-        // Source: Jack Daniels' Running Formula approximations
-        const VDOT_DATA = [
-            { t: 15.00, v: 67 }, { t: 16.00, v: 63 }, { t: 17.00, v: 59 },
-            { t: 18.00, v: 56 }, { t: 19.00, v: 53 }, { t: 20.00, v: 49.8 },
-            { t: 21.00, v: 47 }, { t: 22.00, v: 45 }, { t: 23.00, v: 43 },
-            { t: 24.00, v: 41 }, { t: 25.00, v: 39 }, { t: 26.00, v: 37 },
-            { t: 27.00, v: 35.5 }, { t: 28.00, v: 34 }, { t: 29.00, v: 32.5 },
-            { t: 30.00, v: 31 }, { t: 32.00, v: 29 }, { t: 35.00, v: 26 },
-            { t: 40.00, v: 22 }
-        ];
+        (function () {
+            // --- Immutable Data ---
+            // VDOT Table (5k Time Minutes -> VDOT)
+            // Source: Jack Daniels' Running Formula approximations
+            const VDOT_DATA = [
+                { t: 15.00, v: 67 }, { t: 16.00, v: 63 }, { t: 17.00, v: 59 },
+                { t: 18.00, v: 56 }, { t: 19.00, v: 53 }, { t: 20.00, v: 49.8 },
+                { t: 21.00, v: 47 }, { t: 22.00, v: 45 }, { t: 23.00, v: 43 },
+                { t: 24.00, v: 41 }, { t: 25.00, v: 39 }, { t: 26.00, v: 37 },
+                { t: 27.00, v: 35.5 }, { t: 28.00, v: 34 }, { t: 29.00, v: 32.5 },
+                { t: 30.00, v: 31 }, { t: 32.00, v: 29 }, { t: 35.00, v: 26 },
+                { t: 40.00, v: 22 }
+            ];
 
-        // --- DOM Elements ---
-        const els = {
-            distPreset: document.getElementById('dist-preset'),
-            distance: document.getElementById('distance'),
-            time: document.getElementById('time'),
-            vdot: document.getElementById('vdot-val'),
-            pred5k: document.getElementById('pred-5k'),
-
-            // Reps
-            pace3: document.getElementById('pace-3min'),
-            dist3: document.getElementById('dist-3min'),
-            pace6: document.getElementById('pace-6min'),
-            dist6: document.getElementById('dist-6min'),
-            pace10: document.getElementById('pace-10min'),
-            dist10: document.getElementById('dist-10min'),
-
-            // Zones
-            zE: document.getElementById('zone-easy'),
-            zM: document.getElementById('zone-marathon'),
-            zT: document.getElementById('zone-threshold'),
-            zI: document.getElementById('zone-interval'),
-            zR: document.getElementById('zone-rep')
-        };
-
-        // --- Helpers ---
-        function parseTime(str) {
-            if (!str) return 0;
-            const p = str.toString().trim().split(':').map(Number);
-            if (p.length === 2) return p[0] * 60 + p[1];
-            if (p.length === 3) return p[0] * 3600 + p[1] * 60 + p[2];
-            return parseFloat(str) || 0;
-        }
-
-        function formatTime(sec, showMils = false) {
-            if (!sec || isNaN(sec) || sec === Infinity) return "--:--";
-            let m = Math.floor(sec / 60);
-            let s = Math.round(sec % 60);
-            if (s === 60) { m++; s = 0; }
-            return `${m}:${s.toString().padStart(2, '0')}`;
-        }
-
-        // --- Calculations ---
-
-        function getVDOT(fiveKSeconds) {
-            const tMin = fiveKSeconds / 60;
-            // Simple linear interpolation
-            for (let i = 0; i < VDOT_DATA.length - 1; i++) {
-                const cur = VDOT_DATA[i];
-                const next = VDOT_DATA[i + 1];
-                if (tMin >= cur.t && tMin <= next.t) {
-                    const ratio = (tMin - cur.t) / (next.t - cur.t);
-                    return cur.v + ratio * (next.v - cur.v);
-                }
-            }
-            if (tMin < 15) return 70; // Cap top
-            return 20; // Cap bottom
-        }
-
-        // Paces in seconds/km based on VDOT or Prediction
-        // Using simple modifiers relative to 5k Pace for consistency with user request
-        function calculateZones(fiveKPaceSec) {
-            // Approximate rules from Daniels logic relative to 5k pace
-            // E-Pace: ~125-130% of 5k pace (varies by speed)
-            // M-Pace: ~110-115%
-            // T-Pace: ~106-108%
-            // I-Pace: ~96-98% (Usually 3k-5k pace)
-            // R-Pace: ~90-94% (Mile pace)
-
-            // Dynamic adjustment based on speed (slower runners have smaller gaps percentage-wise but larger absolute)
-
-            let p = fiveKPaceSec;
-
-            return {
-                E: p * 1.34,
-                M: p * 1.14,
-                T: p * 1.075,
-                I: p * 0.96, // Interval usually slightly faster than 5k pace 
-                R: p * 0.88
+            // --- Selectors ---
+            const $ = (id) => document.getElementById(id);
+            const els = {
+                distPreset: $('dist-preset'),
+                distance: $('distance'),
+                time: $('time'),
+                vdot: $('vdot-val'),
+                pred5k: $('pred-5k'),
+                pace3: $('pace-3min'),
+                dist3: $('dist-3min'),
+                pace6: $('pace-6min'),
+                dist6: $('dist-6min'),
+                pace10: $('pace-10min'),
+                dist10: $('dist-10min'),
+                copyBtn: $('copy-btn') // Re-select dynamically if needed, or by ID
             };
-        }
 
-        function update() {
-            const d = parseFloat(els.distance.value);
-            const tSec = parseTime(els.time.value);
-
-            if (!d || !tSec) return;
-
-            // 1. Predict 5k (Riegel)
-            // T2 = T1 * (D2/D1)^1.06
-            const pred5kSec = tSec * Math.pow(5000 / d, 1.06);
-            const pred5kPace = pred5kSec / 5;
-
-            els.pred5k.textContent = formatTime(pred5kSec);
-
-            // 2. VDOT
-            const vdot = getVDOT(pred5kSec);
-            els.vdot.textContent = vdot.toFixed(1);
-
-            // 3. Sub-T Reps (User Formula)
-            // 3min: 1.0020 * 5k + 13.20
-            const p3 = 1.0020 * pred5kPace + 13.20;
-            els.pace3.textContent = formatTime(p3) + "/km";
-            els.dist3.textContent = Math.round((180 / p3) * 1000) + " m";
-
-            // 6min: 1.0256 * 5k + 14.12
-            const p6 = 1.0256 * pred5kPace + 14.12;
-            els.pace6.textContent = formatTime(p6) + "/km";
-            els.dist6.textContent = Math.round((360 / p6) * 1000) + " m";
-
-            // 10min: 1.0552 * 5k + 15.19
-            const p10 = 1.0552 * pred5kPace + 15.19;
-            els.pace10.textContent = formatTime(p10) + "/km";
-            els.dist10.textContent = Math.round((600 / p10) * 1000) + " m";
-
-            // 4. Zones
-            const z = calculateZones(pred5kPace);
-            els.zE.textContent = formatTime(z.E) + "/km";
-            els.zM.textContent = formatTime(z.M) + "/km";
-            els.zT.textContent = formatTime(z.T) + "/km";
-            els.zI.textContent = formatTime(z.I) + "/km";
-            els.zR.textContent = formatTime(z.R) + "/km";
-        }
-
-        function copyResults() {
-            const t = els.time.value;
-            const d = els.distance.value;
-            const v = els.vdot.textContent;
-            const p3 = els.pace3.textContent;
-            const p6 = els.pace6.textContent;
-            const p10 = els.pace10.textContent;
-            const zE = els.zE.textContent;
-            const zT = els.zT.textContent;
-
-            const text = `Pacing Results (TT: ${d}m in ${t})
-VDOT: ${v}
-
-Sub-T Reps:
-- 3min: ${p3}
-- 6min: ${p6}
-- 10min: ${p10}
-
-Zones:
-- Easy: ${zE}
-- Threshold: ${zT}
-`;
-            navigator.clipboard.writeText(text).then(() => {
-                const btn = document.querySelector('.copy-btn');
-                const orig = btn.innerHTML;
-                btn.innerHTML = "Copied!";
-                setTimeout(() => btn.innerHTML = orig, 1500);
-            });
-        }
-
-        // --- Listeners ---
-        els.distPreset.addEventListener('change', () => {
-            if (els.distPreset.value !== 'custom') {
-                els.distance.value = els.distPreset.value;
-                update(); // Force update
+            // --- Logic ---
+            function parseTime(str) {
+                if (!str) return 0;
+                const parts = str.trim().split(':').map(Number);
+                // Handle MM:SS or empty
+                if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+                    return parts[0] * 60 + parts[1];
+                }
+                // Handle HH:MM:SS
+                if (parts.length === 3 && !isNaN(parts[0])) {
+                    return parts[0] * 3600 + parts[1] * 60 + parts[2];
+                }
+                return 0;
             }
-        });
 
-        els.distance.addEventListener('input', () => {
-            // Sync preset dropdown
-            const val = els.distance.value;
-            const match = Array.from(els.distPreset.options).find(o => o.value === val);
-            els.distPreset.value = match ? val : 'custom';
+            function formatTime(sec) {
+                if (!sec || isNaN(sec) || sec === Infinity) return "--:--";
+                let m = Math.floor(sec / 60);
+                let s = Math.round(sec % 60);
+                if (s === 60) { m++; s = 0; }
+                return `${m}:${s.toString().padStart(2, '0')}`;
+            }
+
+            function getVDOT(fiveKSeconds) {
+                const tMin = fiveKSeconds / 60;
+                if (tMin < 13) return "70+";
+                if (tMin > 60) return "<20";
+
+                // Linear interpolation
+                for (let i = 0; i < VDOT_DATA.length - 1; i++) {
+                    const cur = VDOT_DATA[i];
+                    const next = VDOT_DATA[i + 1];
+                    if (tMin >= cur.t && tMin <= next.t) {
+                        const ratio = (tMin - cur.t) / (next.t - cur.t);
+                        return (cur.v + ratio * (next.v - cur.v)).toFixed(1);
+                    }
+                }
+                return "--";
+            }
+
+            function update() {
+                const d = parseFloat(els.distance.value);
+                const tSec = parseTime(els.time.value);
+
+                if (!d || !tSec || d <= 0) {
+                    // Clear UI if invalid
+                    els.pred5k.textContent = "--:--";
+                    els.vdot.textContent = "--";
+                    return;
+                }
+
+                // 1. Predict 5k using Riegel: T2 = T1 * (D2/D1)^1.06
+                const pred5kSec = tSec * Math.pow(5000 / d, 1.06);
+                const pred5kPace = pred5kSec / 5;
+
+                els.pred5k.textContent = formatTime(pred5kSec);
+                els.vdot.textContent = getVDOT(pred5kSec);
+
+                // 2. Calculate Paces (Linear Regression derived from user data)
+                // 30KP (10min): 1.0552 * 5k_pace + 15.19
+                const p10 = 1.0552 * pred5kPace + 15.19;
+                els.pace10.textContent = formatTime(p10) + "/km";
+                els.dist10.textContent = Math.round((600 / p10) * 1000) + " m";
+
+                // HMP (6min): 1.0256 * 5k_pace + 14.12
+                const p6 = 1.0256 * pred5kPace + 14.12;
+                els.pace6.textContent = formatTime(p6) + "/km";
+                els.dist6.textContent = Math.round((360 / p6) * 1000) + " m";
+
+                // 15KP (3min): 1.0020 * 5k_pace + 13.20
+                const p3 = 1.0020 * pred5kPace + 13.20;
+                els.pace3.textContent = formatTime(p3) + "/km";
+                els.dist3.textContent = Math.round((180 / p3) * 1000) + " m";
+            }
+
+            function copyResults() {
+                const inputTime = els.time.value;
+                const inputDist = els.distance.value;
+                const currentVDOT = els.vdot.textContent;
+
+                const results = [
+                    `NSA Pacing (TT: ${inputDist}m in ${inputTime})`,
+                    `VDOT: ${currentVDOT}`,
+                    ``,
+                    `Sub-T Workouts:`,
+                    `- 10min (30KP): ${els.pace10.textContent}`,
+                    `- 6min (HMP): ${els.pace6.textContent}`,
+                    `- 3min (15KP): ${els.pace3.textContent}`
+                ].join('\n');
+
+                navigator.clipboard.writeText(results).then(() => {
+                    const btn = document.getElementById('copy-btn');
+                    const originalText = btn.childNodes[2].textContent; // " Copy" text node
+                    btn.childNodes[2].textContent = " Copied!";
+                    setTimeout(() => {
+                        btn.childNodes[2].textContent = originalText;
+                    }, 1500);
+                }).catch(err => console.error("Failed to copy", err));
+            }
+
+            // --- Event Listeners ---
+            if (els.distPreset) {
+                els.distPreset.addEventListener('change', () => {
+                    const val = els.distPreset.value;
+                    if (val !== 'custom') {
+                        els.distance.value = val;
+                        update();
+                    }
+                });
+            }
+
+            if (els.distance) {
+                els.distance.addEventListener('input', () => {
+                    const val = els.distance.value;
+                    // Sync dropdown logic
+                    let foundOptions = Array.from(els.distPreset.options).filter(o => o.value === val);
+                    els.distPreset.value = foundOptions.length > 0 ? val : 'custom';
+                    update();
+                });
+            }
+
+            if (els.time) {
+                els.time.addEventListener('input', update);
+            }
+
+            if (els.copyBtn) {
+                els.copyBtn.addEventListener('click', copyResults);
+            }
+
+            // Initialize
             update();
-        });
-
-        els.time.addEventListener('input', update);
-
-        // Init
-        update();
-
+        })();
     </script>
 
 </body>
