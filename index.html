@@ -251,27 +251,33 @@
             text-transform: uppercase;
         }
 
-        .tag-30kp {
-            background: rgba(35, 134, 54, 0.2);
-            color: #3fb950;
-            border: 1px solid rgba(35, 134, 54, 0.3);
-        }
-
-        /* Green */
-        .tag-hmp {
-            background: rgba(56, 139, 253, 0.2);
-            color: #58a6ff;
-            border: 1px solid rgba(56, 139, 253, 0.3);
-        }
-
-        /* Blue */
+        /* 15KP = Gold/Orange */
         .tag-15kp {
-            background: rgba(210, 153, 34, 0.2);
-            color: #d29922;
-            border: 1px solid rgba(210, 153, 34, 0.3);
+            background: rgba(245, 158, 11, 0.15);
+            color: #fbbf24;
+            border: 1px solid rgba(245, 158, 11, 0.3);
         }
 
-        /* Orange */
+        /* HMP = Blue */
+        .tag-hmp {
+            background: rgba(59, 130, 246, 0.15);
+            color: #60a5fa;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        /* 30KP = Green */
+        .tag-30kp {
+            background: rgba(16, 185, 129, 0.15);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        /* EZ = Purple */
+        .tag-ez {
+            background: rgba(163, 113, 247, 0.15);
+            color: #a371f7;
+            border: 1px solid rgba(163, 113, 247, 0.3);
+        }
     </style>
 </head>
 
@@ -281,7 +287,6 @@
         <div class="header">
             <div>
                 <h1>NSA Calculator</h1>
-                <div class="subtitle">Norwegian Singles Approach</div>
             </div>
             <button class="copy-btn" id="copy-btn" title="Copy results to clipboard">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -324,8 +329,27 @@
 
         <div class="card">
             <div class="card-title">
-                Key Workouts
+                Subthreshold
+            </div>
 
+            <div class="data-row">
+                <div class="data-label-group">
+                    <span class="data-label">3 min rep <span class="tag tag-15kp">15KP</span></span>
+                </div>
+                <div class="data-value-group">
+                    <div class="data-value" id="pace-3min">--:--/km</div>
+                    <div class="data-sub" id="dist-3min">-- m</div>
+                </div>
+            </div>
+
+            <div class="data-row">
+                <div class="data-label-group">
+                    <span class="data-label">6 min rep <span class="tag tag-hmp">HMP</span></span>
+                </div>
+                <div class="data-value-group">
+                    <div class="data-value" id="pace-6min">--:--/km</div>
+                    <div class="data-sub" id="dist-6min">-- m</div>
+                </div>
             </div>
 
             <div class="data-row">
@@ -338,38 +362,15 @@
                     <div class="data-sub" id="dist-10min">-- m</div>
                 </div>
             </div>
-
-            <div class="data-row">
-                <div class="data-label-group">
-                    <span class="data-label">6 min rep <span class="tag tag-hmp">HMP</span></span>
-
-                </div>
-                <div class="data-value-group">
-                    <div class="data-value" id="pace-6min">--:--/km</div>
-                    <div class="data-sub" id="dist-6min">-- m</div>
-                </div>
-            </div>
-
-            <div class="data-row">
-                <div class="data-label-group">
-                    <span class="data-label">3 min rep <span class="tag tag-15kp">15KP</span></span>
-
-                </div>
-                <div class="data-value-group">
-                    <div class="data-value" id="pace-3min">--:--/km</div>
-                    <div class="data-sub" id="dist-3min">-- m</div>
-                </div>
-            </div>
         </div>
 
         <div class="card" style="margin-top: 16px;">
             <div class="card-title">
-                Recovery & Aerobic
+                Easy Run
             </div>
             <div class="data-row">
                 <div class="data-label-group">
-                    <span class="data-label">Easy Pace <span class="tag tag-E">G.1 / G.2</span></span>
-                    <span class="lactate-est" style="color: var(--text-secondary);">Recuperação e Volume</span>
+                    <span class="data-label">Easy Pace <span class="tag tag-ez">EZ</span></span>
                 </div>
                 <div class="data-value-group">
                     <div class="data-value" id="pace-easy">--:--/km</div>
