@@ -415,141 +415,141 @@
             let m = Math.floor(sec / 60);
             let s = Math.round(sec % 60);
             if (s === 60) { m++; s = 0; }
-            return \`\${m}:\${s.toString().padStart(2, '0')}\`;
-    }
-
-    // --- Calculations ---
-
-    function getVDOT(fiveKSeconds) {
-        const tMin = fiveKSeconds / 60;
-        // Simple linear interpolation
-        for (let i = 0; i < VDOT_DATA.length - 1; i++) {
-            const cur = VDOT_DATA[i];
-            const next = VDOT_DATA[i + 1];
-            if (tMin >= cur.t && tMin <= next.t) {
-                const ratio = (tMin - cur.t) / (next.t - cur.t);
-                return cur.v + ratio * (next.v - cur.v);
-            }
+            return `${m}:${s.toString().padStart(2, '0')}`;
         }
-        if (tMin < 15) return 70; // Cap top
-        return 20; // Cap bottom
-    }
 
-    // Paces in seconds/km based on VDOT or Prediction
-    // Using simple modifiers relative to 5k Pace for consistency with user request
-    function calculateZones(fiveKPaceSec) {
-        // Approximate rules from Daniels logic relative to 5k pace
-        // E-Pace: ~125-130% of 5k pace (varies by speed)
-        // M-Pace: ~110-115%
-        // T-Pace: ~106-108%
-        // I-Pace: ~96-98% (Usually 3k-5k pace)
-        // R-Pace: ~90-94% (Mile pace)
-        
-        // Dynamic adjustment based on speed (slower runners have smaller gaps percentage-wise but larger absolute)
-        
-        let p = fiveKPaceSec;
-        
-        return {
-            E: p * 1.34, 
-            M: p * 1.14,
-            T: p * 1.075,
-            I: p * 0.96, // Interval usually slightly faster than 5k pace 
-            R: p * 0.88
-        };
-    }
+        // --- Calculations ---
 
-    function update() {
-        const d = parseFloat(els.distance.value);
-        const tSec = parseTime(els.time.value);
+        function getVDOT(fiveKSeconds) {
+            const tMin = fiveKSeconds / 60;
+            // Simple linear interpolation
+            for (let i = 0; i < VDOT_DATA.length - 1; i++) {
+                const cur = VDOT_DATA[i];
+                const next = VDOT_DATA[i + 1];
+                if (tMin >= cur.t && tMin <= next.t) {
+                    const ratio = (tMin - cur.t) / (next.t - cur.t);
+                    return cur.v + ratio * (next.v - cur.v);
+                }
+            }
+            if (tMin < 15) return 70; // Cap top
+            return 20; // Cap bottom
+        }
 
-        if (!d || !tSec) return;
+        // Paces in seconds/km based on VDOT or Prediction
+        // Using simple modifiers relative to 5k Pace for consistency with user request
+        function calculateZones(fiveKPaceSec) {
+            // Approximate rules from Daniels logic relative to 5k pace
+            // E-Pace: ~125-130% of 5k pace (varies by speed)
+            // M-Pace: ~110-115%
+            // T-Pace: ~106-108%
+            // I-Pace: ~96-98% (Usually 3k-5k pace)
+            // R-Pace: ~90-94% (Mile pace)
 
-        // 1. Predict 5k (Riegel)
-        // T2 = T1 * (D2/D1)^1.06
-        const pred5kSec = tSec * Math.pow(5000 / d, 1.06);
-        const pred5kPace = pred5kSec / 5;
-        
-        els.pred5k.textContent = formatTime(pred5kSec);
+            // Dynamic adjustment based on speed (slower runners have smaller gaps percentage-wise but larger absolute)
 
-        // 2. VDOT
-        const vdot = getVDOT(pred5kSec);
-        els.vdot.textContent = vdot.toFixed(1);
+            let p = fiveKPaceSec;
 
-        // 3. Sub-T Reps (User Formula)
-        // 3min: 1.0020 * 5k + 13.20
-        const p3 = 1.0020 * pred5kPace + 13.20;
-        els.pace3.textContent = formatTime(p3) + "/km";
-        els.dist3.textContent = Math.round((180 / p3) * 1000) + " m";
+            return {
+                E: p * 1.34,
+                M: p * 1.14,
+                T: p * 1.075,
+                I: p * 0.96, // Interval usually slightly faster than 5k pace 
+                R: p * 0.88
+            };
+        }
 
-        // 6min: 1.0256 * 5k + 14.12
-        const p6 = 1.0256 * pred5kPace + 14.12;
-        els.pace6.textContent = formatTime(p6) + "/km";
-        els.dist6.textContent = Math.round((360 / p6) * 1000) + " m";
+        function update() {
+            const d = parseFloat(els.distance.value);
+            const tSec = parseTime(els.time.value);
 
-        // 10min: 1.0552 * 5k + 15.19
-        const p10 = 1.0552 * pred5kPace + 15.19;
-        els.pace10.textContent = formatTime(p10) + "/km";
-        els.dist10.textContent = Math.round((600 / p10) * 1000) + " m";
+            if (!d || !tSec) return;
 
-        // 4. Zones
-        const z = calculateZones(pred5kPace);
-        els.zE.textContent = formatTime(z.E) + "/km";
-        els.zM.textContent = formatTime(z.M) + "/km";
-        els.zT.textContent = formatTime(z.T) + "/km";
-        els.zI.textContent = formatTime(z.I) + "/km";
-        els.zR.textContent = formatTime(z.R) + "/km";
-    }
+            // 1. Predict 5k (Riegel)
+            // T2 = T1 * (D2/D1)^1.06
+            const pred5kSec = tSec * Math.pow(5000 / d, 1.06);
+            const pred5kPace = pred5kSec / 5;
 
-    function copyResults() {
-        const t = els.time.value;
-        const d = els.distance.value;
-        const v = els.vdot.textContent;
-        const p3 = els.pace3.textContent;
-        const p6 = els.pace6.textContent;
-        const p10 = els.pace10.textContent;
-        const zE = els.zE.textContent;
-        const zT = els.zT.textContent;
+            els.pred5k.textContent = formatTime(pred5kSec);
 
-        const text = \`Pacing Results (TT: \${d}m in \${t})
-VDOT: \${v}
+            // 2. VDOT
+            const vdot = getVDOT(pred5kSec);
+            els.vdot.textContent = vdot.toFixed(1);
+
+            // 3. Sub-T Reps (User Formula)
+            // 3min: 1.0020 * 5k + 13.20
+            const p3 = 1.0020 * pred5kPace + 13.20;
+            els.pace3.textContent = formatTime(p3) + "/km";
+            els.dist3.textContent = Math.round((180 / p3) * 1000) + " m";
+
+            // 6min: 1.0256 * 5k + 14.12
+            const p6 = 1.0256 * pred5kPace + 14.12;
+            els.pace6.textContent = formatTime(p6) + "/km";
+            els.dist6.textContent = Math.round((360 / p6) * 1000) + " m";
+
+            // 10min: 1.0552 * 5k + 15.19
+            const p10 = 1.0552 * pred5kPace + 15.19;
+            els.pace10.textContent = formatTime(p10) + "/km";
+            els.dist10.textContent = Math.round((600 / p10) * 1000) + " m";
+
+            // 4. Zones
+            const z = calculateZones(pred5kPace);
+            els.zE.textContent = formatTime(z.E) + "/km";
+            els.zM.textContent = formatTime(z.M) + "/km";
+            els.zT.textContent = formatTime(z.T) + "/km";
+            els.zI.textContent = formatTime(z.I) + "/km";
+            els.zR.textContent = formatTime(z.R) + "/km";
+        }
+
+        function copyResults() {
+            const t = els.time.value;
+            const d = els.distance.value;
+            const v = els.vdot.textContent;
+            const p3 = els.pace3.textContent;
+            const p6 = els.pace6.textContent;
+            const p10 = els.pace10.textContent;
+            const zE = els.zE.textContent;
+            const zT = els.zT.textContent;
+
+            const text = `Pacing Results (TT: ${d}m in ${t})
+VDOT: ${v}
 
 Sub-T Reps:
-- 3min: \${p3}
-- 6min: \${p6}
-- 10min: \${p10}
+- 3min: ${p3}
+- 6min: ${p6}
+- 10min: ${p10}
 
 Zones:
-- Easy: \${zE}
-- Threshold: \${zT}
-\`;
-        navigator.clipboard.writeText(text).then(() => {
-            const btn = document.querySelector('.copy-btn');
-            const orig = btn.innerHTML;
-            btn.innerHTML = "Copied!";
-            setTimeout(() => btn.innerHTML = orig, 1500);
-        });
-    }
-
-    // --- Listeners ---
-    els.distPreset.addEventListener('change', () => {
-        if (els.distPreset.value !== 'custom') {
-            els.distance.value = els.distPreset.value;
-            update(); // Force update
+- Easy: ${zE}
+- Threshold: ${zT}
+`;
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.querySelector('.copy-btn');
+                const orig = btn.innerHTML;
+                btn.innerHTML = "Copied!";
+                setTimeout(() => btn.innerHTML = orig, 1500);
+            });
         }
-    });
 
-    els.distance.addEventListener('input', () => {
-         // Sync preset dropdown
-         const val = els.distance.value;
-         const match = Array.from(els.distPreset.options).find(o => o.value === val);
-         els.distPreset.value = match ? val : 'custom';
-         update();
-    });
+        // --- Listeners ---
+        els.distPreset.addEventListener('change', () => {
+            if (els.distPreset.value !== 'custom') {
+                els.distance.value = els.distPreset.value;
+                update(); // Force update
+            }
+        });
 
-    els.time.addEventListener('input', update);
+        els.distance.addEventListener('input', () => {
+            // Sync preset dropdown
+            const val = els.distance.value;
+            const match = Array.from(els.distPreset.options).find(o => o.value === val);
+            els.distPreset.value = match ? val : 'custom';
+            update();
+        });
 
-    // Init
-    update();
+        els.time.addEventListener('input', update);
+
+        // Init
+        update();
 
     </script>
 
