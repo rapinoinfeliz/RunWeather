@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -115,7 +116,20 @@
         .highlight {
             color: var(--accent-color);
         }
-        
+
+        .result-data {
+            text-align: right;
+        }
+
+        .result-sub {
+            display: block;
+            font-size: 0.85rem;
+            /* Slightly larger for readability */
+            color: var(--text-secondary);
+            margin-top: 4px;
+            font-weight: 500;
+        }
+
         .rep-section-title {
             margin-top: 20px;
             margin-bottom: 10px;
@@ -135,130 +149,164 @@
             margin-left: 8px;
         }
 
-        .tag-15kp { background-color: rgba(210, 153, 34, 0.2); color: #d29922; }
-        .tag-hmp { background-color: rgba(88, 166, 255, 0.2); color: #58a6ff; }
-        .tag-30kp { background-color: rgba(35, 134, 54, 0.2); color: #3fb950; }
+        .tag-15kp {
+            background-color: rgba(210, 153, 34, 0.2);
+            color: #d29922;
+        }
 
+        .tag-hmp {
+            background-color: rgba(88, 166, 255, 0.2);
+            color: #58a6ff;
+        }
+
+        .tag-30kp {
+            background-color: rgba(35, 134, 54, 0.2);
+            color: #3fb950;
+        }
     </style>
 </head>
+
 <body>
 
-<div class="container">
-    <h1>Pacing Calculator</h1>
-    
-    <div class="input-group">
-        <label for="distance">Time Trial Distance (meters)</label>
-        <input type="number" id="distance" value="2955" placeholder="e.g. 2955">
+    <div class="container">
+        <h1>Pacing Calculator</h1>
+
+        <div class="input-group">
+            <label for="distance">Time Trial Distance (meters)</label>
+            <input type="number" id="distance" value="2955" placeholder="e.g. 2955">
+        </div>
+
+        <div class="input-group">
+            <label for="time">Time (MM:SS)</label>
+            <input type="text" id="time" value="11:16" placeholder="e.g. 11:16">
+        </div>
+
+        <div class="results">
+            <div class="result-item">
+                <span class="result-label">Time Trial Pace</span>
+                <span class="result-value" id="tt-pace">--:--/km</span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">Predicted 5k Time</span>
+                <span class="result-value highlight" id="pred-5k">--:--</span>
+            </div>
+            <div class="result-item">
+                <span class="result-label">Predicted 5k Pace</span>
+                <span class="result-value" id="pred-5k-pace">--:--/km</span>
+            </div>
+
+            <div class="rep-section-title">Training Paces</div>
+
+            <div class="result-item">
+                <span class="result-label">3 min rep <span class="tag tag-15kp">15KP</span></span>
+                <div class="result-data">
+                    <span class="result-value" id="pace-3min">--:--/km</span>
+                    <span class="result-sub" id="dist-3min">-- m</span>
+                </div>
+            </div>
+            <div class="result-item">
+                <span class="result-label">6 min rep <span class="tag tag-hmp">HMP</span></span>
+                <div class="result-data">
+                    <span class="result-value" id="pace-6min">--:--/km</span>
+                    <span class="result-sub" id="dist-6min">-- m</span>
+                </div>
+            </div>
+            <div class="result-item">
+                <span class="result-label">10 min rep <span class="tag tag-30kp">30KP</span></span>
+                <div class="result-data">
+                    <span class="result-value" id="pace-10min">--:--/km</span>
+                    <span class="result-sub" id="dist-10min">-- m</span>
+                </div>
+            </div>
+        </div>
     </div>
-    
-    <div class="input-group">
-        <label for="time">Time (MM:SS)</label>
-        <input type="text" id="time" value="11:16" placeholder="e.g. 11:16">
-    </div>
 
-    <div class="results">
-        <div class="result-item">
-            <span class="result-label">Time Trial Pace</span>
-            <span class="result-value" id="tt-pace">--:--/km</span>
-        </div>
-        <div class="result-item">
-            <span class="result-label">Predicted 5k Time</span>
-            <span class="result-value highlight" id="pred-5k">--:--</span>
-        </div>
-        <div class="result-item">
-            <span class="result-label">Predicted 5k Pace</span>
-            <span class="result-value" id="pred-5k-pace">--:--/km</span>
-        </div>
+    <script>
+        const distanceInput = document.getElementById('distance');
+        const timeInput = document.getElementById('time');
 
-        <div class="rep-section-title">Training Paces</div>
+        // Outputs
+        const ttPaceEl = document.getElementById('tt-pace');
+        const pred5kEl = document.getElementById('pred-5k');
+        const pred5kPaceEl = document.getElementById('pred-5k-pace');
+        const pace3minEl = document.getElementById('pace-3min');
+        const dist3minEl = document.getElementById('dist-3min');
 
-        <div class="result-item">
-            <span class="result-label">3 min rep <span class="tag tag-15kp">15KP</span></span>
-            <span class="result-value" id="pace-3min">--:--/km</span>
-        </div>
-        <div class="result-item">
-            <span class="result-label">6 min rep <span class="tag tag-hmp">HMP</span></span>
-            <span class="result-value" id="pace-6min">--:--/km</span>
-        </div>
-        <div class="result-item">
-            <span class="result-label">10 min rep <span class="tag tag-30kp">30KP</span></span>
-            <span class="result-value" id="pace-10min">--:--/km</span>
-        </div>
-    </div>
-</div>
+        const pace6minEl = document.getElementById('pace-6min');
+        const dist6minEl = document.getElementById('dist-6min');
 
-<script>
-    const distanceInput = document.getElementById('distance');
-    const timeInput = document.getElementById('time');
-    
-    // Outputs
-    const ttPaceEl = document.getElementById('tt-pace');
-    const pred5kEl = document.getElementById('pred-5k');
-    const pred5kPaceEl = document.getElementById('pred-5k-pace');
-    const pace3minEl = document.getElementById('pace-3min');
-    const pace6minEl = document.getElementById('pace-6min');
-    const pace10minEl = document.getElementById('pace-10min');
+        const pace10minEl = document.getElementById('pace-10min');
+        const dist10minEl = document.getElementById('dist-10min');
 
-    function parseTime(timeStr) {
-        if (!timeStr) return 0;
-        const parts = timeStr.trim().split(':');
-        if (parts.length === 2) {
-            return parseInt(parts[0]) * 60 + parseInt(parts[1]);
+        function parseTime(timeStr) {
+            if (!timeStr) return 0;
+            const parts = timeStr.trim().split(':');
+            if (parts.length === 2) {
+                return parseInt(parts[0]) * 60 + parseInt(parts[1]);
+            }
+            if (parts.length === 3) {
+                return parseInt(parts[0]) * 3600 + parseInt(parts[1]) * 60 + parseInt(parts[2]);
+            }
+            return 0;
         }
-        if (parts.length === 3) {
-            return parseInt(parts[0]) * 3600 + parseInt(parts[1]) * 60 + parseInt(parts[2]);
+
+        function formatTime(seconds) {
+            if (isNaN(seconds) || seconds === Infinity) return "--:--";
+            let mins = Math.floor(seconds / 60);
+            let secs = Math.round(seconds % 60);
+            if (secs === 60) {
+                mins++;
+                secs = 0;
+            }
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
         }
-        return 0;
-    }
 
-    function formatTime(seconds) {
-        if (isNaN(seconds) || seconds === Infinity) return "--:--";
-        let mins = Math.floor(seconds / 60);
-        let secs = Math.round(seconds % 60);
-        if (secs === 60) {
-            mins++;
-            secs = 0;
+        function calculate() {
+            const distance = parseFloat(distanceInput.value);
+            const timeStr = timeInput.value;
+            const timeSec = parseTime(timeStr);
+
+            if (!distance || !timeSec) return;
+
+            // TT Pace
+            const ttPaceSec = timeSec / (distance / 1000);
+            ttPaceEl.textContent = formatTime(ttPaceSec) + "/km";
+
+            // Predict 5k using Riegel: T2 = T1 * (D2 / D1)^1.06
+            const pred5kSec = timeSec * Math.pow(5000 / distance, 1.06);
+            pred5kEl.textContent = formatTime(pred5kSec);
+
+            const pred5kPaceSec = pred5kSec / 5;
+            pred5kPaceEl.textContent = formatTime(pred5kPaceSec) + "/km";
+
+            // Calculate Rep Paces based on linear formula (seconds per km)
+            // 3min rep
+            const p3_sec_km = 1.0020 * pred5kPaceSec + 13.20;
+            pace3minEl.textContent = formatTime(p3_sec_km) + "/km";
+            // Distance in 3 mins = (3 * 60) seconds / (sec/km) = km * 1000 = meters
+            const d3_meters = (180 / p3_sec_km) * 1000;
+            dist3minEl.textContent = Math.round(d3_meters) + " m";
+
+            // 6min rep
+            const p6_sec_km = 1.0256 * pred5kPaceSec + 14.12;
+            pace6minEl.textContent = formatTime(p6_sec_km) + "/km";
+            const d6_meters = (360 / p6_sec_km) * 1000;
+            dist6minEl.textContent = Math.round(d6_meters) + " m";
+
+            // 10min rep
+            const p10_sec_km = 1.0552 * pred5kPaceSec + 15.19;
+            pace10minEl.textContent = formatTime(p10_sec_km) + "/km";
+            const d10_meters = (600 / p10_sec_km) * 1000;
+            dist10minEl.textContent = Math.round(d10_meters) + " m";
         }
-        return `${mins}:${secs.toString().padStart(2, '0')}`;
-    }
 
-    function calculate() {
-        const distance = parseFloat(distanceInput.value);
-        const timeStr = timeInput.value;
-        const timeSec = parseTime(timeStr);
+        distanceInput.addEventListener('input', calculate);
+        timeInput.addEventListener('input', calculate);
 
-        if (!distance || !timeSec) return;
-
-        // TT Pace
-        const ttPaceSec = timeSec / (distance / 1000);
-        ttPaceEl.textContent = formatTime(ttPaceSec) + "/km";
-
-        // Predict 5k using Riegel: T2 = T1 * (D2 / D1)^1.06
-        const pred5kSec = timeSec * Math.pow(5000 / distance, 1.06);
-        pred5kEl.textContent = formatTime(pred5kSec);
-
-        const pred5kPaceSec = pred5kSec / 5;
-        pred5kPaceEl.textContent = formatTime(pred5kPaceSec) + "/km";
-
-        // Calculate Rep Paces based on linear formula
-        // 3min: 1.0020 * 5k + 13.20
-        const p3 = 1.0020 * pred5kPaceSec + 13.20;
-        // 6min: 1.0256 * 5k + 14.12
-        const p6 = 1.0256 * pred5kPaceSec + 14.12;
-        // 10min: 1.0552 * 5k + 15.19
-        const p10 = 1.0552 * pred5kPaceSec + 15.19;
-
-        pace3minEl.textContent = formatTime(p3) + "/km";
-        pace6minEl.textContent = formatTime(p6) + "/km";
-        pace10minEl.textContent = formatTime(p10) + "/km";
-    }
-
-    distanceInput.addEventListener('input', calculate);
-    timeInput.addEventListener('input', calculate);
-
-    // Initial calc
-    calculate();
-</script>
+        // Initial calc
+        calculate();
+    </script>
 
 </body>
+
 </html>
