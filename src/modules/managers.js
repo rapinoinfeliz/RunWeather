@@ -37,6 +37,8 @@ export class LocationManager {
     }
 
     async setLocation(lat, lon, name, country) {
+        lat = Number(lat);
+        lon = Number(lon);
         // 1. Snap to existing recent location to stabilize coordinates (and cache keys)
         // If we are "at" a known recent location, use its saved lat/lon.
         let newLoc = { lat, lon, name, country, isDefault: false };
