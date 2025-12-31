@@ -37,7 +37,21 @@ export class LocationManager {
     }
 
     async setLocation(lat, lon, name, country) {
-        this.current = { lat, lon, name, country, isDefault: false };
+        // 1. Snap to existing recent location to stabilize coordinates (and cache keys)
+        // If we are "at" a known recent location, use its saved lat/lon.
+        let newLoc = { lat, lon, name, country, isDefault: false };
+
+        // Find match in recents (using our robust check)
+        const match = this.recents.find(r => this._isSameLocation(r, newLoc));
+        if (match) {
+            console.log("Snapping location to recent match:", match.name);
+            newLoc = { ...match }; // Use the stable coordinates
+            // Ensure we keep the isDefault false unless logic dictates
+            newLoc.isDefault = false;
+        }
+
+        this.current = newLoc;
+
         // Check if back to default (approx)
         if (Math.abs(lat - DEFAULT_LOC.lat) < 0.05 && Math.abs(lon - DEFAULT_LOC.lon) < 0.05) {
             this.current = { ...DEFAULT_LOC };
