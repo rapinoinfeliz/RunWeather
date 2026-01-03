@@ -1648,6 +1648,12 @@ export function update(els, hapCalc) {
         dew: parseFloat(els.dew.value)
     };
 
+    // Logic Rule: Dew Point cannot be > Temp
+    if (!isNaN(state.temp) && !isNaN(state.dew) && state.dew > state.temp) {
+        state.dew = state.temp;
+        els.dew.value = state.temp; // Update UI immediately
+    }
+
     // 2. Pure Calculation (Engine)
     const res = calculatePacingState(state, hapCalc);
 
