@@ -1,4 +1,4 @@
-const CACHE_NAME = 'runweather-v3';
+const CACHE_NAME = 'runweather-v7';
 const ASSETS = [
     './',
     './index.html',
@@ -15,6 +15,7 @@ const ASSETS = [
 ];
 
 self.addEventListener('install', (e) => {
+    self.skipWaiting();
     e.waitUntil(
         caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
     );
@@ -27,7 +28,7 @@ self.addEventListener('activate', (e) => {
                 keys.map((key) => {
                     if (key !== CACHE_NAME) return caches.delete(key);
                 })
-            );
+            ).then(() => self.clients.claim());
         })
     );
 });
