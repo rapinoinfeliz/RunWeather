@@ -74,3 +74,27 @@ export function calculatePacingState(inputs, hapCalc) {
 
     return result;
 }
+
+// --- WBGT Calculation (ACSM / BOM Estimation) ---
+export function calculateWBGT(temp, rh, wind, solar) {
+    // 1. Estimate Wet Bulb (Tw) using Stull (2011)
+    // T = Temp (C), RH = %
+    const T = temp;
+    const RH = rh;
+    const Tw = T * Math.atan(0.151977 * Math.pow(RH + 8.313659, 0.5)) +
+        Math.atan(T + RH) - Math.atan(RH - 1.676331) +
+        0.00391838 * Math.pow(RH, 1.5) * Math.atan(0.023101 * RH) - 4.686035;
+
+    // 2. Estimate Black Globe Temp (Tg)
+    // Uses a simplified approximation for outdoor runners
+    // Tg grows with Radiation and shrinks with Wind.
+    // f(wind) = exp(-0.3 * wind) (Wind in m/s)
+    const windMs = wind / 3.6;
+    const windFactor = Math.exp(-0.25 * windMs); // Wind cooling effect on the globe
+    const Tg = T + (0.019 * solar * windFactor); // Solar heating factor adjusted for wind
+
+    // 3. Calculate Outdoor WBGT
+    // WBGT = 0.7 * Tw + 0.2 * Tg + 0.1 * T
+    const wbgt = (0.7 * Tw) + (0.2 * Tg) + (0.1 * T);
+    return wbgt;
+}

@@ -1,7 +1,7 @@
 
 // UI Module - Reconstructed
 import { HAPCalculator, VDOT_MATH, parseTime, formatTime, getEasyPace, getISOWeek } from './core.js';
-import { calculatePacingState } from './engine.js';
+import { calculatePacingState, calculateWBGT } from './engine.js';
 import { fetchWeatherData, searchCity, fetchIpLocation, reverseGeocode } from './api.js';
 import { saveToStorage } from './storage.js';
 // Assuming core.js has HAPCalculator
@@ -409,33 +409,8 @@ export function renderCurrentTab(w, a, prob2h = 0, precip2h = 0, daily) {
     const windDirStr = getCardinal(dir);
 
     // --- WBGT Calculation (ACSM / BOM Estimation) ---
-    const calculateWBGT = (temp, rh, wind, solar) => {
-        // 1. Estimate Wet Bulb (Tw) using Stull (2011)
-        // T = Temp (C), RH = %
-        const T = temp;
-        const RH = rh;
-        const Tw = T * Math.atan(0.151977 * Math.pow(RH + 8.313659, 0.5)) +
-            Math.atan(T + RH) - Math.atan(RH - 1.676331) +
-            0.00391838 * Math.pow(RH, 1.5) * Math.atan(0.023101 * RH) - 4.686035;
+    // Moved to engine.js
 
-        // 2. Estimate Black Globe Temp (Tg)
-        // Uses a simplified approximation for outdoor runners: Tg ~= T + (0.0144 * SolarRad) + WindCorrection
-        // Improved model: Tg = T + (0.007 * SolarRad) * (1 - 0.05 * WindSpeed) - rough approx to account for wind cooling
-        // A more standard simple approx: Tg = T + (SolarRad / (4 * (Wind + 2.0))) * 0.5 (Just heuristic)
-
-        // We will use the Dimiceli / ABM approximation logic simplified:
-        // Tg grows with Radiation and shrinks with Wind.
-        // Standard assumption for low wind full sun: Tg is ~10-15C higher than T.
-        // f(wind) = exp(-0.3 * wind) (Wind in m/s)
-        const windMs = wind / 3.6;
-        const windFactor = Math.exp(-0.25 * windMs); // Wind cooling effect on the globe
-        const Tg = T + (0.019 * solar * windFactor); // Solar heating factor adjusted for wind
-
-        // 3. Calculate Outdoor WBGT
-        // WBGT = 0.7 * Tw + 0.2 * Tg + 0.1 * T
-        const wbgt = (0.7 * Tw) + (0.2 * Tg) + (0.1 * T);
-        return wbgt;
-    };
 
     const wbgtVal = (w.shortwave_radiation != null) ? calculateWBGT(w.temperature_2m, w.relative_humidity_2m, w.wind_speed_10m, w.shortwave_radiation) : null;
 
@@ -1922,7 +1897,7 @@ export function renderForecastTable(tableBodyId, dayLimit) {
         return new Date(a.time) - new Date(b.time);
     });
 
-    viewData.forEach(h => {
+    tbody.innerHTML = viewData.map(h => {
         const date = new Date(h.time);
         const now = new Date();
         const isToday = date.getDate() === now.getDate();
@@ -1951,7 +1926,7 @@ export function renderForecastTable(tableBodyId, dayLimit) {
         const rainColor = rain > 0 ? '#60a5fa' : 'inherit';
         const dewColor = window.getDewColor ? window.getDewColor(h.dew) : 'inherit';
 
-        html += `
+        return `
         <tr style="${window.selectedForeHour && h.time === window.selectedForeHour ? 'background:var(--card-bg); font-weight:bold;' : ''}">
             <td style="padding:10px; color:var(--text-secondary); white-space:nowrap;">
                 <div style="font-size:0.75em;">${dayName}</div>
@@ -1972,10 +1947,8 @@ export function renderForecastTable(tableBodyId, dayLimit) {
             <td style="text-align:right; font-family:monospace; font-size:1.1em; color:var(--accent-color);">
                 ${formatTime(adjPace)}
             </td>
-        </tr>
-        `;
-    });
-    tbody.innerHTML = html;
+        </tr>`;
+    }).join('');
 }
 
 export function renderVDOTDetails() {

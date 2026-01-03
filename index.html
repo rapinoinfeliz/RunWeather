@@ -7,9 +7,10 @@
     <title>RunWeather</title>
     <link rel="icon" type="image/png" href="favicon.png">
     <!-- App Logic (ES Module) -->
-    <!-- App Logic (ES Module) -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <!-- Cache Busting: increment v=ID on deploy -->
-    <script type="module" src="src/main.js?v=1.0.3"></script>
+    <script type="module" src="src/main.js?v=1.0.4"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 
@@ -30,14 +31,15 @@
                 <h1>Calculator</h1>
                 <div class="subtitle">NSA</div>
             </div>
-            <button class="location-btn" data-action="location-modal" style="margin-left: auto; margin-right: 10px;">
+            <button class="location-btn" data-action="location-modal" aria-label="Change Location"
+                style="margin-left: auto; margin-right: 10px;">
                 <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
                     <circle cx="12" cy="10" r="3"></circle>
                 </svg>
                 <span class="current-location-name">Florianópolis</span>
             </button>
-            <button class="copy-btn" id="copy-btn" title="Copy results to clipboard">
+            <button class="copy-btn" id="copy-btn" title="Copy results to clipboard" aria-label="Copy Results">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
                     <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
@@ -188,7 +190,7 @@
                 <h1>Current Conditions</h1>
                 <div class="subtitle">Live Tracking</div>
             </div>
-            <button class="location-btn" onclick="window.openLocationModal()">
+            <button class="location-btn" data-action="location-modal" aria-label="Change Location">
                 <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
                     <circle cx="12" cy="10" r="3"></circle>
@@ -223,7 +225,7 @@
                 <h1>Forecast</h1>
                 <div class="subtitle">14-Day Heat Impact</div>
             </div>
-            <button class="location-btn" onclick="window.openLocationModal()">
+            <button class="location-btn" data-action="location-modal" aria-label="Change Location">
                 <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
                     <circle cx="12" cy="10" r="3"></circle>
@@ -336,7 +338,7 @@
                 <h1>Climate Analysis</h1>
                 <div class="subtitle">Historical Trends</div>
             </div>
-            <button class="location-btn" onclick="window.openLocationModal()">
+            <button class="location-btn" data-action="location-modal" aria-label="Change Location">
                 <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
                     <circle cx="12" cy="10" r="3"></circle>
