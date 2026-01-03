@@ -1,4 +1,4 @@
-const CACHE_NAME = 'runweather-v7';
+const CACHE_NAME = 'runweather-v8';
 const ASSETS = [
     './',
     './index.html',
@@ -34,6 +34,11 @@ self.addEventListener('activate', (e) => {
 });
 
 self.addEventListener('fetch', (e) => {
+    // Bypass external requests (API calls) - let browser handle them directly
+    if (!e.request.url.startsWith(self.location.origin)) {
+        return;
+    }
+
     e.respondWith(
         caches.match(e.request).then((res) => {
             return res || fetch(e.request);
