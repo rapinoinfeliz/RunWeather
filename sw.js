@@ -1,4 +1,4 @@
-const CACHE_NAME = 'runweather-v11';
+const CACHE_NAME = 'runweather-v12';
 const ASSETS = [
     './',
     './index.html',
@@ -34,8 +34,9 @@ self.addEventListener('activate', (e) => {
 });
 
 self.addEventListener('fetch', (e) => {
-    // Bypass external requests (API calls) - let browser handle them directly
-    if (!e.request.url.startsWith(self.location.origin)) {
+    // Explicitly bypass external API domains to prevent CORS/Opaque issues
+    const url = e.request.url;
+    if (url.includes('open-meteo') || url.includes('ipwho.is') || !url.startsWith(self.location.origin)) {
         return;
     }
 
