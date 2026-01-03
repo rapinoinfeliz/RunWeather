@@ -1677,38 +1677,6 @@ export function update(els, hapCalc) {
 
     // Helper: Render Pace Row
     const renderRow = (key, elPace, elDist, distDuration) => {
-        if (!elPace) return;
-
-        const pace = res.paces[key];
-        // If weather valid, use adjusted, else use neutral
-        const adjPace = (res.weather.valid && res.weather.adjustedPaces[key])
-            ? res.weather.adjustedPaces[key]
-            : pace;
-
-        // Base Pace
-        let html = formatTime(pace) + "/km";
-        elPace.style.color = "";
-
-        // Dist
-        let distHtml = "";
-        if (elDist && distDuration > 0) {
-            const dMeters = Math.round((distDuration / pace) * 1000);
-            distHtml = dMeters + " m";
-        }
-
-        // Adjustment Display (only if valid weather and significant diff)
-        if (res.weather.valid && adjPace > pace + 0.5) {
-            const adjStr = formatTime(adjPace);
-            html += ` <span style="color:var(--lactate-color); font-size:0.85em; margin-left:4px;">(${adjStr})</span>`;
-
-            if (elDist && distDuration > 0) {
-                const adjDistMeters = Math.round((distDuration / adjPace) * 1000);
-                distHtml += ` <span style="color:var(--lactate-color); font-size:0.85em; margin-left:4px;">(${adjDistMeters} m)</span>`;
-            }
-        }
-
-        elPace.innerHTML = html;
-        if (elDist) elDist.innerHTML = distHtml;
     };
 
     // Render Cards
