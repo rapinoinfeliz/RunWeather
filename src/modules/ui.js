@@ -1640,9 +1640,9 @@ export function renderForecastHeatmap(contId, legSelector, dayLimit) {
 }
 
 export function update(els, hapCalc) {
-    // 1. Gather Inputs
+    // 1. Read Inputs
     const state = {
-        distance: parseFloat(els.distance.value),
+        distance: parseFloat(els.distance.value) || 0,
         timeSec: parseTime(els.time.value),
         temp: parseFloat(els.temp.value),
         dew: parseFloat(els.dew.value)
@@ -1675,8 +1675,54 @@ export function update(els, hapCalc) {
         elThreshold.textContent = `${formatTime(res.paces.threshold)}/km`;
     }
 
+    // Determine Impact Color
+    let impactColor = "#fb923c"; // fallback
+    if (res.weather.valid) {
+        impactColor = getImpactColor(res.weather.impactPct);
+    }
+
     // Helper: Render Pace Row
     const renderRow = (key, elPace, elDist, distDuration) => {
+        if (!elPace) return;
+
+        const pace = res.paces[key];
+
+        // Neutral Pace Display
+        let html = formatTime(pace) + "/km";
+        elPace.style.color = ""; // reset
+
+        // Adjusted Pace Logic
+        if (res.weather.valid && res.weather.adjustedPaces[key]) {
+            const adjPace = res.weather.adjustedPaces[key];
+
+            // Only show if significant diff
+            if (adjPace > pace + 0.5) {
+                const adjStr = formatTime(adjPace);
+                // Apply Dynamic Impact Color
+                html += ` <span style="color:${impactColor}; font-size:0.85em; margin-left:4px;">(${adjStr})</span>`;
+            }
+        }
+
+        // Dist Display
+        let distHtml = "";
+        if (elDist && distDuration > 0) {
+            const dMeters = Math.round((distDuration / pace) * 1000);
+            distHtml = dMeters + " m";
+
+            // Adjusted Dist logic (optional, user didn't explicitly ask for dist color but safe to keep neutral or match)
+            // Let's keep dist neutral for now unless requested, or match pattern.
+            // Actually user asked: "o pace e distância ajustados, com a mesma cor"
+            if (res.weather.valid && res.weather.adjustedPaces[key]) {
+                const adjPace = res.weather.adjustedPaces[key];
+                if (adjPace > pace + 0.5) {
+                    const adjDistMeters = Math.round((distDuration / adjPace) * 1000);
+                    distHtml += ` <span style="color:${impactColor}; font-size:0.85em; margin-left:4px;">(${adjDistMeters} m)</span>`;
+                }
+            }
+        }
+
+        elPace.innerHTML = html;
+        if (elDist) elDist.innerHTML = distHtml;
     };
 
     // Render Cards
@@ -1687,7 +1733,9 @@ export function update(els, hapCalc) {
 
     // Impact Text
     if (res.weather.valid) {
-        if (els.weatherImpact) els.weatherImpact.textContent = `Heat Impact: ~${res.weather.impactPct.toFixed(1)}% slowdown`;
+        if (els.weatherImpact) {
+            els.weatherImpact.innerHTML = `Heat Impact: <span style="color:${impactColor}">~${res.weather.impactPct.toFixed(1)}% slowdown</span>`;
+        }
     } else {
         if (els.weatherImpact) els.weatherImpact.textContent = "";
     }
