@@ -134,7 +134,7 @@ export function setPaceMode(mode) {
         if (container) {
             const btns = container.querySelectorAll('.tag-btn');
             btns.forEach(btn => {
-                if (btn.getAttribute('onclick').includes("'" + mode + "'")) {
+                if (btn.dataset.mode === mode) {
                     btn.classList.add('active');
                 } else {
                     btn.classList.remove('active');
