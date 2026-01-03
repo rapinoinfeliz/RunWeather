@@ -20,7 +20,7 @@ export function loadFromStorage(key) {
 
 // --- IndexedDB for Large Data (Climate History) ---
 const DB_NAME = 'RunWeatherDB';
-const DB_VERSION = 1;
+const DB_VERSION = 10; // Force major upgrade to reset stores
 const STORE_CLIMATE = 'climate_history';
 
 export function openDB() {
@@ -28,9 +28,13 @@ export function openDB() {
         const req = indexedDB.open(DB_NAME, DB_VERSION);
         req.onupgradeneeded = (e) => {
             const db = e.target.result;
-            if (!db.objectStoreNames.contains(STORE_CLIMATE)) {
-                db.createObjectStore(STORE_CLIMATE, { keyPath: 'key' });
+            // Robust Store Reset
+            if (db.objectStoreNames.contains(STORE_CLIMATE)) {
+                try {
+                    db.deleteObjectStore(STORE_CLIMATE);
+                } catch (err) { console.warn("Store delete warning", err); }
             }
+            db.createObjectStore(STORE_CLIMATE, { keyPath: 'key' });
         };
         req.onsuccess = (e) => resolve(e.target.result);
         req.onerror = (e) => reject(e);
