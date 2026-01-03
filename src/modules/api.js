@@ -62,13 +62,19 @@ export async function searchCity(query) {
 }
 
 export async function reverseGeocode(lat, lon) {
-    const url = `${GEOCODING_BASE}/reverse?latitude=${lat}&longitude=${lon}&language=pt&format=json`;
+    // Open-Meteo does not support reverse geocoding on the free tier endpoint correctly or it is structured differently.
+    // Switching to BigDataCloud (Free, robust, no-key)
+    const url = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=pt`;
     try {
         const res = await fetch(url);
         if (!res.ok) throw new Error("Reverse Geocoding failed");
         const data = await res.json();
-        // Return first result or null
-        return (data.results && data.results.length > 0) ? data.results[0] : null;
+        // BigDataCloud returns object directly: { city, locality, countryName, ... }
+        // Map to our expected format: { name: "City", country: "CountryCode" }
+        return {
+            name: data.city || data.locality || "Unknown",
+            country: data.countryCode || data.countryName || "BR"
+        };
     } catch (e) {
         console.error("reverseGeocode error:", e);
         return null;
