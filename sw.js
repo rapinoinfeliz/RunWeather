@@ -1,4 +1,4 @@
-const CACHE_NAME = 'runweather-v22';
+const CACHE_NAME = 'runweather-v23';
 const ASSETS = [
     './',
     './index.html',
