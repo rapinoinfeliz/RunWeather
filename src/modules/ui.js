@@ -305,7 +305,7 @@ export function getCondColor(type, val) {
         if (val >= 5) return cWarn;
         if (val >= 2) return cDeepBlue;
         if (val > 0) return cBlue;
-        return "var(--text-primary)";
+        return cGood;
     }
 
     const cCold = '#60a5fa'; // Blue for cold temps
