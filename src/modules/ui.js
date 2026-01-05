@@ -285,7 +285,7 @@ export function getImpactColor(pct) {
 }
 
 export function getDewColor(d) {
-    if (d < 15) return "var(--text-primary)"; // Comfortable
+    if (d < 15) return "#4ade80"; // Green (Comfortable) - User Requirement
     if (d < 20) return "#facc15"; // Yellow (Sticky)
     if (d < 24) return "#fb923c"; // Orange (Uncomfortable)
     return "#f87171"; // Red (Oppressive)
@@ -297,6 +297,16 @@ export function getCondColor(type, val) {
     const cWarn = '#fb923c';
     const cBad = '#f87171';
     const cPurple = '#c084fc';
+    const cBlue = '#60a5fa'; // Light Blue
+    const cDeepBlue = '#3b82f6'; // Deep Blue
+
+    if (type === 'rain') {
+        if (val >= 10) return cBad;
+        if (val >= 5) return cWarn;
+        if (val >= 2) return cDeepBlue;
+        if (val > 0) return cBlue;
+        return "var(--text-primary)";
+    }
 
     const cCold = '#60a5fa'; // Blue for cold temps
 
@@ -521,7 +531,7 @@ export function renderCurrentTab(w, a, prob2h = 0, precip2h = 0, daily) {
                         <div style="${gridStyle}">
                             <div style="${itemStyle}">
                                 <div style="${labelStyle}">Rain (2h) ${infoIcon('Rain Forecast', 'Estimated total precipitation currently expected for the next 2 hours.')}</div>
-                                <div style="${valStyle}">${safeVal(precip2h)} <span style="font-size:0.7em">mm</span></div>
+                                <div style="${valStyle}; color:${getCondColor('rain', precip2h)}">${safeVal(precip2h)} <span style="font-size:0.7em">mm</span></div>
                             </div>
                             <div style="${itemStyle}">
                                 <div style="${labelStyle}">Chance ${infoIcon('Rain Probability', 'Probability of precipitation.<br><br><span style=&quot;color:#4ade80&quot;><b>< 30% (Low):</b></span> Unlikely.<br><span style=&quot;color:#fb923c&quot;><b>30-60% (Medium):</b></span> Possible.<br><span style=&quot;color:#f87171&quot;><b>> 60% (High):</b></span> Look for shelter.')}</div>
