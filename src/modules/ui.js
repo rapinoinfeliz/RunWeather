@@ -303,7 +303,7 @@ export function copyConditions() {
 
     const time = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
-    const text = `Run Conditions ${time}\nTemp: ${temp.toFixed(1)}°C (Feels ${feels.toFixed(1)}°C)\nDew Point: ${dew.toFixed(1)}°C\nHumidity: ${hum}%\nWind: ${wind.toFixed(1)} km/h ${dirStr}\nRain (2h): ${rain.toFixed(1)} mm`;
+    const text = `Run Conditions ${time} | Temp: ${temp.toFixed(1)}°C (Feels ${feels.toFixed(1)}°C) | Dew Point: ${dew.toFixed(1)}°C | Humidity: ${hum}% | Wind: ${wind.toFixed(1)} km/h ${dirStr} | Rain (2h): ${rain.toFixed(1)} mm`;
 
     navigator.clipboard.writeText(text).then(() => {
         // Simple visual feedback (optional, button handles its own active state usually but we can alert or toast)
@@ -512,30 +512,8 @@ export function renderCurrentTab(w, a, prob2h = 0, precip2h = 0, daily) {
     // Update global store for copy
     currentWeatherData = w;
 
-    // Header with Copy Button
-    let html = `
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-        <h2 style="margin:0; font-size:1.2rem; font-weight:700;">Current Conditions</h2>
-        <button id="btn-copy-cond" onclick="window.copyConditions()" style="
-            background:rgba(255,255,255,0.1); 
-            border:none; 
-            color:var(--text-primary); 
-            padding:6px 12px; 
-            border-radius:6px; 
-            font-size:0.8rem; 
-            cursor:pointer; 
-            display:flex; 
-            align-items:center; 
-            gap:6px; 
-            transition:background 0.2s;">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-            </svg>
-            Copy
-        </button>
-    </div>
-    `;
+    // Header structure is now static in index.html
+    let html = '';
 
     // Helper for info icon
     const infoIcon = (title, text) => {
