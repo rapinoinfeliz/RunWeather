@@ -579,7 +579,7 @@ export function renderCurrentTab(w, a, prob2h = 0, precip2h = 0, daily) {
                                 <div style="${valStyle}; color:${getCondColor('wind', wind)}">${safeVal(wind)} <span style="font-size:0.7em">km/h</span></div>
                             </div>
                             <div style="${itemStyle}">
-                                <div style="${labelStyle}">Gusts ${infoIcon('Wind Gusts', 'Maximum instantaneous wind speed at 10 meters.')}</div>
+                                <div style="${labelStyle}">Gusts ${infoIcon('Wind Gusts', 'Maximum instantaneous wind speed at 10 meters.<br><br><span style=&quot;color:#4ade80&quot;><b>< 30 km/h (Manageable):</b></span> Safe.<br><span style=&quot;color:#fb923c&quot;><b>30-50 km/h (Strong):</b></span> Resistance.<br><span style=&quot;color:#f87171&quot;><b>> 50 km/h (Dangerous):</b></span> Unsafe.')}</div>
                                 <div style="${valStyle}; color:${getCondColor('wind', windGust)}">${safeVal(windGust)} <span style="font-size:0.7em">km/h</span></div>
                             </div>
                             <div style="${itemStyle}">
