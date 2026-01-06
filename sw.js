@@ -1,5 +1,4 @@
-```javascript
-const CACHE_NAME = 'runweather-v43';
+const CACHE_NAME = 'runweather-v44';
 const ASSETS = [
     './',
     './index.html',
