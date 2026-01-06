@@ -1107,6 +1107,54 @@ select.modern-input {
     color: var(--text-primary);
 }
 
+/* Icon Animations */
+.icon-spin {
+    animation: iconSpin 10s linear infinite;
+    transform-origin: center;
+}
+
+.icon-float {
+    animation: iconFloat 3s ease-in-out infinite;
+}
+
+.icon-pulse {
+    animation: iconPulse 2s ease-in-out infinite;
+}
+
+@keyframes iconSpin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes iconFloat {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-2px);
+    }
+}
+
+@keyframes iconPulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.7;
+    }
+}
+
 .text-sec-xs {
     color: var(--text-secondary);
     font-size: 0.75rem;

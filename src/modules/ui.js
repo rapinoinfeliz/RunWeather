@@ -559,7 +559,7 @@ export function renderCurrentTab(w, a, prob2h = 0, precip2h = 0, daily) {
     // 2. Wind & Precip
     // 2. Wind
     html += `<div style="${sectionStyle}">
-                        <div style="${headStyle}"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"></path></svg> Wind</div>
+                        <div style="${headStyle}"><svg class="icon-float" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"></path></svg> Wind</div>
                         <div style="${gridStyle}">
                             <div style="${itemStyle}">
                                 <div style="${labelStyle}">Speed ${infoIcon('Wind Speed', 'Sustained wind speed at 10m height.<br><br><span style=&quot;color:#4ade80&quot;><b>< 10 km/h (Calm):</b></span> No impact.<br><span style=&quot;color:#facc15&quot;><b>10-20 km/h (Light):</b></span> Barely noticeable.<br><span style=&quot;color:#fb923c&quot;><b>20-30 km/h (Moderate):</b></span> Effort increases.<br><span style=&quot;color:#f87171&quot;><b>30-40 km/h (Strong):</b></span> Pace unreliable.<br><span style=&quot;color:#c084fc&quot;><b>> 40 km/h (Severe):</b></span> Running compromised.')}</div>
@@ -577,7 +577,7 @@ export function renderCurrentTab(w, a, prob2h = 0, precip2h = 0, daily) {
                     </div>`;
 
     html += `<div style="${sectionStyle}">
-                        <div style="${headStyle}"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="16" y1="13" x2="16" y2="21"></line><line x1="8" y1="13" x2="8" y2="21"></line><line x1="12" y1="15" x2="12" y2="23"></line><path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"></path></svg> Precipitation</div>
+                        <div style="${headStyle}"><svg class="icon-pulse" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="16" y1="13" x2="16" y2="21"></line><line x1="8" y1="13" x2="8" y2="21"></line><line x1="12" y1="15" x2="12" y2="23"></line><path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"></path></svg> Precipitation</div>
                         <div style="${gridStyle}">
                             <div style="${itemStyle}">
                                 <div style="${labelStyle}">Rain (2h) ${infoIcon('Rain Forecast', 'Estimated total precipitation currently expected for the next 2 hours.')}</div>
@@ -594,7 +594,7 @@ export function renderCurrentTab(w, a, prob2h = 0, precip2h = 0, daily) {
     // Remove local aqiColor logic in favor of getCondColor helper
 
     html += `<div style="${sectionStyle}">
-                        <div style="${headStyle}"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="4"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg> Radiation & Air</div>
+                        <div style="${headStyle}"><svg class="icon-spin" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="4"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg> Radiation & Air</div>
                         <div style="${gridStyle} grid-template-columns: 1fr 1fr 1fr;">
                             <div style="${itemStyle}">
                                 <div style="${labelStyle}">UV Index ${infoIcon('UV Index (WHO)', 'Strength of sunburn-producing UV radiation.<br><br><span style=&quot;color:#4ade80&quot;><b>0-2 (Low):</b></span> Safe.<br><span style=&quot;color:#facc15&quot;><b>3-5 (Mod):</b></span> Sunscreen.<br><span style=&quot;color:#fb923c&quot;><b>6-7 (High):</b></span> Cover up.<br><span style=&quot;color:#f87171&quot;><b>8-10 (Very High):</b></span> Shade.<br><span style=&quot;color:#c084fc&quot;><b>11+ (Extreme):</b></span> Stay inside.')}</div>
