@@ -95,15 +95,46 @@ async function init() {
     // Attach Window Helpers (Tooltips, specific onclicks)
     UI.setupWindowHelpers();
 
+    // Auto-format time inputs on blur (e.g., "1920" -> "19:20")
+    const formatTimeInput = (el) => {
+        if (!el) return;
+        el.addEventListener('blur', () => {
+            let val = el.value.replace(/[^0-9]/g, ''); // Remove all non-digits
+            if (val.length === 0) return;
+            // Pad to at least 3 digits for proper parsing
+            if (val.length === 1) val = '0' + val; // "5" -> "05" (5 seconds)
+            if (val.length === 2) val = '0' + val; // "30" -> "030" (30 seconds)
+            // Now split: last 2 are seconds, rest are minutes
+            const secs = val.slice(-2);
+            const mins = val.slice(0, -2) || '0';
+            el.value = `${parseInt(mins, 10)}:${secs}`;
+        });
+    };
+    formatTimeInput(els.time);
+    formatTimeInput(els.inputPace);
+
     // Attach Event Listeners
-    // Inputs (Debounced)
-    const inputs = [els.distance, els.time, els.temp, els.dew];
+    // Inputs (Distance, Temp, Dew)
+    const inputs = [els.distance, els.temp, els.dew];
     inputs.forEach(el => {
         if (el) el.addEventListener('input', () => {
-            // Debounce or immediate? App.js was immediate.
             UI.update(els, window.hapCalc);
         });
     });
+
+    // Time Input: Calculate Pace from Time + Distance
+    if (els.time) {
+        els.time.addEventListener('input', () => {
+            UI.update(els, window.hapCalc);
+            // Also update Pace field if distance is set
+            const tSec = parseTime(els.time.value);
+            const d = parseFloat(els.distance.value);
+            if (tSec > 0 && d > 0 && els.inputPace) {
+                const pacePerKm = tSec / (d / 1000);
+                els.inputPace.value = formatTime(pacePerKm);
+            }
+        });
+    }
 
     // Preset Logic
     if (els.preset) {
@@ -116,9 +147,20 @@ async function init() {
         });
     }
 
-    // Pace Logic (Reverse Calc)
+    // Modal Click Outside (Close)
+    const locModal = document.getElementById('loc-modal');
+    if (locModal) {
+        locModal.addEventListener('click', (e) => {
+            if (e.target === locModal) {
+                locModal.classList.remove('open');
+                locModal.style.removeProperty('display'); // Clear any inline override
+            }
+        });
+    }
+
+    // Pace Input: Calculate Time from Pace + Distance
     if (els.inputPace) {
-        els.inputPace.addEventListener('change', () => { // Change instead of blur for better UX on enter
+        els.inputPace.addEventListener('input', () => {
             const p = parseTime(els.inputPace.value);
             const dStr = els.distance.value;
             if (p > 0 && dStr) {
@@ -134,13 +176,30 @@ async function init() {
     const copyBtn = document.getElementById('copy-btn');
     if (copyBtn) copyBtn.addEventListener('click', () => UI.copyResults(els));
 
+    // Click Outside to Dismiss Info Tooltip
+    // Use mousedown so that link clicks (which fire on mouseup/click) still work
+    document.addEventListener('mousedown', (e) => {
+        const tooltip = document.getElementById('forecast-tooltip');
+        if (!tooltip || tooltip.style.opacity !== '1') return;
+        // If mousedown is inside the tooltip, don't hide (allow link clicks).
+        if (tooltip.contains(e.target)) return;
+        // If mousedown is on an info icon, showInfoTooltip will handle toggle.
+        if (e.target.closest('[onclick*="showInfoTooltip"]')) return;
+        // Otherwise, hide.
+        UI.hideForeTooltip();
+    });
+
     // Initial Load
     // Load State done in LocationManager for location, but inputs?
     // We need to load input state.
     const savedState = loadFromStorage('vdot_calc_state');
     if (savedState) {
         if (els.distance) els.distance.value = savedState.distance || '';
-        if (els.time) els.time.value = savedState.time || '';
+        if (els.time && savedState.time) {
+            // Format the saved time to ensure MM:SS display
+            const timeSec = parseTime(savedState.time);
+            els.time.value = timeSec > 0 ? formatTime(timeSec) : savedState.time;
+        }
     }
 
     // Initial Update
@@ -202,7 +261,7 @@ function processForecast(hourly) {
             time: hourly.time[i],
             temp: hourly.temperature_2m[i],
             dew: hourly.dew_point_2m[i],
-            precip: hourly.precipitation[i],
+            rain: hourly.precipitation[i],
             prob: hourly.precipitation_probability[i],
             wind: hourly.wind_speed_10m[i]
         });

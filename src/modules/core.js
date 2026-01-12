@@ -32,7 +32,23 @@ export const EASY_DATA = [
 // --- Formatting & Parsing ---
 export function parseTime(str) {
     if (!str) return 0;
-    const parts = str.trim().split(':').map(Number);
+    str = str.trim();
+
+    // If no colon, treat as raw digits (e.g., "1920" → 19:20)
+    if (!str.includes(':')) {
+        const digits = str.replace(/[^0-9]/g, '');
+        if (digits.length === 0) return 0;
+        if (digits.length <= 2) {
+            // Just seconds (e.g., "30" → 0:30)
+            return parseInt(digits, 10);
+        }
+        // 3+ digits: last 2 are seconds, rest are minutes
+        const secs = parseInt(digits.slice(-2), 10);
+        const mins = parseInt(digits.slice(0, -2), 10);
+        return mins * 60 + secs;
+    }
+
+    const parts = str.split(':').map(Number);
     // Handle MM:SS or empty
     if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
         return parts[0] * 60 + parts[1];

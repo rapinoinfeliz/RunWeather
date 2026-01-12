@@ -417,8 +417,9 @@ export function showInfoTooltip(e, title, text) {
         return;
     }
 
+    const titleHtml = title ? `<div style="font-weight:600; margin-bottom:4px; border-bottom:1px solid rgba(255,255,255,0.2); padding-bottom:4px;">${title}</div>` : '';
     const html = `
-                        <div style="font-weight:600; margin-bottom:4px; border-bottom:1px solid rgba(255,255,255,0.2); padding-bottom:4px;">${title}</div>
+                        ${titleHtml}
                         <div style="font-size:0.85em; opacity:0.9; line-height:1.4;">${text}</div>
                     `;
 
@@ -1752,44 +1753,51 @@ export function update(els, hapCalc) {
         if (!elPace) return;
 
         const pace = res.paces[key];
+        const normalWidth = "85px";
+        const adjWidth = "85px";
 
         // Neutral Pace Display
+        // Default (no heat or insignificant): just the value
         let html = formatTime(pace) + "/km";
         elPace.style.color = ""; // reset
 
         // Adjusted Pace Logic
+        let hasAdj = false;
+        let adjPaceVal = 0;
         if (res.weather.valid && res.weather.adjustedPaces[key]) {
-            const adjPace = res.weather.adjustedPaces[key];
-
+            adjPaceVal = res.weather.adjustedPaces[key];
             // Only show if significant diff
-            if (adjPace > pace + 0.5) {
-                const adjStr = formatTime(adjPace);
-                // Apply Dynamic Impact Color
-                html += ` <span style="color:${impactColor}; font-size:0.85em; margin-left:4px;">(${adjStr})</span>`;
+            if (adjPaceVal > pace + 0.5) {
+                hasAdj = true;
+                const adjStr = formatTime(adjPaceVal);
+                // Rebuild HTML with columns for alignment
+                // Normal
+                html = `<span style="display:inline-block; min-width:${normalWidth}; text-align:right;">${formatTime(pace)}/km</span>`;
+                // Adjusted
+                html += `<span style="display:inline-block; min-width:${adjWidth}; text-align:right; color:${impactColor}; font-size:0.85em;">(${adjStr})</span>`;
             }
         }
+        elPace.innerHTML = html;
 
         // Dist Display
-        let distHtml = "";
         if (elDist && distDuration > 0) {
             const dMeters = Math.round((distDuration / pace) * 1000);
-            distHtml = dMeters + " m";
+            let distHtml = dMeters + " m";
 
-            // Adjusted Dist logic (optional, user didn't explicitly ask for dist color but safe to keep neutral or match)
-            // Let's keep dist neutral for now unless requested, or match pattern.
-            // Actually user asked: "o pace e distância ajustados, com a mesma cor"
-            if (res.weather.valid && res.weather.adjustedPaces[key]) {
-                const adjPace = res.weather.adjustedPaces[key];
-                if (adjPace > pace + 0.5) {
-                    const adjDistMeters = Math.round((distDuration / adjPace) * 1000);
-                    distHtml += ` <span style="color:${impactColor}; font-size:0.85em; margin-left:4px;">(${adjDistMeters} m)</span>`;
-                }
+            if (hasAdj) {
+                // If pace has adjustment, we must align distance row too
+                const adjDistMeters = Math.round((distDuration / adjPaceVal) * 1000);
+
+                // Normal
+                distHtml = `<span style="display:inline-block; min-width:${normalWidth}; text-align:right;">${dMeters} m</span>`;
+                // Adjusted
+                distHtml += `<span style="display:inline-block; min-width:${adjWidth}; text-align:right; color:${impactColor}; font-size:0.85em;">(${adjDistMeters} m)</span>`;
             }
+            elDist.innerHTML = distHtml;
         }
-
-        elPace.innerHTML = html;
-        if (elDist) elDist.innerHTML = distHtml;
     };
+
+
 
     // Render Cards
     renderRow('p10min', els.pace10, els.dist10, 600);
@@ -1800,7 +1808,8 @@ export function update(els, hapCalc) {
     // Impact Text
     if (res.weather.valid) {
         if (els.weatherImpact) {
-            els.weatherImpact.innerHTML = `Heat Impact: <span style="color:${impactColor}">~${res.weather.impactPct.toFixed(1)}% slowdown</span>`;
+            const heatInfoIcon = `<span onclick="window.showInfoTooltip(event, '', 'Pace adjustment from Hot-weather pace calculator by &lt;a href=&quot;https://apps.runningwritings.com/heat-adjusted-pace/&quot; target=&quot;_blank&quot;&gt;John Davis&lt;/a&gt;.')" style="cursor:pointer; opacity:0.5; margin-left:4px; display:inline-flex; vertical-align:middle;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></span>`;
+            els.weatherImpact.innerHTML = `Heat Impact: <span style="color:${impactColor}">~${res.weather.impactPct.toFixed(1)}% slowdown</span>${heatInfoIcon}`;
         }
     } else {
         if (els.weatherImpact) els.weatherImpact.textContent = "";

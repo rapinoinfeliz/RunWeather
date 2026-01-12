@@ -380,8 +380,8 @@ h1 {
     padding: 10px;
     border-radius: 8px;
     font-size: 0.8rem;
-    pointer-events: none;
-    /* Let mouse pass through */
+    pointer-events: auto;
+    /* Allow clicks on links inside */
     z-index: 10000;
     /* Ensure on top */
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
@@ -1178,4 +1178,91 @@ select.modern-input {
 
 .gps-btn:hover {
     background: rgba(46, 160, 67, 0.2);
+}
+
+/* Rich Tooltip Styles */
+.info-icon {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: help;
+    color: var(--text-secondary);
+    margin-left: 6px;
+    vertical-align: middle;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.info-icon:hover {
+    opacity: 1;
+    color: var(--accent-color);
+}
+
+.tooltip-content {
+    visibility: hidden;
+    width: 260px;
+    background-color: #161b22;
+    color: #c9d1d9;
+    text-align: left;
+    border-radius: 8px;
+    padding: 12px;
+    position: absolute;
+    z-index: 1000;
+    bottom: 125%;
+    /* Top positioning */
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 8px;
+    opacity: 0;
+    transition: opacity 0.2s, transform 0.2s;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    font-size: 0.8rem;
+    line-height: 1.4;
+    font-weight: 400;
+    pointer-events: none;
+    text-transform: none;
+}
+
+/* Triangle Arrow */
+.tooltip-content::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: var(--border-color) transparent transparent transparent;
+}
+
+.info-icon:hover .tooltip-content {
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(-50%) translateY(0);
+}
+
+.tooltip-content a {
+    color: var(--accent-color);
+    text-decoration: none;
+    font-weight: 500;
+    border-bottom: 1px solid transparent;
+}
+
+.tooltip-content a:hover {
+    border-bottom-color: var(--accent-color);
+}
+
+/* Clickable Popover Trigger */
+.popover-trigger {
+    cursor: pointer;
+    border-bottom: 1px dashed var(--text-secondary);
+    transition: color 0.2s, border-color 0.2s;
+}
+
+.popover-trigger:hover {
+    color: var(--accent-color);
+    border-bottom-color: var(--accent-color);
 }
