@@ -1706,7 +1706,9 @@ export function update(els, hapCalc) {
         distance: parseFloat(els.distance.value) || 0,
         timeSec: parseTime(els.time.value),
         temp: parseFloat(els.temp.value),
-        dew: parseFloat(els.dew.value)
+        dew: parseFloat(els.dew.value),
+        wind: parseFloat(els.wind ? els.wind.value : 0),
+        runnerWeight: window.runnerWeight || 65
     };
 
     // Logic Rule: Dew Point cannot be > Temp
@@ -1753,47 +1755,111 @@ export function update(els, hapCalc) {
         if (!elPace) return;
 
         const pace = res.paces[key];
-        const normalWidth = "85px";
-        const adjWidth = "85px";
 
-        // Neutral Pace Display
-        // Default (no heat or insignificant): just the value
-        let html = formatTime(pace) + "/km";
-        elPace.style.color = ""; // reset
+        // Build the content columns
+        let cols = [];
 
-        // Adjusted Pace Logic
-        let hasAdj = false;
-        let adjPaceVal = 0;
-        if (res.weather.valid && res.weather.adjustedPaces[key]) {
-            adjPaceVal = res.weather.adjustedPaces[key];
-            // Only show if significant diff
-            if (adjPaceVal > pace + 0.5) {
-                hasAdj = true;
-                const adjStr = formatTime(adjPaceVal);
-                // Rebuild HTML with columns for alignment
-                // Normal
-                html = `<span style="display:inline-block; min-width:${normalWidth}; text-align:right;">${formatTime(pace)}/km</span>`;
-                // Adjusted
-                html += `<span style="display:inline-block; min-width:${adjWidth}; text-align:right; color:${impactColor}; font-size:0.85em;">(${adjStr})</span>`;
+        // 1. Base Pace (Always Shown)
+        cols.push({
+            label: "Base",
+            paceSec: pace,
+            color: "#e6edf3", // default text color
+            isBase: true
+        });
+
+        // Toggle State (Global or default to false)
+        const view = window.pace_view || { heat: false, headwind: false, tailwind: false };
+
+        // 2. Heat Adjusted (if valid AND toggled)
+        if (view.heat && res.weather.valid && res.weather.adjustedPaces[key]) {
+            const adj = res.weather.adjustedPaces[key];
+            // Show even if insignificant? Or keeping logic? Let's keep logic but allow toggle to FORCE show if active?
+            // Actually, usually user wants to see "what is the adjustment".
+            // If toggle is ON, we show it (unless it's 0/invalid).
+            if (adj > 0 && adj !== pace) {
+                cols.push({
+                    label: "Heat",
+                    paceSec: adj,
+                    color: impactColor
+                });
             }
         }
-        elPace.innerHTML = html;
 
-        // Dist Display
-        if (elDist && distDuration > 0) {
-            const dMeters = Math.round((distDuration / pace) * 1000);
-            let distHtml = dMeters + " m";
+        // 3. Wind Adjusted (Head/Tail)
+        if (res.weather.windPaces && res.weather.windPaces[key]) {
+            const wp = res.weather.windPaces[key];
 
-            if (hasAdj) {
-                // If pace has adjustment, we must align distance row too
-                const adjDistMeters = Math.round((distDuration / adjPaceVal) * 1000);
-
-                // Normal
-                distHtml = `<span style="display:inline-block; min-width:${normalWidth}; text-align:right;">${dMeters} m</span>`;
-                // Adjusted
-                distHtml += `<span style="display:inline-block; min-width:${adjWidth}; text-align:right; color:${impactColor}; font-size:0.85em;">(${adjDistMeters} m)</span>`;
+            // Headwind
+            if (view.headwind && wp.headwind && wp.headwind > 0) {
+                cols.push({
+                    label: "Headwind",
+                    paceSec: wp.headwind,
+                    color: "#f87171" // Soft Red (Tailwind Red-400)
+                });
             }
-            elDist.innerHTML = distHtml;
+
+            // Tailwind
+            if (view.tailwind && wp.tailwind && wp.tailwind > 0) {
+                cols.push({
+                    label: "Tailwind",
+                    paceSec: wp.tailwind,
+                    color: "#4ade80" // Soft Green (Tailwind Green-400)
+                });
+            }
+        }
+
+        // Render HTML Container
+        // Use Flexbox for columns
+        let htmlCanvas = `<div style="display:flex; gap:8px; justify-content: flex-end; align-items:flex-start;">`;
+
+        cols.forEach((col, i) => {
+            // Inner content: Pace on top, Distance below
+            let innerHtml = "";
+
+            // Pace
+            innerHtml += `<div style="font-weight:${col.isBase ? '600' : '500'}; color:${col.color}; white-space:nowrap; font-size:1em;">
+                            ${formatTime(col.paceSec)}/km
+                          </div>`;
+
+            // Distance (if applicable)
+            if (distDuration > 0) {
+                const dMeters = Math.round((distDuration / col.paceSec) * 1000);
+                innerHtml += `<div style="font-size:0.8em; opacity:0.8; color:${col.color}; margin-top:2px;">
+                                 ${dMeters} m
+                               </div>`;
+            }
+
+            // Wrapper for the column
+            let labelHtml = "";
+            if (!col.isBase) {
+                labelHtml = `<div style="font-size:0.65em; text-transform:uppercase; letter-spacing:0.5px; opacity:0.6; margin-bottom:2px;">${col.label}</div>`;
+            } else {
+                // Explicit BASE label if others exist, or if we want clarity
+                if (cols.length > 1) {
+                    labelHtml = `<div style="font-size:0.65em; text-transform:uppercase; letter-spacing:0.5px; opacity:0.4; margin-bottom:2px;">Base</div>`;
+                }
+            }
+
+            htmlCanvas += `<div style="display:flex; flex-direction:column; align-items:center; min-width:60px;">
+                                ${labelHtml}
+                                ${innerHtml}
+                           </div>`;
+
+            // Add divider if not last
+            if (i < cols.length - 1) {
+                htmlCanvas += `<div style="width:1px; background:rgba(255,255,255,0.1); align-self:stretch; margin:0 4px;"></div>`;
+            }
+        });
+
+        htmlCanvas += `</div>`;
+
+        // We replace elPace content with the canvas.
+        elPace.innerHTML = htmlCanvas;
+
+        // Hide separate distance element logic
+        if (elDist) {
+            elDist.innerHTML = "";
+            elDist.style.display = "none";
         }
     };
 
@@ -1805,14 +1871,52 @@ export function update(els, hapCalc) {
     renderRow('p3min', els.pace3, els.dist3, 180);
     renderRow('easy', els.paceEasy, null, 0);
 
-    // Impact Text
+    // Impact Text - Heat
     if (res.weather.valid) {
         if (els.weatherImpact) {
-            const heatInfoIcon = `<span onclick="window.showInfoTooltip(event, '', 'Pace adjustment from Hot-weather pace calculator by &lt;a href=&quot;https://apps.runningwritings.com/heat-adjusted-pace/&quot; target=&quot;_blank&quot;&gt;John Davis&lt;/a&gt;.')" style="cursor:pointer; opacity:0.5; margin-left:4px; display:inline-flex; vertical-align:middle;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></span>`;
+            const heatInfoIcon = `<span onclick="window.showInfoTooltip(event, '', 'Pace adjustment from Hot-weather pace calculator by &lt;a href=&quot;https://apps.runningwritings.com/heat-adjusted-pace/&quot; target=&quot;_blank&quot;&gt;John Davis&lt;/a&gt;.')" style="cursor:pointer; opacity:0.5; position:absolute; top:4px; right:4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></span>`;
             els.weatherImpact.innerHTML = `Heat Impact: <span style="color:${impactColor}">~${res.weather.impactPct.toFixed(1)}% slowdown</span>${heatInfoIcon}`;
         }
     } else {
         if (els.weatherImpact) els.weatherImpact.textContent = "";
+    }
+
+    // Impact Text - Wind
+    if (els.windImpact) {
+        if (res.weather.windImpact) {
+            const { headwindPct, tailwindPct } = res.weather.windImpact;
+            // Format: "Headwind -X% | Tailwind +Y%"
+            // Use specific colors: Red for Headwind, Green for Tailwind
+            let html = "";
+
+            // Headwind (Slowdown)
+            if (Math.abs(headwindPct) > 0.1) {
+                html += `<div style="margin-bottom:2px;">Headwind: <span style="color:#f87171">~${headwindPct.toFixed(1)}% slowdown</span></div>`;
+            }
+
+            // Tailwind (Increase/Speedup)
+            // Note: tailwindPct is likely negative if formulated as "cost reduction"?
+            // Or positive if "speed increase"?
+            // WindCalc implementation:
+            //   costWind = MetCost(v, -wind) -> returns total cost.
+            //   adjSpeed = calculateWindAdjustedPace(v, -wind) -> returns equivalent calm air speed.
+            //   Impact = (Base - Adj) / Base * 100
+            //   If Adj > Base (faster), result is negative.
+            //   So -1.2% means 1.2% faster.
+
+            if (Math.abs(tailwindPct) > 0.1) {
+                const val = Math.abs(tailwindPct);
+                html += `<div>Tailwind: <span style="color:#22c55e">~${val.toFixed(1)}% faster</span></div>`;
+            }
+
+            if (!html) html = "Wind Impact: Negligible";
+
+            const windInfoIcon = `<span onclick="window.showInfoTooltip(event, '', 'Pace adjustment from Headwind and tailwind calculator by &lt;a href=&quot;https://apps.runningwritings.com/wind-calculator&quot; target=&quot;_blank&quot;&gt;John Davis&lt;/a&gt;.')" style="cursor:pointer; opacity:0.5; position:absolute; top:4px; right:4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></span>`;
+
+            els.windImpact.innerHTML = html + windInfoIcon;
+        } else {
+            els.windImpact.textContent = "";
+        }
     }
 
     // Save State (Side Effect)

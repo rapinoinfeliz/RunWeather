@@ -673,8 +673,23 @@ select.modern-input {
 @media (max-width: 600px) {
 
     /* Mobile Input Grid */
+    /* Mobile Input Grid */
     .input-row-grid {
         grid-template-columns: 1fr 1fr;
+    }
+
+    .input-row-grid.cols-3 {
+        grid-template-columns: 1fr 1fr;
+        /* Stack to 2 cols on mobile? Or 1? */
+        /* Let's try 1fr for very small, but 3 cols fit on most phones if padding small. */
+        /* Actually better to let them flow. */
+        grid-template-columns: 1fr;
+        /* Stack vertically on small screens */
+    }
+
+    .input-row-grid.cols-2.impact-grid {
+        grid-template-columns: 1fr 1fr;
+        /* Keep side-by-side for impacts unless very small */
     }
 
     /* Compact Tabs */
@@ -1268,4 +1283,106 @@ select.modern-input {
 .popover-trigger:hover {
     color: var(--accent-color);
     border-bottom-color: var(--accent-color);
+}
+
+.icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: var(--text-primary);
+    padding: 8px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.icon-btn:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.icon-btn:active {
+    transform: scale(0.98);
+}
+
+.input-row-grid.cols-3 {
+    grid-template-columns: 1fr 1fr 1fr;
+}
+
+/* Neutral Toggler Active State */
+.tag-btn.toggler.active {
+    background: rgba(255, 255, 255, 0.9);
+    color: #161b22;
+    /* Dark text for contrast */
+    border-color: rgba(255, 255, 255, 0.9);
+    opacity: 1;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
+}
+
+.tag-btn.toggler:not(.active) {
+    border-color: rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.6);
+}
+/* Impact Box Styling */
+.impact-box {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    line-height: 1.3;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    transition: all 0.2s ease;
+    min-height: 40px; /* Ensure alignment */
+}
+
+.impact-box.header {
+    font-size: 0.7rem; 
+    opacity: 0.6; 
+    margin-bottom: 2px;
+}
+
+/* Force equal width/height for impact grid */
+.input-row-grid.cols-2.impact-grid {
+    grid-template-columns: 1fr 1fr;
+    grid-auto-rows: 1fr; /* Equal height rows */
+}
+
+/* Ensure boxes expand to fill grid cell */
+.impact-box {
+    width: 100%;
+    height: 100%;
+    /* Reaffirm box-sizing just in case */
+    box-sizing: border-box;
+}
+
+/* Ensure formatting context for absolute icon */
+.impact-box {
+    position: relative;
+}
+
+/* Interactive Impact Cards */
+.clickable-card {
+    cursor: pointer;
+    position: relative;
+    user-select: none;
+    transition: all 0.2s ease;
+}
+
+.clickable-card:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.clickable-card:active {
+    transform: scale(0.98);
+}
+
+.clickable-card.active {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+    box-shadow: 0 0 12px rgba(0, 0, 0, 0.2);
 }

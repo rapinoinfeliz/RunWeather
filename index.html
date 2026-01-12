@@ -44,8 +44,17 @@
                     </span>
                 </div>
             </div>
+            <button id="btn-settings" class="icon-btn" title="Runner Settings (Weight)"
+                style="margin-left:auto; margin-right:8px; opacity:0.6; padding:6px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path
+                        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+                    </path>
+                </svg>
+            </button>
             <button class="location-btn" data-action="location-modal" aria-label="Change Location"
-                style="margin-left: auto; margin-right: 10px;">
+                style="margin-right: 8px;">
                 <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
                     <circle cx="12" cy="10" r="3"></circle>
@@ -98,7 +107,29 @@
                 </div>
             </div>
 
-            <!-- Weather Block -->
+            <!-- VDOT Card (Moved Up) -->
+            <div class="vdot-box" id="vdot-card"
+                style="flex-direction:column; align-items:stretch; cursor:pointer; margin-bottom:20px;"
+                data-action="vdot-details">
+                <div class="vdot-header flex-between">
+                    <div class="vdot-info">
+                        <div class="vdot-label">Estimated VDOT <span
+                                style="font-size:0.7em; opacity:0.7; font-weight:400;">(Click to Expand)</span></div>
+                        <div class="vdot-sub">Based on 5k: <span id="pred-5k" style="color:#e6edf3;">--:--</span></div>
+                        <div class="vdot-sub" style="margin-top:2px;">Threshold: <span id="vdot-threshold"
+                                style="color:#e6edf3; font-weight:700;">--:--/km</span></div>
+                    </div>
+                    <div class="vdot-right" style="text-align:right;">
+                        <div class="vdot-val" id="vdot-val">--</div>
+                    </div>
+                </div>
+                <div id="vdot-details"
+                    style="display:none; margin-top:16px; border-top:1px solid rgba(255,255,255,0.1); padding-top:12px;">
+                    <!-- Detailed Rows will be injected here -->
+                </div>
+            </div>
+
+            <!-- Weather Block (Moved Down) -->
             <div class="modern-input-card">
                 <div class="modern-label">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -106,7 +137,7 @@
                     </svg>
                     Weather Conditions
                 </div>
-                <div class="input-row-grid cols-2">
+                <div class="input-row-grid cols-3">
                     <div class="floating-input-group">
                         <label for="temp">Temperature (°C)</label>
                         <input type="number" id="temp" placeholder="Temp" title="Temperature in Celsius"
@@ -117,32 +148,28 @@
                         <input type="number" id="dew" placeholder="Dew" title="Dew Point in Celsius"
                             class="modern-input">
                     </div>
+                    <div class="floating-input-group">
+                        <label for="wind">Wind Speed (km/h)</label>
+                        <input type="number" id="wind" placeholder="Wind" title="Wind Speed in km/h"
+                            class="modern-input">
+                    </div>
                 </div>
-                <div id="weather-impact"
-                    style="font-size: 0.8rem; color: var(--lactate-color); margin-top: 12px; font-weight:500; min-height:1em;">
+
+                <div class="input-row-grid cols-2 impact-grid" style="margin-top:12px; gap:8px;">
+                    <div id="weather-impact" class="impact-box clickable-card" data-toggle-target="heat" role="button"
+                        tabindex="0" style="color:var(--text-secondary);">
+                        <!-- Content injected via JS -->
+                    </div>
+                    <div id="wind-impact" class="impact-box clickable-card" data-toggle-target="wind" role="button"
+                        tabindex="0" style="color:var(--text-secondary);">
+                        <!-- Content injected via JS -->
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="vdot-box" id="vdot-card" style="flex-direction:column; align-items:stretch; cursor:pointer;"
-            data-action="vdot-details">
-            <div class="vdot-header flex-between">
-                <div class="vdot-info">
-                    <div class="vdot-label">Estimated VDOT <span
-                            style="font-size:0.7em; opacity:0.7; font-weight:400;">(Click to Expand)</span></div>
-                    <div class="vdot-sub">Based on 5k: <span id="pred-5k" style="color:#e6edf3;">--:--</span></div>
-                    <div class="vdot-sub" style="margin-top:2px;">Threshold: <span id="vdot-threshold"
-                            style="color:#e6edf3; font-weight:700;">--:--/km</span></div>
-                </div>
-                <div class="vdot-right" style="text-align:right;">
-                    <div class="vdot-val" id="vdot-val">--</div>
-                </div>
-            </div>
-            <div id="vdot-details"
-                style="display:none; margin-top:16px; border-top:1px solid rgba(255,255,255,0.1); padding-top:12px;">
-                <!-- Detailed Rows will be injected here -->
-            </div>
-        </div>
+        <!-- View Model Toggles Removed -->
+        <!-- Interaction moved to Impact Cards -->
 
         <div class="card">
             <div class="card-title">
@@ -215,13 +242,15 @@
                 </div>
             </div>
             <button class="location-btn" data-action="location-modal" aria-label="Change Location"
-                style="margin-left: auto; margin-right: 10px;">
+                style="margin-left: auto; margin-right: 8px;">
                 <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
                     <circle cx="12" cy="10" r="3"></circle>
                 </svg>
                 <span class="current-location-name">Florianópolis</span>
             </button>
+
+
             <button class="copy-btn" id="btn-copy-cond" onclick="window.copyConditions()"
                 title="Copy conditions to clipboard" aria-label="Copy Conditions">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -235,7 +264,8 @@
             <div style="text-align:center; padding:40px; color:var(--text-secondary);">
                 <svg class="animate-spin" style="width:24px;height:24px;margin:auto;" xmlns="http://www.w3.org/2000/svg"
                     fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                    </circle>
                     <path class="opacity-75" fill="currentColor"
                         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
                     </path>

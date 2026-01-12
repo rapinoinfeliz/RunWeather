@@ -1,4 +1,5 @@
 import { VDOT_MATH, getEasyPace } from './core.js';
+import { WindCalc } from './wind.js';
 
 export function calculatePacingState(inputs, hapCalc) {
     const { distance, timeSec, temp, dew } = inputs;
@@ -51,23 +52,61 @@ export function calculatePacingState(inputs, hapCalc) {
     // Weather Logic
     const useWeather = hapCalc && !isNaN(temp);
     const d = !isNaN(dew) ? dew : temp;
+    const windKmh = inputs.wind || 0;
+    const runnerWeight = inputs.runnerWeight || 65;
 
+    // Heat Calculations
     if (useWeather) {
         result.weather.valid = true;
         result.weather.dew = d;
 
-        // Impact on Ref Pace
+        // Impact on Ref Pace (Heat)
         const ref = 300;
         const adjRef = hapCalc.calculatePaceInHeat(ref, temp, d);
         result.weather.impactPct = ((adjRef - ref) / ref) * 100;
 
-        // Adjust all calculated paces
+        // Adjust all calculated paces (Heat)
         Object.keys(result.paces).forEach(key => {
             const val = result.paces[key];
             if (val > 0) {
                 result.weather.adjustedPaces[key] = hapCalc.calculatePaceInHeat(val, temp, d);
             } else {
                 result.weather.adjustedPaces[key] = 0;
+            }
+        });
+    }
+
+    // Wind Calculations (Independent of Heat validity, but usually grouped)
+    if (windKmh > 0) {
+        result.weather.valid = true;
+
+        // Wind Impact Stats (Headwind on Ref Pace)
+        const ref = 300; // 5:00/km
+        const refSpeed = 1000 / ref; // Convert to m/s
+
+        const headwindImpact = WindCalc.getImpactPercentage(refSpeed, windKmh, runnerWeight);
+        const tailwindImpact = WindCalc.getImpactPercentage(refSpeed, -windKmh, runnerWeight);
+
+        result.weather.windImpact = {
+            headwindPct: headwindImpact,
+            tailwindPct: tailwindImpact
+        };
+        result.weather.windPaces = {};
+
+        Object.keys(result.paces).forEach(key => {
+            const val = result.paces[key]; // Pace in s/km
+            if (val > 0) {
+                const speedMs = 1000 / val; // Convert to m/s
+
+                // Calculate Adjusted Speeds (m/s)
+                const hwSpeed = WindCalc.calculateWindAdjustedPace(speedMs, windKmh, runnerWeight);
+                const twSpeed = WindCalc.calculateWindAdjustedPace(speedMs, -windKmh, runnerWeight);
+
+                // Convert back to Pace (s/km)
+                result.weather.windPaces[key] = {
+                    headwind: hwSpeed > 0 ? 1000 / hwSpeed : 0,
+                    tailwind: twSpeed > 0 ? 1000 / twSpeed : 0
+                };
             }
         });
     }

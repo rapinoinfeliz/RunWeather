@@ -78,6 +78,8 @@ async function init() {
         time: document.getElementById('time'),
         temp: document.getElementById('temp'),
         dew: document.getElementById('dew'),
+        wind: document.getElementById('wind'), // New
+        btnSettings: document.getElementById('btn-settings'), // New
         inputPace: document.getElementById('input-pace'),
         pred5k: document.getElementById('pred-5k'),
         vdot: document.getElementById('vdot-val'),
@@ -88,7 +90,8 @@ async function init() {
         pace3: document.getElementById('pace-3min'),
         dist3: document.getElementById('dist-3min'),
         paceEasy: document.getElementById('pace-easy'),
-        weatherImpact: document.getElementById('weather-impact')
+        weatherImpact: document.getElementById('weather-impact'),
+        windImpact: document.getElementById('wind-impact') // New
     };
     window.els = els; // Export for UI module if it uses window.els (my implementation passed 'els' to update)
 
@@ -114,13 +117,85 @@ async function init() {
     formatTimeInput(els.inputPace);
 
     // Attach Event Listeners
-    // Inputs (Distance, Temp, Dew)
-    const inputs = [els.distance, els.temp, els.dew];
+    // Initialize Pace View State
+    window.pace_view = { heat: false, headwind: false, tailwind: false };
+
+    // Impact Card Toggle Logic
+    const updateImpactCards = () => {
+        const heatCard = document.querySelector('[data-toggle-target="heat"]');
+        const windCard = document.querySelector('[data-toggle-target="wind"]');
+
+        if (heatCard) {
+            if (window.pace_view.heat) heatCard.classList.add('active');
+            else heatCard.classList.remove('active');
+        }
+
+        if (windCard) {
+            // Active if either headwind or tailwind is enabled (they are synced now)
+            if (window.pace_view.headwind || window.pace_view.tailwind) windCard.classList.add('active');
+            else windCard.classList.remove('active');
+        }
+    };
+
+    document.querySelectorAll('.clickable-card').forEach(card => {
+        card.addEventListener('click', (e) => {
+            const target = e.currentTarget.dataset.toggleTarget; // using currentTarget to get the card div
+
+            if (target === 'heat') {
+                window.pace_view.heat = !window.pace_view.heat;
+            } else if (target === 'wind') {
+                // Toggle both together
+                const newState = !window.pace_view.headwind; // Toggle based on one
+                window.pace_view.headwind = newState;
+                window.pace_view.tailwind = newState;
+            }
+
+            updateImpactCards();
+            UI.update(els, window.hapCalc);
+        });
+
+        // Basic keyboard accessibility
+        card.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                card.click();
+            }
+        });
+    });
+
+    // Inputs (Distance, Temp, Dew, Wind)
+    const inputs = [els.distance, els.temp, els.dew, els.wind];
     inputs.forEach(el => {
         if (el) el.addEventListener('input', () => {
             UI.update(els, window.hapCalc);
         });
     });
+
+    // Settings Button Logic
+    if (els.btnSettings) {
+        els.btnSettings.addEventListener('click', () => {
+            const currentWeight = window.runnerWeight || 65;
+            const newWeight = prompt("Enter Runner Weight (kg):", currentWeight);
+            if (newWeight !== null) {
+                const w = parseFloat(newWeight);
+                if (!isNaN(w) && w > 0) {
+                    window.runnerWeight = w;
+                    saveToStorage('runner_weight', w);
+                    UI.update(els, window.hapCalc);
+                } else {
+                    alert("Invalid weight entered.");
+                }
+            }
+        });
+    }
+
+    // Load Weight on Init
+    const savedWeight = loadFromStorage('runner_weight');
+    if (savedWeight) {
+        window.runnerWeight = parseFloat(savedWeight);
+    } else {
+        window.runnerWeight = 65;
+    }
 
     // Time Input: Calculate Pace from Time + Distance
     if (els.time) {
@@ -243,6 +318,7 @@ async function refreshWeather(force = false) {
         if ((!els.temp.value && !els.dew.value) || force) {
             els.temp.value = weather.current.temperature_2m;
             els.dew.value = weather.current.dew_point_2m;
+            if (els.wind) els.wind.value = weather.current.wind_speed_10m;
             UI.update(els, window.hapCalc);
         }
 
