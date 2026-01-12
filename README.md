@@ -18,13 +18,11 @@ A comprehensive, weather-aware running pace calculator that helps runners optimi
 - **Heat Impact Analysis**: Automatically adjusts paces based on temperature and humidity 
   - Real-time heat impact percentage calculation
   - Visual feedback for slowdown effect
-  - Based on [John Davis's Hot-Weather Running Calculator](https://apps.runningwritings.com/heat-adjusted-pace/)
 
 - **Wind Impact Analysis**: Calculates pace adjustments for headwind and tailwind conditions
   - Separate headwind/tailwind pace recommendations
   - Metabolic cost calculations using suburban wind profile
   - Runner weight consideration for accurate adjustments
-  - Based on [John Davis's Wind Calculator](https://apps.runningwritings.com/wind-calculator)
 
 ###  Location-Based Weather
 - **Live Weather Integration**: Fetches current conditions via [Open-Meteo API](https://open-meteo.com/)
@@ -34,23 +32,6 @@ A comprehensive, weather-aware running pace calculator that helps runners optimi
 
 ### VDOT Calculation
 The calculator uses Jack Daniels' VDOT formula, which estimates aerobic capacity based on race performances. VDOT is a more practical metric than VO2max for training purposes.
-
-### Heat Adjustment
-Heat impact is calculated using:
-- **Wet Bulb Globe Temperature (WBGT)**: Combines temperature and humidity
-- **Performance Impact Formula**: Based on empirical data from elite runners
-- **Threshold-Based Scaling**: Higher intensity paces are affected more by heat
-
-Reference: [John Davis - Running Writings](https://apps.runningwritings.com/heat-adjusted-pace/)
-
-### Wind Adjustment
-Wind calculations account for:
-- **Metabolic Cost**: Energy required to overcome air resistance
-- **Runner Mass**: Heavier runners are less affected by wind
-- **Wind Profile**: Uses suburban terrain model (wind increases with height)
-- **Bidirectional Analysis**: Separate calculations for headwind and tailwind
-
-Reference: [John Davis - Wind Calculator](https://apps.runningwritings.com/wind-calculator)
 
 
 
@@ -69,7 +50,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ##  Contact
 
-Rapino Infeliz - [@github](https://github.com/rapinoinfeliz) [@email](rapinoinfeliz@gmail.com)
+Rapino Infeliz - [github](https://github.com/rapinoinfeliz) [email](rapinoinfeliz@gmail.com)
 
 Project Link: [https://github.com/rapinoinfeliz/RunWeather](https://github.com/rapinoinfeliz/RunWeather)
 
