@@ -20,11 +20,11 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <!-- Cache Busting: increment v=ID on deploy -->
-    <script type="module" src="src/main.js?v=1.0.13"></script>
+    <script type="module" src="src/main.js?v=1.0.14"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-    <!-- Optimized Fonts Loading -->
+    <!-- Fonts (Async is fine, keeps text visible) -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"
         media="print" onload="this.media='all'">
     <noscript>
@@ -32,11 +32,8 @@
             rel="stylesheet">
     </noscript>
 
-    <!-- Optimized CSS Loading -->
-    <link rel="stylesheet" href="style.css" media="print" onload="this.media='all'">
-    <noscript>
-        <link rel="stylesheet" href="style.css">
-    </noscript>
+    <!-- CSS (Blocking to prevent FOUC / White Screen) -->
+    <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
