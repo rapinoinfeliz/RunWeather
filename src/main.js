@@ -172,20 +172,106 @@ async function init() {
     });
 
     // Settings Button Logic
-    if (els.btnSettings) {
-        els.btnSettings.addEventListener('click', () => {
-            const currentWeight = window.runnerWeight || 65;
-            const newWeight = prompt("Enter Runner Weight (kg):", currentWeight);
-            if (newWeight !== null) {
-                const w = parseFloat(newWeight);
-                if (!isNaN(w) && w > 0) {
-                    window.runnerWeight = w;
-                    saveToStorage('runner_weight', w);
-                    UI.update(els, window.hapCalc);
-                } else {
-                    alert("Invalid weight entered.");
-                }
+    // Load Unit System on Init
+    const savedUnitSystem = loadFromStorage('unit_system');
+    window.unitSystem = savedUnitSystem || 'metric';
+
+    // Settings Button Logic (Modal)
+    const settingsModal = document.getElementById('settings-modal');
+    if (els.btnSettings && settingsModal) {
+        const closeBtn = document.getElementById('close-settings');
+        const saveBtn = document.getElementById('save-settings');
+        const weightInput = document.getElementById('runner-weight');
+        const radios = document.getElementsByName('unit-system');
+
+        const closeSettings = () => {
+            settingsModal.classList.remove('open');
+            settingsModal.style.removeProperty('display');
+        };
+
+        const openSettings = () => {
+             // 1. Set Weight
+            if (weightInput) {
+                 // Convert stored KG to LBS if in Imperial
+                 let val = window.runnerWeight || 65;
+                 if (window.unitSystem === 'imperial') {
+                     val = val * 2.20462;
+                     val = Math.round(val * 10) / 10;
+                 }
+                 weightInput.value = val;
             }
+            
+            // 2. Set Radio
+            const currentSystem = window.unitSystem || 'metric';
+            for (const radio of radios) {
+                if (radio.value === currentSystem) radio.checked = true;
+            }
+
+            settingsModal.classList.add('open');
+            settingsModal.style.display = 'flex'; 
+        };
+
+        const saveSettings = () => {
+             // 1. Unit System
+             let newSystem = 'metric';
+             for (const radio of radios) {
+                 if (radio.checked) newSystem = radio.value;
+             }
+             
+             // Check if system changed
+             const systemChanged = newSystem !== window.unitSystem;
+             window.unitSystem = newSystem;
+             saveToStorage('unit_system', newSystem);
+
+             // 2. Weight
+             const val = parseFloat(weightInput.value);
+             if (!isNaN(val) && val > 0) {
+                 let weightKg = val;
+                 if (newSystem === 'imperial') {
+                     // Input was lbs, convert to kg for storage
+                     weightKg = val / 2.20462;
+                 }
+                 
+                 window.runnerWeight = weightKg;
+                 saveToStorage('runner_weight', weightKg);
+                 
+                 UI.update(els, window.hapCalc);
+                 closeSettings();
+                 
+             } else {
+                 alert("Please enter a valid weight.");
+             }
+        };
+
+        els.btnSettings.addEventListener('click', openSettings);
+        
+        if (closeBtn) closeBtn.addEventListener('click', closeSettings);
+        if (saveBtn) saveBtn.addEventListener('click', saveSettings);
+        
+        // Click outside to close
+        settingsModal.addEventListener('click', (e) => {
+            if (e.target === settingsModal) closeSettings();
+        });
+        
+        // Dynamic Label Updates on Radio Change
+        radios.forEach(r => {
+            r.addEventListener('change', () => {
+                 const lbl = document.querySelector('label[for="runner-weight"]');
+                 if (lbl) {
+                     lbl.textContent = `Runner Weight (${r.value === 'imperial' ? 'lbs' : 'kg'})`;
+                 }
+                 if (weightInput.value) {
+                     let v = parseFloat(weightInput.value);
+                     if (!isNaN(v)) {
+                         if (r.value === 'imperial') {
+                             v = v * 2.20462;
+                         } else {
+                             v = v / 2.20462;
+                         }
+                         weightInput.value = Math.round(v * 10) / 10;
+                     }
+                 }
+            });
         });
     }
 

@@ -1324,6 +1324,7 @@ select.modern-input {
     border-color: rgba(255, 255, 255, 0.2);
     color: rgba(255, 255, 255, 0.6);
 }
+
 /* Impact Box Styling */
 .impact-box {
     background: rgba(255, 255, 255, 0.03);
@@ -1337,19 +1338,21 @@ select.modern-input {
     flex-direction: column;
     justify-content: center;
     transition: all 0.2s ease;
-    min-height: 40px; /* Ensure alignment */
+    min-height: 40px;
+    /* Ensure alignment */
 }
 
 .impact-box.header {
-    font-size: 0.7rem; 
-    opacity: 0.6; 
+    font-size: 0.7rem;
+    opacity: 0.6;
     margin-bottom: 2px;
 }
 
 /* Force equal width/height for impact grid */
 .input-row-grid.cols-2.impact-grid {
     grid-template-columns: 1fr 1fr;
-    grid-auto-rows: 1fr; /* Equal height rows */
+    grid-auto-rows: 1fr;
+    /* Equal height rows */
 }
 
 /* Ensure boxes expand to fill grid cell */
@@ -1387,42 +1390,46 @@ select.modern-input {
     box-shadow: 0 0 12px rgba(0, 0, 0, 0.2);
 }
 
-    /* Fix Pace Card Overflow on Mobile */
+/* Fix Pace Card Overflow on Mobile */
+.data-row {
+    flex-wrap: wrap;
+    /* Allow wrapping */
+}
+
+.data-value-group {
+    max-width: 100%;
+    /* Ensure it doesn't exceed parent */
+    overflow-x: auto;
+    /* Scroll if too wide */
+    -webkit-overflow-scrolling: touch;
+}
+
+/* On very small screens, stack them */
+@media (max-width: 400px) {
     .data-row {
-        flex-wrap: wrap; /* Allow wrapping */
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
     }
-    
+
     .data-value-group {
-        max-width: 100%; /* Ensure it doesn't exceed parent */
-        overflow-x: auto; /* Scroll if too wide */
-        -webkit-overflow-scrolling: touch;
+        width: 100%;
+        text-align: left;
     }
-    
-    /* On very small screens, stack them */
-    @media (max-width: 400px) {
-        .data-row {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 6px;
-        }
-        
-        .data-value-group {
-            width: 100%;
-            text-align: left;
-        }
-        
-        /* Force left alignment of the inner flex container so scrolling works naturally from left */
-        .data-value > div {
-            justify-content: flex-start !important;
-        }
+
+    /* Force left alignment of the inner flex container so scrolling works naturally from left */
+    .data-value>div {
+        justify-content: flex-start !important;
     }
+}
 
 /* Reduce font size on mobile to prevent clipping */
 @media (max-width: 600px) {
     .data-value {
-        font-size: 0.95rem; /* Reduced from 1.1rem */
+        font-size: 0.95rem;
+        /* Reduced from 1.1rem */
     }
-    
+
     /* Even smaller for very narrow screens */
     @media (max-width: 370px) {
         .data-value {
@@ -1434,14 +1441,17 @@ select.modern-input {
 /* Further reduce font size and letter spacing for mobile */
 @media (max-width: 600px) {
     .data-value {
-        font-size: 0.85rem !important; /* Aggressive reduction */
-        letter-spacing: -0.5px; /* Compact text */
+        font-size: 0.85rem !important;
+        /* Aggressive reduction */
+        letter-spacing: -0.5px;
+        /* Compact text */
     }
 }
 
 @media (max-width: 370px) {
     .data-value {
-        font-size: 0.75rem !important; /* Tiny for small phones */
+        font-size: 0.75rem !important;
+        /* Tiny for small phones */
     }
 }
 
@@ -1465,4 +1475,72 @@ select.modern-input {
 
 .github-link:hover {
     opacity: 0.8;
+}
+
+/* Radio Button Styling */
+.radio-label input:checked+span {
+    color: var(--accent-color);
+    font-weight: 700;
+}
+
+.radio-label:has(input:checked) {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Premium Modal Styling (Shared) */
+.premium-modal {
+    max-width: 340px;
+    padding: 24px;
+    background: linear-gradient(145deg, #161b22, #0d1117);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.settings-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    margin-top: 8px;
+}
+
+.settings-input {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 12px 40px 12px 12px;
+    /* Space for kg unit */
+    font-size: 1rem;
+    color: #fff;
+    transition: all 0.2s ease;
+}
+
+.settings-input:focus {
+    border-color: var(--accent-color);
+    background: rgba(0, 0, 0, 0.5);
+    box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.15);
+}
+
+.unit-suffix {
+    position: absolute;
+    right: 12px;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    pointer-events: none;
+}
+
+.settings-label {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.settings-helper {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-top: 8px;
+    line-height: 1.4;
 }
