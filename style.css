@@ -1386,3 +1386,33 @@ select.modern-input {
     border-color: rgba(255, 255, 255, 0.3);
     box-shadow: 0 0 12px rgba(0, 0, 0, 0.2);
 }
+
+    /* Fix Pace Card Overflow on Mobile */
+    .data-row {
+        flex-wrap: wrap; /* Allow wrapping */
+    }
+    
+    .data-value-group {
+        max-width: 100%; /* Ensure it doesn't exceed parent */
+        overflow-x: auto; /* Scroll if too wide */
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    /* On very small screens, stack them */
+    @media (max-width: 400px) {
+        .data-row {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 6px;
+        }
+        
+        .data-value-group {
+            width: 100%;
+            text-align: left;
+        }
+        
+        /* Force left alignment of the inner flex container so scrolling works naturally from left */
+        .data-value > div {
+            justify-content: flex-start !important;
+        }
+    }
