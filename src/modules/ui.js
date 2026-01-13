@@ -245,6 +245,7 @@ export function showForeTooltip(e, htmlContent) {
     el.innerHTML = htmlContent;
     el.style.display = 'block'; // Make sure it's visible if it was hidden
     el.style.opacity = '1';
+    el.style.pointerEvents = 'auto'; // Re-enable clicks inside tooltip
 
     // Initial Position
     const w = el.offsetWidth;
@@ -274,7 +275,10 @@ export function moveForeTooltip(e) {
 
 export function hideForeTooltip() {
     const el = document.getElementById('forecast-tooltip');
-    if (el) el.style.opacity = '0';
+    if (el) {
+        el.style.opacity = '0';
+        el.style.pointerEvents = 'none'; // Prevent blocking clicks
+    }
 }
 
 export function getImpactColor(pct) {
