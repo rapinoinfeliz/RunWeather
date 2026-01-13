@@ -430,6 +430,7 @@ export function showInfoTooltip(e, title, text) {
     el.innerHTML = html;
     el.style.display = 'block';
     el.style.opacity = '1';
+    el.style.pointerEvents = 'auto'; // Fix: Re-enable clicks
     el.style.maxWidth = '200px';
     el.dataset.currentTitle = title;
 
