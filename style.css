@@ -1416,3 +1416,17 @@ select.modern-input {
             justify-content: flex-start !important;
         }
     }
+
+/* Reduce font size on mobile to prevent clipping */
+@media (max-width: 600px) {
+    .data-value {
+        font-size: 0.95rem; /* Reduced from 1.1rem */
+    }
+    
+    /* Even smaller for very narrow screens */
+    @media (max-width: 370px) {
+        .data-value {
+            font-size: 0.85rem;
+        }
+    }
+}
