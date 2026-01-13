@@ -1430,3 +1430,17 @@ select.modern-input {
         }
     }
 }
+
+/* Further reduce font size and letter spacing for mobile */
+@media (max-width: 600px) {
+    .data-value {
+        font-size: 0.85rem !important; /* Aggressive reduction */
+        letter-spacing: -0.5px; /* Compact text */
+    }
+}
+
+@media (max-width: 370px) {
+    .data-value {
+        font-size: 0.75rem !important; /* Tiny for small phones */
+    }
+}
