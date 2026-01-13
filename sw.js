@@ -1,4 +1,4 @@
-const CACHE_NAME = 'runweather-v47-fouc-fix';
+const CACHE_NAME = 'runweather-v48-deploy';
 const ASSETS = [
     './',
     './index.html',
