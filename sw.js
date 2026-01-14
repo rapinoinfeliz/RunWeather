@@ -1,4 +1,4 @@
-const CACHE_NAME = 'runweather-v48-deploy';
+const CACHE_NAME = 'runweather-v49-deploy';
 const ASSETS = [
     './',
     './index.html',
@@ -6,6 +6,10 @@ const ASSETS = [
     './src/main.js',
     './src/modules/core.js',
     './src/modules/ui.js',
+    './src/modules/ui/events.js',
+    './src/modules/ui/renderers.js',
+    './src/modules/ui/state.js',
+    './src/modules/ui/utils.js',
     './src/modules/managers.js',
     './src/modules/api.js',
     './src/modules/storage.js',

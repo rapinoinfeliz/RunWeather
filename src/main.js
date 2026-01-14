@@ -7,7 +7,7 @@ import { HAP_GRID } from '../data/hap_grid.js'; // Import data module
 import * as UI from './modules/ui.js';
 import { loadFromStorage, saveToStorage } from './modules/storage.js';
 
-console.log("Main JS Starting...");
+console.log("Main JS Starting... v1.0.16");
 
 // --- Expose UI to Window (Legacy Support) ---
 console.log("UI Keys:", Object.keys(UI));
