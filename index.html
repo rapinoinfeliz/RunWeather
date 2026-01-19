@@ -202,7 +202,11 @@
 
             <div class="data-row">
                 <div class="data-label-group">
-                    <span class="data-label">1 min rep <span class="tag tag-10kp">10KP</span></span>
+                    <div class="split-badge">
+                        <span class="sb-time">1 min</span>
+                        <span class="sb-sep"></span>
+                        <span class="sb-tag tag-10kp-text">10KP</span>
+                    </div>
                 </div>
                 <div class="data-value-group">
                     <div class="data-value" id="pace-1min">--:--/km</div>
@@ -212,7 +216,11 @@
 
             <div class="data-row">
                 <div class="data-label-group">
-                    <span class="data-label">3 min rep <span class="tag tag-15kp">15KP</span></span>
+                    <div class="split-badge">
+                        <span class="sb-time">3 min</span>
+                        <span class="sb-sep"></span>
+                        <span class="sb-tag tag-15kp-text">15KP</span>
+                    </div>
                 </div>
                 <div class="data-value-group">
                     <div class="data-value" id="pace-3min">--:--/km</div>
@@ -222,7 +230,11 @@
 
             <div class="data-row">
                 <div class="data-label-group">
-                    <span class="data-label">6 min rep <span class="tag tag-hmp">HMP</span></span>
+                    <div class="split-badge">
+                        <span class="sb-time">6 min</span>
+                        <span class="sb-sep"></span>
+                        <span class="sb-tag tag-hmp-text">HMP</span>
+                    </div>
                 </div>
                 <div class="data-value-group">
                     <div class="data-value" id="pace-6min">--:--/km</div>
@@ -232,8 +244,11 @@
 
             <div class="data-row">
                 <div class="data-label-group">
-                    <span class="data-label">10 min rep <span class="tag tag-30kp">30KP</span></span>
-
+                    <div class="split-badge">
+                        <span class="sb-time">10 min</span>
+                        <span class="sb-sep"></span>
+                        <span class="sb-tag tag-30kp-text">30KP</span>
+                    </div>
                 </div>
                 <div class="data-value-group">
                     <div class="data-value" id="pace-10min">--:--/km</div>
@@ -248,7 +263,11 @@
             </div>
             <div class="data-row">
                 <div class="data-label-group">
-                    <span class="data-label">Easy Pace <span class="tag tag-ez">EZ</span></span>
+                    <div class="split-badge">
+                        <span class="sb-time">Easy Run</span>
+                        <span class="sb-sep"></span>
+                        <span class="sb-tag tag-ez-text">EZ</span>
+                    </div>
                 </div>
                 <div class="data-value-group">
                     <div class="data-value" id="pace-easy">--:--/km</div>
@@ -383,14 +402,14 @@
         </div>
 
         <!-- Pace Selector (Shared State) -->
-        <div style="margin-bottom:15px; display:flex; justify-content:flex-end; align-items:center;">
+        <div style="margin-bottom:15px; display:flex; justify-content:flex-start; align-items:center;">
             <span style="font-size:0.8rem; color:var(--text-secondary); margin-right:8px;">Adjust Paces For:</span>
             <div id="pace-tag-container-16" style="display:flex; gap:8px;">
-                <button class="tag-btn tag-10kp" data-action="pace-mode" data-mode="10KP">10KP (1min)</button>
-                <button class="tag-btn tag-15kp" data-action="pace-mode" data-mode="15KP">15KP (3min)</button>
-                <button class="tag-btn tag-hmp active" data-action="pace-mode" data-mode="HMP">HMP (6min)</button>
-                <button class="tag-btn tag-30kp" data-action="pace-mode" data-mode="30KP">30KP (10min)</button>
-                <button class="tag-btn tag-ez" data-action="pace-mode" data-mode="EZ">Easy Pace</button>
+                <button class="tag-btn tag-10kp" data-action="pace-mode" data-mode="10KP">10KP</button>
+                <button class="tag-btn tag-15kp" data-action="pace-mode" data-mode="15KP">15KP</button>
+                <button class="tag-btn tag-hmp active" data-action="pace-mode" data-mode="HMP">HMP</button>
+                <button class="tag-btn tag-30kp" data-action="pace-mode" data-mode="30KP">30KP</button>
+                <button class="tag-btn tag-ez" data-action="pace-mode" data-mode="EZ">EZ</button>
             </div>
         </div>
 

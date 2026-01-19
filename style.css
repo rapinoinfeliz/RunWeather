@@ -539,78 +539,260 @@ h1 {
     border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
-/* Pace Tag Buttons */
-.tag-btn {
+
+
+/* Split Badge Aesthetic (Premium Polish) */
+.split-badge {
+    display: inline-flex;
+    align-items: center;
+    background: rgba(22, 27, 34, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+    padding: 2px 0;
+    overflow: hidden;
+    font-size: 0.85rem;
+    font-weight: 500;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.split-badge:hover {
     background: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--border-color);
+    border-color: rgba(255, 255, 255, 0.15);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 12px -2px rgba(0, 0, 0, 0.2);
+}
+
+.sb-time {
+    padding: 3px 10px;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+    font-size: 0.8rem;
+    opacity: 0.9;
+}
+
+.sb-sep {
+    width: 1px;
+    height: 12px;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.sb-tag {
+    padding: 3px 10px;
+    font-weight: 700;
+    font-size: 0.7rem;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    position: relative;
+    z-index: 1;
+}
+
+/* Dynamic Glows using :has() */
+/* 10KP (Red) */
+.split-badge:has(.tag-10kp-text) {
+    border-left: 2px solid rgba(248, 113, 113, 0.5);
+}
+
+.split-badge:has(.tag-10kp-text):hover {
+    border-color: rgba(248, 113, 113, 0.4);
+    box-shadow: 0 4px 12px rgba(248, 113, 113, 0.1);
+}
+
+.tag-10kp-text {
+    color: #f87171;
+    text-shadow: 0 0 10px rgba(248, 113, 113, 0.3);
+}
+
+/* 15KP (Yellow) */
+.split-badge:has(.tag-15kp-text) {
+    border-left: 2px solid rgba(251, 191, 36, 0.5);
+}
+
+.split-badge:has(.tag-15kp-text):hover {
+    border-color: rgba(251, 191, 36, 0.4);
+    box-shadow: 0 4px 12px rgba(251, 191, 36, 0.1);
+}
+
+.tag-15kp-text {
+    color: #fbbf24;
+    text-shadow: 0 0 10px rgba(251, 191, 36, 0.3);
+}
+
+/* HMP (Blue) */
+.split-badge:has(.tag-hmp-text) {
+    border-left: 2px solid rgba(96, 165, 250, 0.5);
+}
+
+.split-badge:has(.tag-hmp-text):hover {
+    border-color: rgba(96, 165, 250, 0.4);
+    box-shadow: 0 4px 12px rgba(96, 165, 250, 0.1);
+}
+
+.tag-hmp-text {
+    color: #60a5fa;
+    text-shadow: 0 0 10px rgba(96, 165, 250, 0.3);
+}
+
+/* 30KP (Green) */
+.split-badge:has(.tag-30kp-text) {
+    border-left: 2px solid rgba(52, 211, 153, 0.5);
+}
+
+.split-badge:has(.tag-30kp-text):hover {
+    border-color: rgba(52, 211, 153, 0.4);
+    box-shadow: 0 4px 12px rgba(52, 211, 153, 0.1);
+}
+
+.tag-30kp-text {
+    color: #34d399;
+    text-shadow: 0 0 10px rgba(52, 211, 153, 0.3);
+}
+
+/* EZ (Purple) */
+.split-badge:has(.tag-ez-text) {
+    border-left: 2px solid rgba(167, 139, 250, 0.5);
+}
+
+.split-badge:has(.tag-ez-text):hover {
+    border-color: rgba(167, 139, 250, 0.4);
+    box-shadow: 0 4px 12px rgba(167, 139, 250, 0.1);
+}
+
+.tag-ez-text {
+    color: #a371f7;
+    text-shadow: 0 0 10px rgba(167, 139, 250, 0.3);
+}
+
+
+
+
+
+/* Tag Button Styles (Calculator Aesthetic Alignment) */
+.tag-btn {
+    background: rgba(22, 27, 34, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    /* Match split-badge border */
     color: var(--text-secondary);
     font-size: 0.75rem;
     font-weight: 600;
-    padding: 4px 8px;
+    padding: 6px 12px;
     border-radius: 6px;
+    /* Match split-badge radius */
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.2s ease;
     text-transform: uppercase;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    letter-spacing: 0.5px;
 }
 
 .tag-btn:hover {
-    border-color: var(--text-secondary);
+    transform: translateY(-1px);
+    background: rgba(255, 255, 255, 0.05);
+    /* Subtle lightening */
+    color: var(--text-primary);
 }
 
-.tag-btn.active.tag-hmp {
-    background: rgba(59, 130, 246, 1);
-    color: #fff;
-    border-color: rgba(59, 130, 246, 1);
+/* Specific Colors (Matching Split Badge Text) */
+.tag-btn.tag-10kp:not(.active) {
+    color: #f87171;
+    border-color: rgba(248, 113, 113, 0.2);
 }
 
-.tag-btn.active.tag-15kp {
-    background: rgba(245, 158, 11, 1);
-    color: #000;
-    border-color: rgba(245, 158, 11, 1);
-}
-
-.tag-btn.active.tag-30kp {
-    background: rgba(16, 185, 129, 1);
-    color: #fff;
-    border-color: rgba(16, 185, 129, 1);
-}
-
-.tag-btn.active.tag-ez {
-    background: rgba(163, 113, 247, 1);
-    color: #fff;
-    border-color: rgba(163, 113, 247, 1);
-}
-
-.tag-btn.active.tag-10kp {
-    background: rgba(239, 68, 68, 1);
-    color: #fff;
-    border-color: rgba(239, 68, 68, 1);
-}
-
-.tag-btn.tag-hmp:not(.active) {
-    color: #60a5fa;
-    border-color: rgba(59, 130, 246, 0.3);
+.tag-btn.tag-10kp:not(.active):hover {
+    border-color: rgba(248, 113, 113, 0.5);
+    box-shadow: 0 4px 12px rgba(248, 113, 113, 0.1);
 }
 
 .tag-btn.tag-15kp:not(.active) {
     color: #fbbf24;
-    border-color: rgba(245, 158, 11, 0.3);
+    border-color: rgba(251, 191, 36, 0.2);
+}
+
+.tag-btn.tag-15kp:not(.active):hover {
+    border-color: rgba(251, 191, 36, 0.5);
+    box-shadow: 0 4px 12px rgba(251, 191, 36, 0.1);
+}
+
+.tag-btn.tag-hmp:not(.active) {
+    color: #60a5fa;
+    border-color: rgba(96, 165, 250, 0.2);
+}
+
+.tag-btn.tag-hmp:not(.active):hover {
+    border-color: rgba(96, 165, 250, 0.5);
+    box-shadow: 0 4px 12px rgba(96, 165, 250, 0.1);
 }
 
 .tag-btn.tag-30kp:not(.active) {
     color: #34d399;
-    border-color: rgba(16, 185, 129, 0.3);
+    border-color: rgba(52, 211, 153, 0.2);
+}
+
+.tag-btn.tag-30kp:not(.active):hover {
+    border-color: rgba(52, 211, 153, 0.5);
+    box-shadow: 0 4px 12px rgba(52, 211, 153, 0.1);
 }
 
 .tag-btn.tag-ez:not(.active) {
     color: #a371f7;
-    border-color: rgba(163, 113, 247, 0.3);
+    border-color: rgba(167, 139, 250, 0.2);
 }
 
-.tag-btn.tag-10kp:not(.active) {
-    color: #f87171;
-    border-color: rgba(239, 68, 68, 0.3);
+.tag-btn.tag-ez:not(.active):hover {
+    border-color: rgba(167, 139, 250, 0.5);
+    box-shadow: 0 4px 12px rgba(167, 139, 250, 0.1);
 }
+
+/* Active State - Subtle yet Clear */
+.tag-btn.active {
+    color: #fff;
+    transform: translateY(0);
+    /* Remove text shadow for cleaner look */
+}
+
+.tag-btn.active.tag-10kp {
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.6);
+    color: #f87171;
+    box-shadow: 0 0 12px rgba(239, 68, 68, 0.15);
+}
+
+.tag-btn.active.tag-15kp {
+    background: rgba(245, 158, 11, 0.15);
+    border: 1px solid rgba(245, 158, 11, 0.6);
+    color: #fbbf24;
+    box-shadow: 0 0 12px rgba(245, 158, 11, 0.15);
+}
+
+.tag-btn.active.tag-hmp {
+    background: rgba(59, 130, 246, 0.15);
+    border: 1px solid rgba(59, 130, 246, 0.6);
+    color: #60a5fa;
+    box-shadow: 0 0 12px rgba(59, 130, 246, 0.15);
+}
+
+.tag-btn.active.tag-30kp {
+    background: rgba(16, 185, 129, 0.15);
+    border: 1px solid rgba(16, 185, 129, 0.6);
+    color: #34d399;
+    box-shadow: 0 0 12px rgba(16, 185, 129, 0.15);
+}
+
+.tag-btn.active.tag-ez {
+    background: rgba(163, 113, 247, 0.15);
+    border: 1px solid rgba(163, 113, 247, 0.6);
+    color: #a371f7;
+    box-shadow: 0 0 12px rgba(163, 113, 247, 0.15);
+}
+
+
+
+
+
 
 /* Modern Input Styles */
 .modern-input-card {
