@@ -117,6 +117,7 @@ export function getBasePaceSec() {
     };
 
     if (mode === '15KP') return parseEl('pace-3min');
+    if (mode === '10KP') return parseEl('pace-1min');
     if (mode === 'HMP') return parseEl('pace-6min');
     if (mode === '30KP') return parseEl('pace-10min');
     if (mode === 'EZ') return parseEl('pace-easy');

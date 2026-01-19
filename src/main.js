@@ -89,6 +89,8 @@ async function init() {
         dist6: document.getElementById('dist-6min'),
         pace3: document.getElementById('pace-3min'),
         dist3: document.getElementById('dist-3min'),
+        pace1: document.getElementById('pace-1min'),
+        dist1: document.getElementById('dist-1min'),
         paceEasy: document.getElementById('pace-easy'),
         weatherImpact: document.getElementById('weather-impact'),
         windImpact: document.getElementById('wind-impact') // New

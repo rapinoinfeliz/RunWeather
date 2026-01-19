@@ -594,6 +594,7 @@ export function update(els, hapCalc) {
     renderRow('p10min', els.pace10, els.dist10, 600);
     renderRow('p6min', els.pace6, els.dist6, 360);
     renderRow('p3min', els.pace3, els.dist3, 180);
+    renderRow('p1min', els.pace1, els.dist1, 60);
     renderRow('easy', els.paceEasy, null, 0);
 
     // Impact Text - Heat

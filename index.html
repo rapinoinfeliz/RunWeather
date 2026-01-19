@@ -202,6 +202,16 @@
 
             <div class="data-row">
                 <div class="data-label-group">
+                    <span class="data-label">1 min rep <span class="tag tag-10kp">10KP</span></span>
+                </div>
+                <div class="data-value-group">
+                    <div class="data-value" id="pace-1min">--:--/km</div>
+                    <div class="data-sub" id="dist-1min">-- m</div>
+                </div>
+            </div>
+
+            <div class="data-row">
+                <div class="data-label-group">
                     <span class="data-label">3 min rep <span class="tag tag-15kp">15KP</span></span>
                 </div>
                 <div class="data-value-group">
@@ -376,6 +386,7 @@
         <div style="margin-bottom:15px; display:flex; justify-content:flex-end; align-items:center;">
             <span style="font-size:0.8rem; color:var(--text-secondary); margin-right:8px;">Adjust Paces For:</span>
             <div id="pace-tag-container-16" style="display:flex; gap:8px;">
+                <button class="tag-btn tag-10kp" data-action="pace-mode" data-mode="10KP">10KP (1min)</button>
                 <button class="tag-btn tag-15kp" data-action="pace-mode" data-mode="15KP">15KP (3min)</button>
                 <button class="tag-btn tag-hmp active" data-action="pace-mode" data-mode="HMP">HMP (6min)</button>
                 <button class="tag-btn tag-30kp" data-action="pace-mode" data-mode="30KP">30KP (10min)</button>
