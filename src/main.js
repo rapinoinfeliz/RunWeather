@@ -395,7 +395,7 @@ async function refreshWeather(force = false) {
             weather.hourly.precipitation_probability[0],
             weather.hourly.precipitation[0],
             weather.daily,
-            window.hapCalc
+            weather.elevation // Pass Elevation
         );
 
         // Render Forecasts

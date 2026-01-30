@@ -859,9 +859,20 @@ export function renderForecastChart(containerId, dayLimit) {
     cont.innerHTML = svg;
 }
 
-export function renderCurrentTab(w, a, prob2h = 0, precip2h = 0, daily) {
+export function renderCurrentTab(w, a, prob2h = 0, precip2h = 0, daily, elevation) {
     const container = document.getElementById('current-content');
     if (!container) return;
+
+    // Update Elevation Displays (Global, since buttons are outside this container)
+    document.querySelectorAll('.elevation-display').forEach(el => {
+        if (elevation !== undefined && elevation !== null) {
+            el.textContent = `${Math.round(elevation)}m`;
+            el.style.display = 'block';
+        } else {
+            el.textContent = '';
+            el.style.display = 'none';
+        }
+    });
 
     // Metrics
     const safeVal = (v, dec = 1) => (v != null && !isNaN(v)) ? v.toFixed(dec) : '--';
@@ -875,6 +886,19 @@ export function renderCurrentTab(w, a, prob2h = 0, precip2h = 0, daily) {
     const uv = w.uv_index;
     const aqi = a ? a.us_aqi : '--';
     const pm25 = a ? a.pm2_5 : '--';
+    const cloud = w.cloud_cover != null ? w.cloud_cover : 0;
+
+    // Cloud Color logic
+    const getCloudColor = (c) => {
+        if (c < 20) return '#60a5fa'; // Clear/Blue
+        if (c < 60) return '#9ca3af'; // Partly Cloudy/Gray
+        return '#6b7280'; // Overcast/Dark Gray
+    };
+    const getCloudText = (c) => {
+        if (c < 20) return 'Clear';
+        if (c < 60) return 'Partly Cld';
+        return 'Overcast';
+    };
 
     // Convert Dir to Cardinal
     const getCardinal = (angle) => {
@@ -993,7 +1017,7 @@ export function renderCurrentTab(w, a, prob2h = 0, precip2h = 0, daily) {
 
     html += `<div style="${sectionStyle}">
                         <div style="${headStyle}"><svg class="icon-pulse" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="16" y1="13" x2="16" y2="21"></line><line x1="8" y1="13" x2="8" y2="21"></line><line x1="12" y1="15" x2="12" y2="23"></line><path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"></path></svg> Precipitation</div>
-                        <div style="${gridStyle}">
+                        <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:8px; row-gap:16px; align-items: stretch;">
                             <div style="${itemStyle}">
                                 <div style="${labelStyle}">Rain (2h) ${infoIcon('Rain Forecast', 'Estimated total precipitation currently expected for the next 2 hours.')}</div>
                                 <div style="${valStyle}; color:${getCondColor('rain', precip2h)}">${safeVal(precip2h)} <span style="font-size:0.7em">mm</span></div>
@@ -1001,6 +1025,10 @@ export function renderCurrentTab(w, a, prob2h = 0, precip2h = 0, daily) {
                             <div style="${itemStyle}">
                                 <div style="${labelStyle}">Chance ${infoIcon('Rain Probability', 'Probability of precipitation.<br><br><span style=&quot;color:#4ade80&quot;><b>< 30% (Low):</b></span> Unlikely.<br><span style=&quot;color:#fb923c&quot;><b>30-60% (Medium):</b></span> Possible.<br><span style=&quot;color:#f87171&quot;><b>> 60% (High):</b></span> Look for shelter.')}</div>
                                 <div style="${valStyle}; color:${getCondColor('prob', prob2h)}">${prob2h} <span style="font-size:0.7em">%</span></div>
+                            </div>
+                            <div style="${itemStyle}">
+                                <div style="${labelStyle}">Clouds ${infoIcon('Cloud Coverage', 'Percentage of sky covered by clouds.<br><br><span style=&quot;color:#60a5fa&quot;><b>0-20% (Clear):</b></span> Sunny.<br><span style=&quot;color:#9ca3af&quot;><b>20-60% (Partly):</b></span> Mixed.<br><span style=&quot;color:#6b7280&quot;><b>> 60% (Overcast):</b></span> Cloudy.')}</div>
+                                <div style="${valStyle}; color:${getCloudColor(cloud)}">${cloud} <span style="font-size:0.7em">%</span></div>
                             </div>
                         </div>
                     </div>`;
