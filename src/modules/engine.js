@@ -49,9 +49,9 @@ export function calculatePacingState(inputs, hapCalc) {
     result.paces.p6min = 1.0256 * pred5kPace + 14.12;
     result.paces.p3min = 1.0020 * pred5kPace + 13.20;
 
-    // 10KP (1 min reps) - Calculate exact 10k Pace
-    const t10k = VDOT_MATH.solveTime(vdotScore, 10000);
-    result.paces.p1min = t10k / 10;
+    // 5K Pace (Previously 10KP)
+    // result.paces.p1min now represents 5K Pace
+    result.paces.p1min = pred5kPace;
 
     result.paces.easy = getEasyPace(pred5kSec);
 
