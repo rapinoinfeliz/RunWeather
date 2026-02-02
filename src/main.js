@@ -173,9 +173,15 @@ async function init() {
             if (el === els.distance) {
                 const val = el.value.trim();
                 const options = Array.from(els.preset.options).map(o => o.value);
+
+                // Check if value matches any preset (exact match)
                 if (options.includes(val)) {
                     els.preset.value = val;
                 } else {
+                    // If not currently on a valid preset for this value, switch to custom.
+                    // But if user selected a preset, the value IS set.
+                    // So if we type 5000, we select 5k.
+                    // If we type 5001, we should select Custom.
                     els.preset.value = 'custom';
                 }
             }
@@ -293,9 +299,9 @@ async function init() {
                     el.value = adjustDistance(el.value, dir * step);
                 }
 
-                // Trigger update
-                UI.update(els, window.hapCalc);
-                saveCalcState();
+                // Trigger standard input event so auto-select logic works
+                // This input listener ALREADY calls UI.update and saveCalcState (see inputs.forEach listener)
+                el.dispatchEvent(new Event('input'));
 
                 // Specific Input Logic (Calculated fields)
                 if (el === els.time) {
@@ -517,7 +523,11 @@ async function init() {
     // We need to load input state.
     const savedState = loadFromStorage('vdot_calc_state');
     if (savedState) {
-        if (els.distance) els.distance.value = savedState.distance || '';
+        if (els.distance) {
+            els.distance.value = savedState.distance || '';
+            // Trigger auto-select logic
+            els.distance.dispatchEvent(new Event('input'));
+        }
         if (els.time && savedState.time) {
             // Format the saved time to ensure MM:SS display
             const timeSec = parseTime(savedState.time);

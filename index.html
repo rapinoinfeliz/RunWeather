@@ -401,18 +401,77 @@
         <!-- Trend Chart -->
         <div
             style="background:var(--card-bg); border-radius:12px; padding:15px; margin-bottom:20px; border:1px solid var(--border-color);">
-            <h3 class="h3-title">
-                Temperature & Dew Point</h3>
-            <div id="forecast-chart-container-16" class="chart-box">
-                <!-- JS Injected SVG -->
-                <div style="text-align:center; color:var(--text-secondary); font-size:0.8rem; padding-top:60px;">Loading
-                    Chart...</div>
+            <div onclick="toggleTempChart()"
+                style="display:flex; align-items:center; justify-content:space-between; cursor:pointer;">
+                <h3 class="h3-title" style="margin-bottom:0;">
+                    Temperature & Dew Point</h3>
+                <span id="temp-toggle-icon" style="transition:transform 0.2s; color:var(--text-secondary);">▼</span>
             </div>
-            <div style="display:flex; justify-content:center; gap:16px; margin-top:10px; font-size:0.75rem;">
-                <div style="color:#f87171; display:flex; align-items:center; gap:4px;"><span
-                        style="width:8px; height:8px; border-radius:50%; background:#f87171;"></span> Temp</div>
-                <div style="color:#60a5fa; display:flex; align-items:center; gap:4px;"><span
-                        style="width:8px; height:8px; border-radius:50%; background:#60a5fa;"></span> Dew Point</div>
+
+            <div id="temp-chart-wrapper" style="margin-top:20px; transition:all 0.3s ease-out; overflow:hidden;">
+                <div id="forecast-chart-container-16" class="chart-box">
+                    <!-- JS Injected SVG -->
+                    <div style="text-align:center; color:var(--text-secondary); font-size:0.8rem; padding-top:60px;">
+                        Loading
+                        Chart...</div>
+                </div>
+                <div style="display:flex; justify-content:center; gap:16px; margin-top:10px; font-size:0.75rem;">
+                    <div style="color:#f87171; display:flex; align-items:center; gap:4px;"><span
+                            style="width:8px; height:8px; border-radius:50%; background:#f87171;"></span> Temp</div>
+                    <div style="color:#60a5fa; display:flex; align-items:center; gap:4px;"><span
+                            style="width:8px; height:8px; border-radius:50%; background:#60a5fa;"></span> Dew Point
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rain Chart -->
+        <div
+            style="background:var(--card-bg); border-radius:12px; padding:15px; margin-bottom:20px; border:1px solid var(--border-color);">
+            <div onclick="toggleRainChart()"
+                style="display:flex; align-items:center; justify-content:space-between; cursor:pointer;">
+                <h3 class="h3-title" style="margin-bottom:0;">
+                    Precipitation</h3>
+                <span id="rain-toggle-icon" style="transition:transform 0.2s; color:var(--text-secondary);">▼</span>
+            </div>
+
+            <div id="rain-chart-wrapper" style="margin-top:20px; transition:all 0.3s ease-out; overflow:hidden;">
+                <div id="forecast-rain-chart-container-16" class="chart-box">
+                    <!-- JS Injected SVG -->
+                    <div style="text-align:center; color:var(--text-secondary); font-size:0.8rem; padding-top:60px;">
+                        Loading
+                        Chart...</div>
+                </div>
+                <div style="display:flex; justify-content:center; gap:16px; margin-top:10px; font-size:0.75rem;">
+                    <div style="color:#60a5fa; display:flex; align-items:center; gap:4px;"><span
+                            style="width:8px; height:8px; background:#60a5fa;"></span> Rain (mm)</div>
+                    <div style="color:#93c5fd; display:flex; align-items:center; gap:4px;"><span
+                            style="width:8px; height:2px; background:#93c5fd;"></span> Probability (%)</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Wind Chart -->
+        <div
+            style="background:var(--card-bg); border-radius:12px; padding:15px; margin-bottom:20px; border:1px solid var(--border-color);">
+            <div onclick="toggleWindChart()"
+                style="display:flex; align-items:center; justify-content:space-between; cursor:pointer;">
+                <h3 class="h3-title" style="margin-bottom:0;">
+                    Wind Speed</h3>
+                <span id="wind-toggle-icon" style="transition:transform 0.2s; color:var(--text-secondary);">▼</span>
+            </div>
+
+            <div id="wind-chart-wrapper" style="margin-top:20px; transition:all 0.3s ease-out; overflow:hidden;">
+                <div id="forecast-wind-chart-container-16" class="chart-box">
+                    <!-- JS Injected SVG -->
+                    <div style="text-align:center; color:var(--text-secondary); font-size:0.8rem; padding-top:60px;">
+                        Loading
+                        Chart...</div>
+                </div>
+                <div style="display:flex; justify-content:center; gap:16px; margin-top:10px; font-size:0.75rem;">
+                    <div style="color:#c084fc; display:flex; align-items:center; gap:4px;"><span
+                            style="width:8px; height:2px; background:#c084fc;"></span> Wind (km/h)</div>
+                </div>
             </div>
         </div>
 

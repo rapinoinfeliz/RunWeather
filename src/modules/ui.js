@@ -3,8 +3,9 @@
 import { HAPCalculator, VDOT_MATH, parseTime, formatTime, getEasyPace, getISOWeek } from './core.js';
 import { calculatePacingState, calculateWBGT } from './engine.js';
 import { fetchWeatherData, searchCity, fetchIpLocation, reverseGeocode } from './api.js';
-import { saveToStorage } from './storage.js';
-export { renderCurrentTab, renderForecastChart, renderClimateTable, renderClimateLegend, renderClimateHeatmap, renderForecastHeatmap, renderForecastTable, renderVDOTDetails, renderAllForecasts, renderOverview, calculateBestRunTime } from './ui/renderers.js';
+import { saveToStorage, loadFromStorage } from './storage.js';
+import { renderCurrentTab, renderForecastChart, renderRainChart, renderWindChart, renderClimateTable, renderClimateLegend, renderClimateHeatmap, renderForecastHeatmap, renderForecastTable, renderVDOTDetails, renderAllForecasts, renderOverview, calculateBestRunTime } from './ui/renderers.js';
+export { renderCurrentTab, renderForecastChart, renderRainChart, renderWindChart, renderClimateTable, renderClimateLegend, renderClimateHeatmap, renderForecastHeatmap, renderForecastTable, renderVDOTDetails, renderAllForecasts, renderOverview, calculateBestRunTime };
 import { UIState } from './ui/state.js';
 export { UIState };
 import { infoIcon, getImpactColor, getDewColor, getCondColor, getImpactCategory, getBasePaceSec, getDateFromWeek, animateValue } from './ui/utils.js';
@@ -18,6 +19,88 @@ window.openTab = openTab;
 window.setPaceMode = setPaceMode;
 window.toggleForeSort = toggleForeSort;
 window.setBestRunRange = setBestRunRange;
+
+
+window.toggleTempChart = () => {
+    const wrapper = document.getElementById('temp-chart-wrapper');
+    const icon = document.getElementById('temp-toggle-icon');
+    if (!wrapper || !icon) return;
+
+    if (wrapper.style.display === 'none') {
+        wrapper.style.display = 'block';
+        icon.style.transform = 'rotate(0deg)';
+        saveToStorage('temp_chart_collapsed', false);
+        // Re-render to ensure size is correct if it was hidden
+        renderForecastChart('forecast-chart-container-16', 14);
+    } else {
+        wrapper.style.display = 'none';
+        icon.style.transform = 'rotate(-90deg)';
+        saveToStorage('temp_chart_collapsed', true);
+    }
+};
+
+// Restore Temp Chart State
+const savedTempState = loadFromStorage('temp_chart_collapsed');
+if (savedTempState === true) {
+    const wrapper = document.getElementById('temp-chart-wrapper');
+    const icon = document.getElementById('temp-toggle-icon');
+    if (wrapper) wrapper.style.display = 'none';
+    if (icon) icon.style.transform = 'rotate(-90deg)';
+}
+
+window.toggleWindChart = () => {
+    const wrapper = document.getElementById('wind-chart-wrapper');
+    const icon = document.getElementById('wind-toggle-icon');
+    if (!wrapper || !icon) return;
+
+    if (wrapper.style.display === 'none') {
+        wrapper.style.display = 'block';
+        icon.style.transform = 'rotate(0deg)';
+        saveToStorage('wind_chart_collapsed', false);
+        renderWindChart('forecast-wind-chart-container-16', 14);
+    } else {
+        wrapper.style.display = 'none';
+        icon.style.transform = 'rotate(-90deg)';
+        saveToStorage('wind_chart_collapsed', true);
+    }
+};
+
+// Restore Wind Chart State
+const savedWindState = loadFromStorage('wind_chart_collapsed');
+if (savedWindState === true) {
+    const wrapper = document.getElementById('wind-chart-wrapper');
+    const icon = document.getElementById('wind-toggle-icon');
+    if (wrapper) wrapper.style.display = 'none';
+    if (icon) icon.style.transform = 'rotate(-90deg)';
+}
+
+window.toggleRainChart = () => {
+    const wrapper = document.getElementById('rain-chart-wrapper');
+    const icon = document.getElementById('rain-toggle-icon');
+    if (!wrapper || !icon) return;
+
+    if (wrapper.style.display === 'none') {
+        wrapper.style.display = 'block';
+        icon.style.transform = 'rotate(0deg)';
+        saveToStorage('rain_chart_collapsed', false);
+        // Re-render to ensure size is correct if it was hidden
+        renderRainChart('forecast-rain-chart-container-16', 14);
+    } else {
+        wrapper.style.display = 'none';
+        icon.style.transform = 'rotate(-90deg)';
+        saveToStorage('rain_chart_collapsed', true);
+    }
+};
+
+// Restore Rain Chart State
+const savedRainState = loadFromStorage('rain_chart_collapsed');
+if (savedRainState === true) {
+    const wrapper = document.getElementById('rain-chart-wrapper');
+    const icon = document.getElementById('rain-toggle-icon');
+    if (wrapper) wrapper.style.display = 'none';
+    if (icon) icon.style.transform = 'rotate(-90deg)';
+}
+
 window.toggleImpactFilter = toggleImpactFilter;
 window.copyConditions = copyConditions;
 window.sortForecastTable = sortForecastTable;
@@ -142,38 +225,55 @@ export function toggleVDOTDetails() {
 export function handleChartHover(e, totalW, chartW, padLeft, dataLen) {
     const rect = e.target.getBoundingClientRect();
     // Adjust mouseX to be relative to the chart area (padLeft offset)
-    // The SVG rect element starts at pad.left, so e.clientX on it is relative to viewport.
-    const rectBounds = e.target.getBoundingClientRect();
-    const x = e.clientX - rectBounds.left;
-    const ratio = x / rectBounds.width;
+    const x = e.clientX - rect.left;
+    const ratio = x / rect.width;
     const len = dataLen || UIState.forecastData.length;
     let idx = Math.round(ratio * (len - 1));
     idx = Math.max(0, Math.min(idx, len - 1)); // Clamp to bounds
+
     if (idx >= 0 && idx < UIState.forecastData.length) {
         const d = UIState.forecastData[idx];
-
-        // Calculate Impact for consistency
-        const mode = window.currentPaceMode || 'HMP';
-
-        // Calculate Impact for consistency
-        let baseSec = getBasePaceSec();
-        const adjPace = hapCalc.calculatePaceInHeat(baseSec, d.temp, d.dew);
-        const pct = ((adjPace - baseSec) / baseSec) * 100;
-        const color = getImpactColor(pct);
         const date = new Date(d.time);
         const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
-        // Add combined day/month
         const dateStr = date.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' });
-        const hourStr = d.time.substring(11, 13); // Force string usage
-        // Exact same HTML template as handleCellHover
-        const html = `
-                            <div class="tooltip-header">${dayName} ${dateStr} ${hourStr}:00</div>
-                            <div class="tooltip-row"><span class="tooltip-label">Temp:</span> <span class="tooltip-val" style="color:#fff">${d.temp != null ? d.temp.toFixed(1) : '--'}°</span></div>
-                            <div class="tooltip-row"><span class="tooltip-label">Dew:</span> <span class="tooltip-val" style="color:#60a5fa">${d.dew != null ? d.dew.toFixed(1) : '--'}°</span></div>
-                            <div class="tooltip-row" style="margin-top:4px; padding-top:4px; border-top:1px solid #374151">
-                                <span class="tooltip-label">Impact:</span> <span class="tooltip-val" style="color:${color}">${pct.toFixed(2)}%</span>
-                            </div>
-                        `;
+        const hourStr = d.time.substring(11, 13);
+
+        const type = e.target.getAttribute('data-type'); // Check chart type
+
+        let html = '';
+
+        if (type === 'rain') {
+            // Rain Tooltip
+            html = `
+                <div class="tooltip-header">${dayName} ${dateStr} ${hourStr}:00</div>
+                <div class="tooltip-row"><span class="tooltip-label">Rain:</span> <span class="tooltip-val" style="color:#60a5fa">${d.rain != null ? d.rain.toFixed(1) : '0.0'} mm</span></div>
+                <div class="tooltip-row"><span class="tooltip-label">Prob:</span> <span class="tooltip-val" style="color:#93c5fd">${d.prob != null ? d.prob : '0'}%</span></div>
+            `;
+        } else if (type === 'wind') {
+            // Wind Tooltip
+            const getCardinal = (angle) => ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'][Math.round(angle / 45) % 8];
+            const dirStr = getCardinal(d.dir || 0);
+            html = `
+                <div class="tooltip-header">${dayName} ${dateStr} ${hourStr}:00</div>
+                <div class="tooltip-row"><span class="tooltip-label">Wind:</span> <span class="tooltip-val" style="color:#c084fc">${d.wind != null ? d.wind.toFixed(1) : '0'} km/h</span></div>
+                <div class="tooltip-row"><span class="tooltip-label">Dir:</span> <span class="tooltip-val" style="color:#e9d5ff">${dirStr}</span></div>
+            `;
+        } else {
+            // Standard Temp/Impact Tooltip
+            let baseSec = getBasePaceSec();
+            const adjPace = window.hapCalc ? window.hapCalc.calculatePaceInHeat(baseSec, d.temp, d.dew) : baseSec;
+            const pct = ((adjPace - baseSec) / baseSec) * 100;
+            const color = getImpactColor(pct);
+
+            html = `
+                <div class="tooltip-header">${dayName} ${dateStr} ${hourStr}:00</div>
+                <div class="tooltip-row"><span class="tooltip-label">Temp:</span> <span class="tooltip-val" style="color:#fff">${d.temp != null ? d.temp.toFixed(1) : '--'}°</span></div>
+                <div class="tooltip-row"><span class="tooltip-label">Dew:</span> <span class="tooltip-val" style="color:#60a5fa">${d.dew != null ? d.dew.toFixed(1) : '--'}°</span></div>
+                <div class="tooltip-row" style="margin-top:4px; padding-top:4px; border-top:1px solid #374151">
+                    <span class="tooltip-label">Impact:</span> <span class="tooltip-val" style="color:${color}">${pct.toFixed(2)}%</span>
+                </div>
+            `;
+        }
         window.showForeTooltip(e, html);
     }
 }
@@ -393,14 +493,20 @@ export function setupWindowHelpers() {
         // Forecast Deselection
         if (window.selectedForeHour) {
             // Updated IDs for 16-day forecast
-            const chart = document.getElementById('forecast-chart-container-16');
+            const charContainer = document.getElementById('forecast-chart-container-16');
+            const rainChart = document.getElementById('forecast-rain-chart-container-16');
+            const windChart = document.getElementById('forecast-wind-chart-container-16');
             const legend = document.getElementById('legend-container-16');
-            const isOutsideChart = !chart || !chart.contains(e.target);
-            const isOutsideLegend = !legend || !legend.contains(e.target);
-            // Also check if target is the interaction layer (though inside chart) or specific buttons
-            console.log('Click check Forecast:', { isOutsideChart, isOutsideLegend, target: e.target });
 
-            if (isOutsideChart && isOutsideLegend) {
+            const isOutsideChart = !charContainer || !charContainer.contains(e.target);
+            const isOutsideRain = !rainChart || !rainChart.contains(e.target);
+            const isOutsideWind = !windChart || !windChart.contains(e.target);
+            const isOutsideLegend = !legend || !legend.contains(e.target);
+
+            // Also check if target is the interaction layer (though inside chart) or specific buttons
+            console.log('Click check Forecast:', { isOutsideChart, isOutsideRain, isOutsideWind, isOutsideLegend, target: e.target });
+
+            if (isOutsideChart && isOutsideRain && isOutsideWind && isOutsideLegend) {
                 console.log("Deselecting Forecast");
                 toggleForeSelection(null);
             }
@@ -434,6 +540,8 @@ export function setupWindowHelpers() {
             // Re-render charts that need responsive sizing
             if (UIState.forecastData && UIState.forecastData.length > 0) {
                 renderForecastChart('forecast-chart-container-16', 14);
+                renderRainChart('forecast-rain-chart-container-16', 14);
+                renderWindChart('forecast-wind-chart-container-16', 14);
             }
             // Re-render heatmaps if needed
             renderForecastHeatmap('forecast-grid-container-16', '#legend-container-16', 14);

@@ -16,6 +16,8 @@ export function renderAllForecasts() {
     renderForecastHeatmap('forecast-grid-container-16', '#legend-container-16', 14);
     renderForecastTable('forecast-body-16', 14);
     renderForecastChart('forecast-chart-container-16', 14);
+    renderRainChart('forecast-rain-chart-container-16', 14);
+    renderWindChart('forecast-wind-chart-container-16', 14);
 }
 
 export function renderVDOTDetails() {
@@ -850,6 +852,256 @@ export function renderForecastChart(containerId, dayLimit) {
     // Easier to use inline events on rect for quick implementation
     svg += `<rect x="${pad.left}" y="${pad.top}" width="${chartW}" height="${chartH}" fill="white" fill-opacity="0" 
                             data-action="chart-interact"
+                            data-total-w="${w}"
+                            data-chart-w="${chartW}"
+                            data-pad-left="${pad.left}"
+                            data-len="${chartData.length}" />`;
+
+    svg += `</svg>`;
+    cont.innerHTML = svg;
+}
+
+export function renderRainChart(containerId, dayLimit) {
+    const cont = document.getElementById(containerId || 'forecast-rain-chart-container-16');
+    if (!cont || !UIState.forecastData || UIState.forecastData.length === 0) return;
+
+    // Data Slicing
+    let chartData = UIState.forecastData;
+    if (dayLimit) {
+        chartData = UIState.forecastData.slice(0, 24 * dayLimit);
+    }
+
+    const w = cont.clientWidth;
+    const h = 180;
+    if (w === 0) return;
+
+    const pad = { top: 20, right: 30, bottom: 20, left: 30 };
+    const chartW = w - pad.left - pad.right;
+    const chartH = h - pad.top - pad.bottom;
+
+    // Scales
+    const rains = chartData.map(d => d.rain || 0);
+    const probs = chartData.map(d => d.prob || 0);
+
+    // Y1 (Rain) Scale 0 to Max (min 5mm)
+    let maxRain = Math.max(...rains, 5);
+    maxRain = Math.ceil(maxRain);
+
+    // Y2 (Prob) Scale 0 to 100
+    const maxProb = 100;
+
+    const getX = (i) => pad.left + (i / (chartData.length - 1)) * chartW;
+    const getYRain = (val) => pad.top + chartH - (val / maxRain) * chartH;
+    const getYProb = (val) => pad.top + chartH - (val / maxProb) * chartH;
+
+    // Paths
+    let pathProb = '';
+    let hasStartedProb = false;
+
+    // Build Bars (rects) and Line Path
+    let barsHtml = '';
+
+    const barW = Math.max(1, (chartW / chartData.length) - 1);
+
+    chartData.forEach((d, i) => {
+        const x = getX(i);
+
+        // Rain Bar
+        if (d.rain > 0) {
+            const yR = getYRain(d.rain);
+            const hR = (pad.top + chartH) - yR;
+            // Center bar on point
+            barsHtml += `<rect x="${x - barW / 2}" y="${yR}" width="${barW}" height="${hR}" fill="#60a5fa" opacity="0.8" />`;
+        }
+
+        // Prob Line
+        if (d.prob != null) {
+            const yP = getYProb(d.prob);
+            const cmd = hasStartedProb ? 'L' : 'M';
+            pathProb += `${cmd} ${x.toFixed(1)} ${yP.toFixed(1)} `;
+            hasStartedProb = true;
+        } else {
+            hasStartedProb = false;
+        }
+    });
+
+    let svg = `<svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg" style="cursor:crosshair;">`;
+
+    // Grid (Left Axis based - Rain)
+    const steps = 5;
+    for (let i = 0; i <= steps; i++) {
+        const pct = i / steps;
+        const y = pad.top + chartH - (pct * chartH);
+        const valRain = pct * maxRain;
+        const valProb = pct * maxProb;
+
+        // Grid Line
+        svg += `<line x1="${pad.left}" y1="${y}" x2="${w - pad.right}" y2="${y}" stroke="var(--border-color)" stroke-width="1" stroke-dasharray="4 4" opacity="0.3" style="pointer-events:none;" />`;
+
+        // Label Left (Rain)
+        svg += `<text x="${pad.left - 5}" y="${y + 3}" fill="#60a5fa" font-size="9" text-anchor="end" style="pointer-events:none;">${Math.round(valRain)} <tspan font-size="7">mm</tspan></text>`;
+
+        // Label Right (Prob)
+        svg += `<text x="${w - pad.right + 5}" y="${y + 3}" fill="#93c5fd" font-size="9" text-anchor="start" style="pointer-events:none;">${Math.round(valProb)}%</text>`;
+    }
+
+    // Days Delimiter (Midnight) & Labels (Noon)
+    chartData.forEach((d, i) => {
+        const date = new Date(d.time);
+        const hour = parseInt(d.time.substring(11, 13));
+        const x = getX(i);
+
+        // Midnight Line
+        if (hour === 0 && i > 0) {
+            svg += `<line x1="${x}" y1="${pad.top}" x2="${x}" y2="${h - pad.bottom}" stroke="var(--border-color)" stroke-width="1" opacity="0.3" />`;
+        }
+
+        // Noon Label
+        if (hour === 12) {
+            svg += `<text x="${x}" y="${h - 5}" fill="var(--text-secondary)" font-size="9" text-anchor="middle">${date.toLocaleDateString('en-US', { weekday: 'short' })}</text>`;
+        }
+    });
+
+    // Selected Hour Highlight
+    let selectedX = -1;
+    if (UIState.selectedForeHour) {
+        const idx = UIState.forecastData.findIndex(d => d.time === UIState.selectedForeHour);
+        if (idx !== -1) {
+            selectedX = getX(idx);
+            // Highlight Line
+            svg += `<line x1="${selectedX}" y1="${pad.top}" x2="${selectedX}" y2="${h - pad.bottom}" stroke="var(--accent-color)" stroke-width="2" opacity="0.8" />`;
+            // Highlight Dot for Prob
+            const d = UIState.forecastData[idx];
+            svg += `<circle cx="${selectedX}" cy="${getYProb(d.prob || 0)}" r="4" fill="#93c5fd" stroke="white" stroke-width="2"/>`;
+        }
+    }
+
+    // Render Bars
+    svg += barsHtml;
+
+    // Render Prob Line
+    svg += `<path d="${pathProb}" fill="none" stroke="#93c5fd" stroke-width="2" stroke-linecap="round" />`;
+
+    // Interaction Layer
+    // NOTE: 'chart-interact' relies on handleChartClick in UI events.
+    // The key for selection toggling (allow re-select to toggle off) is handled in 'toggleForeSelection'.
+    // If handleChartClick works for other charts, it should work here. 
+    // Is it possible CSS pointer-events or stacking is an issue?
+    // Let's ensure this rect is ON TOP and has pointer events.
+    svg += `<rect x="${pad.left}" y="${pad.top}" width="${chartW}" height="${chartH}" fill="white" fill-opacity="0" 
+                            style="cursor:crosshair; pointer-events:all;"
+                            data-action="chart-interact"
+                            data-type="rain"
+                            data-total-w="${w}"
+                            data-chart-w="${chartW}"
+                            data-pad-left="${pad.left}"
+                            data-len="${chartData.length}" />`;
+
+    svg += `</svg>`;
+    cont.innerHTML = svg;
+}
+
+
+export function renderWindChart(containerId, dayLimit) {
+    const cont = document.getElementById(containerId || 'forecast-wind-chart-container-16');
+    if (!cont || !UIState.forecastData || UIState.forecastData.length === 0) return;
+
+    // Data Slicing
+    let chartData = UIState.forecastData;
+    if (dayLimit) {
+        chartData = UIState.forecastData.slice(0, 24 * dayLimit);
+    }
+
+    const w = cont.clientWidth;
+    const h = 180;
+    if (w === 0) return;
+
+    const pad = { top: 20, right: 30, bottom: 20, left: 30 };
+    const chartW = w - pad.left - pad.right;
+    const chartH = h - pad.top - pad.bottom;
+
+    // Scales
+    const winds = chartData.map(d => d.wind || 0);
+
+    // Y Scale 0 to Max (min 20km/h for visual reasons)
+    let maxWind = Math.max(...winds, 20);
+    maxWind = Math.ceil(maxWind);
+
+    const getX = (i) => pad.left + (i / (chartData.length - 1)) * chartW;
+    const getY = (val) => pad.top + chartH - (val / maxWind) * chartH;
+
+    // Paths
+    let pathWind = '';
+    let hasStarted = false;
+
+    chartData.forEach((d, i) => {
+        const x = getX(i);
+
+        if (d.wind != null) {
+            const y = getY(d.wind);
+            const cmd = hasStarted ? 'L' : 'M';
+            pathWind += `${cmd} ${x.toFixed(1)} ${y.toFixed(1)} `;
+            hasStarted = true;
+        } else {
+            hasStarted = false;
+        }
+    });
+
+    let svg = `<svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg" style="cursor:crosshair;">`;
+
+    // Grid (Left Axis based - Wind)
+    const steps = 5;
+    for (let i = 0; i <= steps; i++) {
+        const pct = i / steps;
+        const y = pad.top + chartH - (pct * chartH);
+        const val = pct * maxWind;
+
+        // Grid Line
+        svg += `<line x1="${pad.left}" y1="${y}" x2="${w - pad.right}" y2="${y}" stroke="var(--border-color)" stroke-width="1" stroke-dasharray="4 4" opacity="0.3" style="pointer-events:none;" />`;
+
+        // Label Left (Wind)
+        svg += `<text x="${pad.left - 5}" y="${y + 3}" fill="#c084fc" font-size="9" text-anchor="end" style="pointer-events:none;">${Math.round(val)} <tspan font-size="7">km/h</tspan></text>`;
+    }
+
+    // Days Delimiter (Midnight) & Labels (Noon)
+    chartData.forEach((d, i) => {
+        const date = new Date(d.time);
+        const hour = parseInt(d.time.substring(11, 13));
+        const x = getX(i);
+
+        // Midnight Line
+        if (hour === 0 && i > 0) {
+            svg += `<line x1="${x}" y1="${pad.top}" x2="${x}" y2="${h - pad.bottom}" stroke="var(--border-color)" stroke-width="1" opacity="0.3" />`;
+        }
+
+        // Noon Label
+        if (hour === 12) {
+            svg += `<text x="${x}" y="${h - 5}" fill="var(--text-secondary)" font-size="9" text-anchor="middle">${date.toLocaleDateString('en-US', { weekday: 'short' })}</text>`;
+        }
+    });
+
+    // Selected Hour Highlight
+    let selectedX = -1;
+    if (UIState.selectedForeHour) {
+        const idx = UIState.forecastData.findIndex(d => d.time === UIState.selectedForeHour);
+        if (idx !== -1) {
+            selectedX = getX(idx);
+            // Highlight Line
+            svg += `<line x1="${selectedX}" y1="${pad.top}" x2="${selectedX}" y2="${h - pad.bottom}" stroke="var(--accent-color)" stroke-width="2" opacity="0.8" />`;
+            // Highlight Dot for Wind
+            const d = UIState.forecastData[idx];
+            svg += `<circle cx="${selectedX}" cy="${getY(d.wind || 0)}" r="4" fill="#c084fc" stroke="white" stroke-width="2"/>`;
+        }
+    }
+
+    // Render Line
+    svg += `<path d="${pathWind}" fill="none" stroke="#c084fc" stroke-width="2" stroke-linecap="round" />`;
+
+    // Interaction Layer
+    svg += `<rect x="${pad.left}" y="${pad.top}" width="${chartW}" height="${chartH}" fill="white" fill-opacity="0" 
+                            style="cursor:crosshair; pointer-events:all;"
+                            data-action="chart-interact"
+                            data-type="wind"
                             data-total-w="${w}"
                             data-chart-w="${chartW}"
                             data-pad-left="${pad.left}"

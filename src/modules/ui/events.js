@@ -175,7 +175,8 @@ export function setPaceMode(mode) {
 
 export function openTab(tabName, btn) {
     document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-    document.getElementById('tab-' + tabName).classList.add('active');
+    const tabEl = document.getElementById('tab-' + tabName);
+    if (tabEl) tabEl.classList.add('active');
 
     document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
     if (btn) btn.classList.add('active');
@@ -195,4 +196,13 @@ export function openTab(tabName, btn) {
     if ((tabName === 'forecast' || tabName === 'forecast16') && window.renderAllForecasts) {
         setTimeout(window.renderAllForecasts, 100);
     }
+}
+
+export function toggleForeSelection(time, event) {
+    if (UIState.selectedForeHour === time) {
+        UIState.selectedForeHour = null;
+    } else {
+        UIState.selectedForeHour = time;
+    }
+    renderAllForecasts();
 }
