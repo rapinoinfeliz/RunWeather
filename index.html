@@ -77,17 +77,42 @@
                     </path>
                 </svg>
             </button>
-            <button class="location-btn" data-action="location-modal" aria-label="Change Location"
-                style="margin-right: 8px;">
-                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                    <circle cx="12" cy="10" r="3"></circle>
-                </svg>
-                <div class="loc-text-col">
-                    <span class="current-location-name">Florianópolis</span>
-                    <span class="elevation-display">--m</span>
-                </div>
             </button>
+
+            <!-- Location Group -->
+            <div class="location-group" style="position:relative; margin-right:8px;">
+                <div
+                    style="display:flex; align-items:center; background:var(--input-bg); border:1px solid var(--border-color); border-radius:8px; padding:2px 8px 2px 4px;">
+                    <!-- Star Button -->
+                    <button onclick="toggleLocationFavorite()" class="icon-btn btn-favorite" title="Toggle Favorite"
+                        style="padding:6px; color:var(--text-secondary);">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <polygon
+                                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
+                            </polygon>
+                        </svg>
+                    </button>
+
+                    <!-- Location Dropdown Trigger -->
+                    <button class="location-btn" onclick="toggleLocationDropdown(this)" aria-label="Change Location"
+                        style="background:transparent; border:none; margin:0; padding-left:4px;">
+                        <div class="loc-text-col" style="text-align:left;">
+                            <span class="current-location-name">Florianópolis</span>
+                            <span class="elevation-display" style="font-size:0.7em; opacity:0.6;">--m</span>
+                        </div>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" style="margin-left:6px; opacity:0.5;">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Dropdown Menu -->
+                <div class="dropdown-menu" style="display:none;">
+                    <!-- JS Injected Content -->
+                </div>
+            </div>
             <button class="copy-btn" id="copy-btn" title="Copy results to clipboard" aria-label="Copy Results">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
@@ -303,17 +328,40 @@
                     </span>
                 </div>
             </div>
-            <button class="location-btn" data-action="location-modal" aria-label="Change Location"
-                style="margin-left: auto; margin-right: 8px;">
-                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                    <circle cx="12" cy="10" r="3"></circle>
-                </svg>
-                <div class="loc-text-col">
-                    <span class="current-location-name">Florianópolis</span>
-                    <span class="elevation-display">--m</span>
+            <!-- Location Group -->
+            <div class="location-group" style="position:relative; margin-left:auto; margin-right:8px;">
+                <div
+                    style="display:flex; align-items:center; background:var(--input-bg); border:1px solid var(--border-color); border-radius:8px; padding:2px 8px 2px 4px;">
+                    <!-- Star Button -->
+                    <button onclick="toggleLocationFavorite()" class="icon-btn btn-favorite" title="Toggle Favorite"
+                        style="padding:6px; color:var(--text-secondary);">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <polygon
+                                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
+                            </polygon>
+                        </svg>
+                    </button>
+
+                    <!-- Location Dropdown Trigger -->
+                    <button class="location-btn" onclick="toggleLocationDropdown(this)" aria-label="Change Location"
+                        style="background:transparent; border:none; margin:0; padding-left:4px;">
+                        <div class="loc-text-col" style="text-align:left;">
+                            <span class="current-location-name">Florianópolis</span>
+                            <span class="elevation-display" style="font-size:0.7em; opacity:0.6;">--m</span>
+                        </div>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" style="margin-left:6px; opacity:0.5;">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
                 </div>
-            </button>
+
+                <!-- Dropdown Menu -->
+                <div class="dropdown-menu" style="display:none;">
+                    <!-- JS Injected Content -->
+                </div>
+            </div>
 
 
             <button class="copy-btn" id="btn-copy-cond" onclick="window.copyConditions()"
@@ -353,16 +401,40 @@
                 <h1>Forecast</h1>
                 <div class="subtitle">14-Day Heat Impact</div>
             </div>
-            <button class="location-btn" data-action="location-modal" aria-label="Change Location">
-                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                    <circle cx="12" cy="10" r="3"></circle>
-                </svg>
-                <div class="loc-text-col">
-                    <span class="current-location-name">Florianópolis</span>
-                    <span class="elevation-display">--m</span>
+            <!-- Location Group -->
+            <div class="location-group" style="position:relative;">
+                <div
+                    style="display:flex; align-items:center; background:var(--input-bg); border:1px solid var(--border-color); border-radius:8px; padding:2px 8px 2px 4px;">
+                    <!-- Star Button -->
+                    <button onclick="toggleLocationFavorite()" class="icon-btn btn-favorite" title="Toggle Favorite"
+                        style="padding:6px; color:var(--text-secondary);">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <polygon
+                                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
+                            </polygon>
+                        </svg>
+                    </button>
+
+                    <!-- Location Dropdown Trigger -->
+                    <button class="location-btn" onclick="toggleLocationDropdown(this)" aria-label="Change Location"
+                        style="background:transparent; border:none; margin:0; padding-left:4px;">
+                        <div class="loc-text-col" style="text-align:left;">
+                            <span class="current-location-name">Florianópolis</span>
+                            <span class="elevation-display" style="font-size:0.7em; opacity:0.6;">--m</span>
+                        </div>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" style="margin-left:6px; opacity:0.5;">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
                 </div>
-            </button>
+
+                <!-- Dropdown Menu -->
+                <div class="dropdown-menu" style="display:none; right:0; left:auto;">
+                    <!-- JS Injected Content -->
+                </div>
+            </div>
         </div>
 
         <!-- Best Run Time Banner (Minimal) -->
@@ -539,16 +611,40 @@
                     </span>
                 </div>
             </div>
-            <button class="location-btn" data-action="location-modal" aria-label="Change Location">
-                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                    <circle cx="12" cy="10" r="3"></circle>
-                </svg>
-                <div class="loc-text-col">
-                    <span class="current-location-name">Florianópolis</span>
-                    <span class="elevation-display">--m</span>
+            <!-- Location Group -->
+            <div class="location-group" style="position:relative;">
+                <div
+                    style="display:flex; align-items:center; background:var(--input-bg); border:1px solid var(--border-color); border-radius:8px; padding:2px 8px 2px 4px;">
+                    <!-- Star Button -->
+                    <button onclick="toggleLocationFavorite()" class="icon-btn btn-favorite" title="Toggle Favorite"
+                        style="padding:6px; color:var(--text-secondary);">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <polygon
+                                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
+                            </polygon>
+                        </svg>
+                    </button>
+
+                    <!-- Location Dropdown Trigger -->
+                    <button class="location-btn" onclick="toggleLocationDropdown(this)" aria-label="Change Location"
+                        style="background:transparent; border:none; margin:0; padding-left:4px;">
+                        <div class="loc-text-col" style="text-align:left;">
+                            <span class="current-location-name">Florianópolis</span>
+                            <span class="elevation-display" style="font-size:0.7em; opacity:0.6;">--m</span>
+                        </div>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" style="margin-left:6px; opacity:0.5;">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
                 </div>
-            </button>
+
+                <!-- Dropdown Menu -->
+                <div class="dropdown-menu" style="display:none; right:0; left:auto;">
+                    <!-- JS Injected Content -->
+                </div>
+            </div>
         </div>
 
         <div

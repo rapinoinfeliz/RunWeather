@@ -1041,12 +1041,17 @@ select.modern-input {
 }
 
 /* --- Location UI --- */
+/* --- Location UI --- */
 .location-btn {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--border-color);
+    background: transparent;
+    /* Changed from rgba */
+    border: none;
+    /* Changed from 1px solid */
     color: var(--text-secondary);
-    padding: 6px 12px;
-    border-radius: 20px;
+    padding: 2px 4px;
+    /* Reduced padding */
+    border-radius: 6px;
+    /* Changed from 20px to 6px (Square) */
     font-size: 0.75rem;
     cursor: pointer;
     display: flex;
@@ -1073,9 +1078,15 @@ select.modern-input {
 }
 
 .location-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+    /* Subtle square hover */
     color: var(--text-primary);
-    border-color: var(--accent-color);
+    /* Removed border-color override since border is none */
+}
+
+.location-btn:focus {
+    outline: none;
+    box-shadow: none;
 }
 
 .modal-backdrop {
@@ -2187,4 +2198,62 @@ select.modern-input {
     vertical-align: middle;
     margin-right: 2px;
     opacity: 0.8;
+}
+
+/* Drops & Menus */
+.dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 8px;
+    width: 240px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    overflow: hidden;
+    animation: fadeIn 0.2s ease-out;
+}
+
+.dropdown-header {
+    padding: 8px 12px;
+    font-size: 0.7em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    background: rgba(255, 255, 255, 0.03);
+    border-bottom: 1px solid var(--border-color);
+    letter-spacing: 0.5px;
+}
+
+.dropdown-item {
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    transition: background 0.2s;
+}
+
+.dropdown-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.dropdown-item .sub {
+    font-size: 0.75em;
+    color: var(--text-secondary);
+}
+
+.dropdown-divider {
+    height: 1px;
+    background: var(--border-color);
+    margin: 4px 0;
+}
+
+.star-active svg {
+    fill: #eab308;
+    /* Yellow-500 */
+    stroke: #eab308;
 }

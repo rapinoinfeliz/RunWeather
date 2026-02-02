@@ -101,7 +101,124 @@ if (savedRainState === true) {
     if (icon) icon.style.transform = 'rotate(-90deg)';
 }
 
-window.toggleImpactFilter = toggleImpactFilter;
+// --- Favorites / Quick Switch UI ---
+window.toggleLocationFavorite = () => {
+    const isFav = window.locManager.toggleFavorite();
+    updateFavoriteStar();
+};
+
+window.toggleLocationDropdown = (arg) => {
+    let trigger = (arg && arg.nodeType === 1) ? arg : (arg && arg.currentTarget ? arg.currentTarget : null);
+    if (arg && arg.stopPropagation) arg.stopPropagation();
+
+    let dropdown = document.getElementById('location-dropdown');
+    if (trigger) {
+        const wrapper = trigger.closest('.location-group');
+        if (wrapper) {
+            const found = wrapper.querySelector('.dropdown-menu');
+            if (found) dropdown = found;
+        }
+    }
+
+    if (!dropdown) return;
+
+    if (dropdown.style.display === 'block') {
+        dropdown.style.display = 'none';
+        return;
+    }
+
+    // Render & Show
+    dropdown.innerHTML = '';
+
+    // Favorites
+    if (window.locManager.favorites.length > 0) {
+        const hFav = document.createElement('div');
+        hFav.className = 'dropdown-header';
+        hFav.textContent = 'Favorites';
+        dropdown.appendChild(hFav);
+
+        window.locManager.favorites.forEach(fav => {
+            const item = document.createElement('div');
+            item.className = 'dropdown-item';
+            item.innerHTML = `<span>${fav.name}</span> <span class="sub">${fav.country}</span>`;
+            item.onclick = () => {
+                window.locManager.setLocation(fav.lat, fav.lon, fav.name, fav.country);
+                dropdown.style.display = 'none';
+            };
+            dropdown.appendChild(item);
+        });
+
+        const div = document.createElement('div');
+        div.className = 'dropdown-divider';
+        dropdown.appendChild(div);
+    }
+
+    // Recents
+    const recentsToUse = window.locManager.recents.filter(r => !window.locManager.isFavorite(r)).slice(0, 5);
+    if (recentsToUse.length > 0) {
+        const hRec = document.createElement('div');
+        hRec.className = 'dropdown-header';
+        hRec.textContent = 'Recent';
+        dropdown.appendChild(hRec);
+
+        recentsToUse.forEach(rec => {
+            const item = document.createElement('div');
+            item.className = 'dropdown-item';
+            item.innerHTML = `<span>${rec.name}</span> <span class="sub">${rec.country}</span>`;
+            item.onclick = () => {
+                window.locManager.setLocation(rec.lat, rec.lon, rec.name, rec.country);
+                dropdown.style.display = 'none';
+            };
+            dropdown.appendChild(item);
+        });
+
+        const div = document.createElement('div');
+        div.className = 'dropdown-divider';
+        dropdown.appendChild(div);
+    }
+
+    // Search Option
+    const searchItem = document.createElement('div');
+    searchItem.className = 'dropdown-item';
+    searchItem.style.color = 'var(--accent-color)';
+    searchItem.style.fontWeight = '500';
+    searchItem.innerHTML = `<span style="display:flex; align-items:center; gap:6px;"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg> Search...</span>`;
+    searchItem.onclick = () => {
+        dropdown.style.display = 'none';
+        window.openLocationModal();
+    };
+    dropdown.appendChild(searchItem);
+
+    dropdown.style.display = 'block';
+
+    // Click outside to close (Class-based)
+    const closeMenu = (e) => {
+        if (!dropdown.contains(e.target) && (!trigger || !trigger.contains(e.target))) {
+            dropdown.style.display = 'none';
+            document.removeEventListener('click', closeMenu);
+        }
+    };
+    // Delay to prevent immediate close
+    setTimeout(() => document.addEventListener('click', closeMenu), 0);
+};
+
+window.updateFavoriteStar = () => {
+    if (!window.locManager) return;
+    const isFav = window.locManager.isFavorite();
+    document.querySelectorAll('.btn-favorite').forEach(btn => {
+        const svg = btn.querySelector('svg');
+        if (isFav) {
+            btn.classList.add('star-active');
+            if (svg) { svg.style.fill = 'currentColor'; svg.style.stroke = 'currentColor'; }
+            btn.style.opacity = '1';
+        } else {
+            btn.classList.remove('star-active');
+            if (svg) { svg.style.fill = 'none'; svg.style.stroke = 'currentColor'; }
+            btn.style.opacity = '0.5';
+        }
+    });
+};
+
 window.copyConditions = copyConditions;
 window.sortForecastTable = sortForecastTable;
 window.handleCellHover = handleCellHover;

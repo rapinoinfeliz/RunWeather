@@ -9,6 +9,7 @@ export class LocationManager {
     constructor(onLocationChanged) {
         this.current = this.loadState() || DEFAULT_LOC;
         this.recents = this.loadRecents() || [];
+        this.favorites = this.loadFavorites() || [];
         this.onLocationChanged = onLocationChanged;
     }
 
@@ -43,6 +44,40 @@ export class LocationManager {
 
     saveRecents() {
         saveToStorage('rw_recents', this.recents);
+    }
+
+    // --- Favorites Logic ---
+    loadFavorites() {
+        const favs = loadFromStorage('rw_favorites') || [];
+        favs.forEach(f => { f.lat = Number(f.lat); f.lon = Number(f.lon); });
+        return favs;
+    }
+
+    saveFavorites() {
+        saveToStorage('rw_favorites', this.favorites);
+    }
+
+    isFavorite(loc) {
+        if (!loc) loc = this.current;
+        return this.favorites.some(f => this._isSameLocation(f, loc));
+    }
+
+    toggleFavorite(loc) {
+        if (!loc) loc = this.current;
+        if (this.isFavorite(loc)) {
+            // Remove
+            this.favorites = this.favorites.filter(f => !this._isSameLocation(f, loc));
+        } else {
+            // Add (Save minimal data)
+            this.favorites.push({
+                lat: Number(loc.lat),
+                lon: Number(loc.lon),
+                name: loc.name,
+                country: loc.country
+            });
+        }
+        this.saveFavorites();
+        return this.isFavorite(loc);
     }
 
     async setLocation(lat, lon, name, country) {

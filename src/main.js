@@ -62,6 +62,9 @@ async function init() {
                 .catch(console.error)
                 .finally(() => UI.setLoading('climate', false));
         }
+
+        // 4. Update Star Status
+        if (window.updateFavoriteStar) window.updateFavoriteStar();
     });
 
 
@@ -70,6 +73,7 @@ async function init() {
     document.querySelectorAll('.current-location-name').forEach(el => {
         el.textContent = window.locManager.current.name;
     });
+    if (window.updateFavoriteStar) window.updateFavoriteStar();
 
     // 3. UI Setup
     const els = {
