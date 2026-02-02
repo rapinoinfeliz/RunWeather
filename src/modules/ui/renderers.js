@@ -1427,8 +1427,47 @@ export function renderCurrentTab(w, a, prob2h = 0, precip2h = 0, daily, elevatio
     const gridWrapper = `<div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:12px;">`;
     const gridEnd = `</div><style>.current-cards-grid > div:last-child:nth-child(odd) { grid-column: 1 / -1; max-width: 50%; justify-self: center; }</style>`;
 
-    container.innerHTML = gridWrapper + html + gridEnd;
+    // Freshness Footer: Store timestamp and show relative time
+    const dataTime = w.time; // ISO string from Open-Meteo (e.g., "2024-01-15T14:00")
+    UIState.currentDataTimestamp = dataTime ? new Date(dataTime) : new Date();
+
+    const freshnessFooter = `<div id="data-freshness" style="text-align:center; padding:12px 0 4px; font-size:0.7rem; color:var(--text-secondary); opacity:0.6;"></div>`;
+
+    container.innerHTML = gridWrapper + html + gridEnd + freshnessFooter;
     container.querySelector('div').classList.add('current-cards-grid');
+
+    // Update the freshness text immediately and start interval
+    updateFreshnessText();
+    startFreshnessUpdater();
+}
+
+// --- Freshness Updater Logic ---
+let freshnessIntervalId = null;
+
+function updateFreshnessText() {
+    const el = document.getElementById('data-freshness');
+    if (!el || !UIState.currentDataTimestamp) return;
+
+    const now = new Date();
+    const diff = now - UIState.currentDataTimestamp;
+    const mins = Math.floor(diff / 60000);
+
+    let text;
+    if (mins < 1) text = 'Updated just now';
+    else if (mins === 1) text = 'Updated 1 min ago';
+    else if (mins < 60) text = `Updated ${mins} min ago`;
+    else {
+        const hrs = Math.floor(mins / 60);
+        text = hrs === 1 ? `Updated 1 hr ago` : `Updated ${hrs} hrs ago`;
+    }
+    el.textContent = text;
+}
+
+function startFreshnessUpdater() {
+    // Clear previous interval to avoid duplicates
+    if (freshnessIntervalId) clearInterval(freshnessIntervalId);
+    // Update every 30 seconds
+    freshnessIntervalId = setInterval(updateFreshnessText, 30000);
 }
 
 export function renderOverview() {
