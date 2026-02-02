@@ -109,7 +109,7 @@
                 </div>
 
                 <!-- Dropdown Menu -->
-                <div class="dropdown-menu" style="display:none;">
+                <div class="dropdown-menu" style="display:none; right:0; left:auto;">
                     <!-- JS Injected Content -->
                 </div>
             </div>
@@ -118,7 +118,6 @@
                     <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
                     <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
                 </svg>
-                Copy
             </button>
         </div>
 
@@ -358,7 +357,7 @@
                 </div>
 
                 <!-- Dropdown Menu -->
-                <div class="dropdown-menu" style="display:none;">
+                <div class="dropdown-menu" style="display:none; right:0; left:auto;">
                     <!-- JS Injected Content -->
                 </div>
             </div>
@@ -370,7 +369,6 @@
                     <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
                     <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
                 </svg>
-                Copy
             </button>
         </div>
         <div id="current-content" class="current-grid">
@@ -674,39 +672,38 @@
         </div>
 
         <!-- Data Table -->
-        <div style="background:var(--card-bg); border-radius:12px; padding:15px; border:1px solid var(--border-color);">
-            <div class="flex-between" style="margin-bottom:15px;">
-                <h3 class="h3-title" style="margin:0;">Historical Data Detail</h3>
-                <div class="start-center gap-2">
-                    <span id="climate-filter-label"
-                        style="display:none; font-size:0.65rem; background:var(--accent-color); color:white; padding:1px 4px; border-radius:2px;"></span>
-                    <button id="climate-clear-filter" data-action="filter-climate"
-                        style="display:none; background:none; border:none; color:var(--text-secondary); cursor:pointer; font-size:0.75rem; text-decoration:underline;">Clear</button>
-                </div>
+        <div style="margin-bottom:15px; display:flex; justify-content:flex-start; align-items:center;">
+            <span style="font-size:0.9rem; font-weight:600; color:var(--text-primary); margin-right:12px;">Historical
+                Data</span>
+            <div class="start-center gap-2">
+                <span id="climate-filter-label"
+                    style="display:none; font-size:0.65rem; background:var(--accent-color); color:white; padding:1px 4px; border-radius:2px;"></span>
+                <button id="climate-clear-filter" data-action="filter-climate"
+                    style="display:none; background:none; border:none; color:var(--text-secondary); cursor:pointer; font-size:0.75rem; text-decoration:underline;">Clear</button>
             </div>
+        </div>
 
-            <div class="table-wrapper">
-                <table class="forecast-table">
-                    <thead style="position:sticky; top:0; background:var(--card-bg); z-index:10;">
-                        <tr>
-                            <th style="cursor:pointer; width:35%;" data-action="sort-climate" data-col="date">Time <span
-                                    id="sort-icon-climate-date"></span></th>
-                            <th style="cursor:pointer; text-align:center;" data-action="sort-climate" data-col="temp">
-                                Temp <span id="sort-icon-climate-temp"></span></th>
-                            <th style="cursor:pointer; text-align:center;" data-action="sort-climate" data-col="dew">Dew
-                                <span id="sort-icon-climate-dew"></span>
-                            </th>
-                            <th style="cursor:pointer; text-align:center;" data-action="sort-climate" data-col="precip">
-                                Rain <span id="sort-icon-climate-precip"></span></th>
-                            <th style="cursor:pointer; text-align:center;" data-action="sort-climate" data-col="wind">
-                                Wind <span id="sort-icon-climate-wind"></span></th>
-                            <th style="cursor:pointer; text-align:center;" data-action="sort-climate" data-col="impact">
-                                Impact <span id="sort-icon-climate-impact">▼</span></th>
-                        </tr>
-                    </thead>
-                    <tbody id="climateTableBody"></tbody>
-                </table>
-            </div>
+        <div class="table-wrapper">
+            <table class="forecast-table">
+                <thead style="position:sticky; top:0; background:var(--card-bg); z-index:10;">
+                    <tr>
+                        <th style="cursor:pointer; width:35%;" data-action="sort-climate" data-col="date">Time <span
+                                id="sort-icon-climate-date"></span></th>
+                        <th style="cursor:pointer; text-align:center;" data-action="sort-climate" data-col="temp">
+                            Temp <span id="sort-icon-climate-temp"></span></th>
+                        <th style="cursor:pointer; text-align:center;" data-action="sort-climate" data-col="dew">Dew
+                            <span id="sort-icon-climate-dew"></span>
+                        </th>
+                        <th style="cursor:pointer; text-align:center;" data-action="sort-climate" data-col="precip">
+                            Rain <span id="sort-icon-climate-precip"></span></th>
+                        <th style="cursor:pointer; text-align:center;" data-action="sort-climate" data-col="wind">
+                            Wind <span id="sort-icon-climate-wind"></span></th>
+                        <th style="cursor:pointer; text-align:center;" data-action="sort-climate" data-col="impact">
+                            Impact <span id="sort-icon-climate-impact">▼</span></th>
+                    </tr>
+                </thead>
+                <tbody id="climateTableBody"></tbody>
+            </table>
         </div>
     </div>
     <div id="loading-climate" class="loading-overlay">
