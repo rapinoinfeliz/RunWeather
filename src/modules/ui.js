@@ -484,6 +484,12 @@ export function update(els, hapCalc) {
     if (elThreshold) {
         elThreshold.textContent = `${formatTime(res.paces.threshold)}/km`;
     }
+
+    // Live Update of VDOT Details if Open
+    const vdotDetails = document.getElementById('vdot-details');
+    if (vdotDetails && vdotDetails.style.display !== 'none') {
+        renderVDOTDetails();
+    }
     // Determine Impact Color
     let impactColor = "#fb923c"; // fallback
     if (res.weather.valid) {
