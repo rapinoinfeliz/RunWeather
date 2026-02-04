@@ -730,7 +730,7 @@ export function renderForecastChart(containerId, dayLimit) {
     const h = 180; // Fixed height
     if (w === 0) return; // Not visible yet
 
-    const pad = { top: 20, right: 10, bottom: 20, left: 30 };
+    const pad = { top: 20, right: 10, bottom: 20, left: 45 };
     const chartW = w - pad.left - pad.right;
     const chartH = h - pad.top - pad.bottom;
 
@@ -787,7 +787,7 @@ export function renderForecastChart(containerId, dayLimit) {
         const val = minVal + (valRange * (i / steps));
         const y = getY(val);
         svg += `<line x1="${pad.left}" y1="${y}" x2="${w - pad.right}" y2="${y}" stroke="var(--border-color)" stroke-width="1" stroke-dasharray="4 4" opacity="0.3" style="pointer-events:none;" />`;
-        svg += `<text x="${pad.left - 5}" y="${y + 3}" fill="var(--text-secondary)" font-size="9" text-anchor="end" style="pointer-events:none;">${Math.round(val)}</text>`;
+        svg += `<text x="${pad.left - 5}" y="${y + 3}" fill="var(--text-secondary)" font-size="9" text-anchor="end" style="pointer-events:none;">${Math.round(val)}<tspan font-size="7" dx="1">°C</tspan></text>`;
     }
 
     // Days Delimiter (Midnight) & Labels (Noon)
@@ -1016,7 +1016,7 @@ export function renderWindChart(containerId, dayLimit) {
     const h = 180;
     if (w === 0) return;
 
-    const pad = { top: 20, right: 30, bottom: 20, left: 30 };
+    const pad = { top: 20, right: 30, bottom: 20, left: 50 };
     const chartW = w - pad.left - pad.right;
     const chartH = h - pad.top - pad.bottom;
 
