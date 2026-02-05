@@ -371,6 +371,44 @@ export function renderForecastHeatmap(contId, legSelector, dayLimit) {
                     stroke = 'stroke="#fff" stroke-width="2" paint-order="stroke"';
                 }
 
+                // Night Shading Logic (Forecast - Fractional with Dawn/Dusk)
+                // User defined Dawn = Sunrise - 25min, Dusk = Sunset + 25min
+                let nightRects = [];
+                if (UIState.dailyForecast) {
+                    const daily = UIState.dailyForecast;
+                    let dIdx = -1;
+                    if (daily.time) dIdx = daily.time.findIndex(t => t === dayKey);
+
+                    if (dIdx !== -1) {
+                        try {
+                            const getVal = (str) => {
+                                if (!str) return null;
+                                const parts = str.split('T')[1].split(':');
+                                return parseInt(parts[0], 10) + (parseInt(parts[1], 10) / 60);
+                            };
+                            const sr = getVal(daily.sunrise[dIdx]);
+                            const ss = getVal(daily.sunset[dIdx]);
+
+                            if (sr !== null && ss !== null) {
+                                // Apply Offsets
+                                const dawn = sr - (25 / 60);
+                                const dusk = ss + (25 / 60);
+
+                                // Morning Night: [0, dawn]
+                                // Cell is [h, h+1]. Overlap with [0, dawn]
+                                const mOverlap = Math.max(0, Math.min(h + 1, dawn) - h);
+                                if (mOverlap > 0) nightRects.push({ xOffset: 0, wFrac: mOverlap });
+
+                                // Evening Night: [dusk, 24]
+                                // Overlap with [dusk, 24]
+                                const eStart = Math.max(h, dusk);
+                                const eEnd = Math.min(h + 1, 24);
+                                if (eStart < eEnd) nightRects.push({ xOffset: eStart - h, wFrac: eEnd - eStart });
+                            }
+                        } catch (e) { /* ignore */ }
+                    }
+                }
+
                 svgInner += `<rect x="${x}" y="${yBase}" width="${cellW}" height="${cellH}" rx="2" 
                     fill="${color}" fill-opacity="${opacity}" ${stroke}
                     style="cursor:pointer; transition: fill-opacity 0.2s;"
@@ -383,6 +421,13 @@ export function renderForecastHeatmap(contId, legSelector, dayLimit) {
                     data-pct="${pct.toFixed(2)}"
                     data-color="${color}"
                 />`;
+
+                // Overlay for Night (Fractional)
+                nightRects.forEach(rect => {
+                    // Ensure rx is masked or small. 
+                    svgInner += `<rect x="${x + (rect.xOffset * cellW)}" y="${yBase}" width="${rect.wFrac * cellW}" height="${cellH}" rx="2" 
+                        fill="#000" fill-opacity="${opacity === '1' ? '0.2' : '0.05'}" pointer-events="none" />`;
+                });
             } else {
                 svgInner += `<rect x="${x}" y="${yBase}" width="${cellW}" height="${cellH}" rx="2" fill="var(--card-bg)" opacity="0.1" />`;
             }
@@ -541,6 +586,7 @@ export function renderClimateHeatmap(data) {
                     stroke = 'stroke="#fff" stroke-width="2" paint-order="stroke"';
                 }
 
+
                 svgInner += `<rect x="${x}" y="${y}" width="${cellW}" height="${cellH}" rx="1"
                         fill="${color}" fill-opacity="${opacity}" ${stroke}
                         style="cursor:pointer; transition: fill-opacity 0.2s;"
@@ -549,6 +595,8 @@ export function renderClimateHeatmap(data) {
                         onmousemove="window.moveClimateTooltip(event)"
                         onmouseleave="window.hideClimateTooltip()"
                     />`;
+
+
             } else {
                 // Empty/Missing placeholder (optional, or just skip)
                 svgInner += `<rect x="${x}" y="${y}" width="${cellW}" height="${cellH}" rx="1"
@@ -557,6 +605,59 @@ export function renderClimateHeatmap(data) {
             }
         }
     }
+
+    // --- Smooth Night Curve Overlay ---
+    try {
+        const lat = (window.locManager && window.locManager.current) ? window.locManager.current.lat : 0;
+
+        // Calculate points for every week (column center)
+        const curvePoints = [];
+
+        for (let w = 1; w <= cols; w++) {
+            // Week Center X
+            const cx = labelW + ((w - 1) * (cellW + gap)) + (cellW / 2);
+
+            // Solar Calc
+            const doy = (w - 1) * 7 + 3;
+            const phi = lat * Math.PI / 180;
+            const delta = 23.45 * (Math.PI / 180) * Math.sin(2 * Math.PI * (284 + doy) / 365);
+            const term = -Math.tan(phi) * Math.tan(delta);
+
+            let haRad = 0;
+            if (term < -1) haRad = Math.PI;
+            else if (term > 1) haRad = 0;
+            else haRad = Math.acos(term);
+
+            const halfDayHours = (haRad * 180 / Math.PI) / 15;
+            const srHour = 12 - halfDayHours;
+            const ssHour = 12 + halfDayHours;
+
+            // Apply Dawn/Dusk Offset (-/+ 25 mins)
+            const off = 25 / 60;
+            const dawnHour = srHour - off;
+            const duskHour = ssHour + off;
+
+            // Map Hour to Y
+            // Y = headerH + (hour * (cellH + gap))
+            const getY = (hour) => headerH + (hour * (cellH + gap));
+
+            curvePoints.push({ x: cx, ySr: getY(dawnHour), ySs: getY(duskHour) });
+        }
+
+        // Build Dawn Path (Top Night)
+        let pathTop = `M ${labelW} ${headerH} `;
+        curvePoints.forEach(p => pathTop += `L ${p.x} ${p.ySr} `);
+        pathTop += `L ${totalW} ${headerH} Z`;
+
+        // Build Dusk Path (Bottom Night)
+        let pathBottom = `M ${labelW} ${totalH} `;
+        curvePoints.forEach(p => pathBottom += `L ${p.x} ${p.ySs} `);
+        pathBottom += `L ${totalW} ${totalH} Z`;
+
+        svgInner += `<path d="${pathTop}" fill="#000" fill-opacity="0.15" pointer-events="none" />`;
+        svgInner += `<path d="${pathBottom}" fill="#000" fill-opacity="0.15" pointer-events="none" />`;
+
+    } catch (e) { console.warn('Climate curve error', e); }
 
     container.innerHTML = `<svg viewBox="0 0 ${totalW} ${totalH}" preserveAspectRatio="xMidYMid meet" style="width:100%; height:auto; display:block;">${svgInner}</svg>`;
 }
@@ -1215,6 +1316,7 @@ export function renderCurrentTab(w, a, prob2h = 0, precip2h = 0, daily, elevatio
 
     // Update global store for copy
     UIState.currentWeatherData = w;
+    UIState.dailyForecast = daily; // Store daily data specifically for Heatmap Shading lookup
 
     // Header structure is now static in index.html
     let html = '';
@@ -1555,4 +1657,67 @@ export function calculateBestRunTime(data) {
     }
 
     return bestHour.time; // Return for auto-selection
+}
+
+function getNightShadingSVG(daily, chartW, chartH, pad, chartData) {
+    let shading = '';
+    if (daily && daily.time) {
+        const dTimes = daily.time;
+        const sunrises = daily.sunrise;
+        const sunsets = daily.sunset;
+
+        // Iterate days in daily forecast
+        for (let i = 0; i < dTimes.length; i++) {
+            // Logic: Night is from Sunset(i) -> Sunrise(i+1)
+            const sunset = new Date(sunsets[i]).getTime();
+            let nextSunrise = null;
+            if (i < dTimes.length - 1) {
+                nextSunrise = new Date(sunrises[i + 1]).getTime();
+            } else {
+                continue; // Skip end of range
+            }
+
+            const dataStart = new Date(chartData[0].time).getTime();
+            const dataEnd = new Date(chartData[chartData.length - 1].time).getTime();
+            const totalMs = dataEnd - dataStart;
+
+            // Check overlap
+            if (nextSunrise < dataStart || sunset > dataEnd) continue;
+
+            // Clamp
+            const startMs = Math.max(sunset, dataStart);
+            const endMs = Math.min(nextSunrise, dataEnd);
+
+            if (startMs >= endMs) continue;
+
+            const startPct = (startMs - dataStart) / totalMs;
+            const endPct = (endMs - dataStart) / totalMs;
+
+            const x1 = pad.left + (startPct * chartW);
+            const x2 = pad.left + (endPct * chartW);
+            const width = x2 - x1;
+
+            if (width > 0) {
+                shading += `<rect x="${x1}" y="${pad.top}" width="${width}" height="${chartH}" fill="rgba(0,0,0,0.2)" />`;
+            }
+        }
+
+        // Special Case: Pre-dawn on First Day (Start of Chart -> Sunrise(0))
+        if (chartData.length > 0 && sunrises.length > 0) {
+            const firstSunrise = new Date(sunrises[0]).getTime();
+            const dataStart = new Date(chartData[0].time).getTime();
+
+            if (dataStart < firstSunrise) {
+                const dataEnd = new Date(chartData[chartData.length - 1].time).getTime();
+                const totalMs = dataEnd - dataStart;
+                const endMs = Math.min(firstSunrise, dataEnd);
+
+                if (endMs > dataStart) {
+                    const width = ((endMs - dataStart) / totalMs) * chartW;
+                    shading += `<rect x="${pad.left}" y="${pad.top}" width="${width}" height="${chartH}" fill="rgba(0,0,0,0.2)" />`;
+                }
+            }
+        }
+    }
+    return shading;
 }
