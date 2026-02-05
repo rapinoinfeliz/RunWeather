@@ -131,7 +131,13 @@ export function setBestRunRange(range, event) {
     });
 
     // Recalculate
-    calculateBestRunTime(UIState.forecastData);
+    // Recalculate
+    const bestTime = calculateBestRunTime(UIState.forecastData);
+    if (bestTime) {
+        UIState.selectedForeHour = bestTime;
+        window.selectedForeHour = bestTime; // Sync for global listener
+        renderAllForecasts(); // Re-render heatmaps to show selection
+    }
 }
 
 export function toggleForeSort(col) {
@@ -181,6 +187,16 @@ export function openTab(tabName, btn) {
     document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
     if (btn) btn.classList.add('active');
 
+    // FAB Visibility
+    const fab = document.getElementById('fab-refresh');
+    if (fab) {
+        if (tabName === 'current') {
+            fab.classList.add('visible');
+        } else {
+            fab.classList.remove('visible');
+        }
+    }
+
     // Hide tooltip if exists
     const tooltip = document.getElementById('forecast-tooltip');
     if (tooltip) {
@@ -204,5 +220,6 @@ export function toggleForeSelection(time, event) {
     } else {
         UIState.selectedForeHour = time;
     }
+    window.selectedForeHour = UIState.selectedForeHour; // Sync for global listener
     renderAllForecasts();
 }

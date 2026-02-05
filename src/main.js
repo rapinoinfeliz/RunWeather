@@ -553,6 +553,7 @@ async function init() {
 }
 
 async function refreshWeather(force = false) {
+    window.refreshWeather = refreshWeather; // Expose for UI/FAB
     const loc = window.locManager.current;
     if (!loc) return;
 

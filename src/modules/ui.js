@@ -234,7 +234,21 @@ window.moveClimateTooltip = moveClimateTooltip;
 window.hideClimateTooltip = hideClimateTooltip;
 window.filterClimateByImpact = filterClimateByImpact;
 window.toggleDarkMode = toggleDarkMode; // Was exported but maybe used in HTML?
-// But app.js code used `window.hapCalc`.
+
+// FAB Click Listener
+document.addEventListener('DOMContentLoaded', () => {
+    const fab = document.getElementById('fab-refresh');
+    if (fab) {
+        fab.addEventListener('click', async () => {
+            if (window.refreshWeather) {
+                fab.classList.add('fab-spin');
+                await window.refreshWeather(true); // Force update 
+                // Artificial delay to ensure spin is felt if refresh is too fast
+                setTimeout(() => fab.classList.remove('fab-spin'), 1000);
+            }
+        });
+    }
+});
 // Assuming core.js has HAPCalculator
 // But app.js code used `window.hapCalc`.
 
@@ -620,10 +634,14 @@ export function setupWindowHelpers() {
             const isOutsideWind = !windChart || !windChart.contains(e.target);
             const isOutsideLegend = !legend || !legend.contains(e.target);
 
-            // Also check if target is the interaction layer (though inside chart) or specific buttons
-            console.log('Click check Forecast:', { isOutsideChart, isOutsideRain, isOutsideWind, isOutsideLegend, target: e.target });
 
-            if (isOutsideChart && isOutsideRain && isOutsideWind && isOutsideLegend) {
+            // Should also ignore clicks on the "Best Run" buttons (but NOT the banner itself, per user request)
+            const isOutsideBestButtons = !e.target.closest('.insight-btn');
+
+            // Also check if target is the interaction layer (though inside chart) or specific buttons
+            console.log('Click check Forecast:', { isOutsideChart, isOutsideRain, isOutsideWind, isOutsideLegend, isOutsideBestButtons, target: e.target });
+
+            if (isOutsideChart && isOutsideRain && isOutsideWind && isOutsideLegend && isOutsideBestButtons) {
                 console.log("Deselecting Forecast");
                 toggleForeSelection(null);
             }

@@ -2258,3 +2258,66 @@ select.modern-input {
     /* Yellow-500 */
     stroke: #eab308;
 }
+/* Floating Action Button (Refresh) */
+.fab-btn {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--accent-color);
+    color: white;
+    border: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    transition: transform 0.2s, box-shadow 0.2s, background 0.2s, opacity 0.2s;
+    /* Only show on Conditions tab by default, toggled via JS */
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(0.8);
+}
+
+.fab-btn.visible {
+    opacity: 1;
+    pointer-events: auto;
+    transform: scale(1);
+}
+
+.fab-btn:active {
+    transform: scale(0.95);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+.fab-btn:hover {
+    background: var(--accent-light); /* fallback if accent-light not defined, brightness filter ok */
+    filter: brightness(1.1);
+}
+
+.fab-spin svg {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    100% { transform: rotate(360deg); }
+}
+
+@media (max-width: 600px) {
+    .fab-btn {
+        bottom: 20px;
+        right: 20px;
+        width: 48px;
+        height: 48px;
+    }
+}
+
+/* Hide FAB on Desktop */
+@media (min-width: 601px) {
+    .fab-btn {
+        display: none !important;
+    }
+}

@@ -1553,4 +1553,6 @@ export function calculateBestRunTime(data) {
 
         banner.style.display = 'flex';
     }
+
+    return bestHour.time; // Return for auto-selection
 }
