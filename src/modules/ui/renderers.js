@@ -2,6 +2,7 @@ import { UIState } from './state.js';
 import { infoIcon, getImpactColor, getDewColor, getCondColor, getImpactCategory, getBasePaceSec, getDateFromWeek, getWeatherIcon } from './utils.js';
 import { HAPCalculator, VDOT_MATH, parseTime, formatTime, getEasyPace, getISOWeek } from '../core.js';
 import { calculatePacingState, calculateWBGT } from '../engine.js';
+import { loadFromStorage, saveToStorage } from '../storage.js';
 // Chart.js is loaded globally via script tag 
 // No, the code likely uses global Chart or dynamic import. 
 // Let's check if ui.js imports Chart? No, it probably assumes window.Chart or logic is different.
@@ -1892,6 +1893,18 @@ export function renderMonthlyAverages(data) {
     });
 
     container.innerHTML = html;
+
+
+    // Restore collapsed state if it was saved
+    setTimeout(() => {
+        const savedState = loadFromStorage('monthly_averages_collapsed');
+        if (savedState === true) {
+            const wrapper = document.getElementById('monthly-averages-wrapper');
+            const icon = document.getElementById('monthly-toggle-icon');
+            if (wrapper) wrapper.style.display = 'none';
+            if (icon) icon.style.transform = 'rotate(-90deg)';
+        }
+    }, 50);
 }
 
 // Remove global type since we don't use toggles anymore
@@ -1906,8 +1919,12 @@ window.toggleMonthlyAverages = () => {
         wrap.style.display = 'block';
         wrap.style.height = 'auto';
         if (icon) icon.style.transform = 'rotate(0deg)';
+        // Save expanded state
+        saveToStorage('monthly_averages_collapsed', false);
     } else {
         wrap.style.display = 'none';
         if (icon) icon.style.transform = 'rotate(-90deg)';
+        // Save collapsed state
+        saveToStorage('monthly_averages_collapsed', true);
     }
 };

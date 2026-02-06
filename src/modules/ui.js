@@ -101,6 +101,8 @@ if (savedRainState === true) {
     if (icon) icon.style.transform = 'rotate(-90deg)';
 }
 
+
+
 // --- Favorites / Quick Switch UI ---
 window.toggleLocationFavorite = () => {
     const isFav = window.locManager.toggleFavorite();
