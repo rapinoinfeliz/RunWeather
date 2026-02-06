@@ -506,6 +506,34 @@ async function init() {
         });
     }
 
+    // Time Input Formatting (numeric keypad support)
+    const handleTimeInput = (e) => {
+        let val = e.target.value.replace(/\D/g, ''); // Remove non-digits
+        if (val.length > 4) val = val.slice(0, 4); // Max 4 digits (MMSS)
+
+        if (val.length >= 3) {
+            val = val.slice(0, val.length - 2) + ':' + val.slice(val.length - 2);
+        }
+        e.target.value = val;
+    };
+
+    if (els.inputPace) {
+        els.inputPace.oninput = (e) => {
+            handleTimeInput(e);
+            window.setPaceMode(null); // Clear mode on manual input
+            UI.update(els, window.hapCalc);
+        }
+    }
+
+    // Also apply to Time Trial Input
+    if (els.time) {
+        els.time.oninput = (e) => {
+            handleTimeInput(e);
+            UI.update(els, window.hapCalc);
+            saveToStorage('last_time', e.target.value);
+        }
+    }
+
     // Preset Logic
     if (els.preset) {
         els.preset.addEventListener('change', () => {
