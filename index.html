@@ -198,16 +198,16 @@
                     <div class="floating-input-group">
                         <label for="temp">Temperature (°C)</label>
                         <input type="number" id="temp" placeholder="Temp" title="Temperature in Celsius"
-                            class="modern-input">
+                            inputmode="decimal" class="modern-input">
                     </div>
                     <div class="floating-input-group">
                         <label for="dew">Dew Point (°C)</label>
-                        <input type="number" id="dew" placeholder="Dew" title="Dew Point in Celsius"
+                        <input type="number" id="dew" placeholder="Dew" title="Dew Point in Celsius" inputmode="decimal"
                             class="modern-input">
                     </div>
                     <div class="floating-input-group">
                         <label for="wind">Wind Speed (km/h)</label>
-                        <input type="number" id="wind" placeholder="Wind" title="Wind Speed in km/h"
+                        <input type="number" id="wind" placeholder="Wind" title="Wind Speed in km/h" inputmode="decimal"
                             class="modern-input">
                     </div>
                 </div>
@@ -810,7 +810,8 @@
                 </label>
 
                 <div class="settings-input-wrapper">
-                    <input type="number" id="runner-weight" class="settings-input" placeholder="65" step="0.5">
+                    <input type="number" id="runner-weight" class="settings-input" placeholder="65" step="0.5"
+                        inputmode="decimal">
                     <span class="unit-suffix">kg</span>
                 </div>
 
@@ -850,8 +851,8 @@
                         Age
                     </label>
                     <div class="settings-input-wrapper">
-                        <input type="number" id="runner-age" class="settings-input" placeholder="30" step="1" min="5"
-                            max="100">
+                        <input type="number" id="runner-age" class="settings-input" placeholder="e.g. 32" step="1"
+                            min="5" max="100" inputmode="numeric">
                         <span class="unit-suffix">yrs</span>
                     </div>
                 </div>
