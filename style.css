@@ -2363,6 +2363,7 @@ select.modern-input {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
     font-weight: 600;
 }
+
 /* ========================================
    Monthly Averages Enhancements
    ======================================== */
@@ -2373,31 +2374,14 @@ select.modern-input {
         opacity: 0;
         transform: translateX(-20px);
     }
+
     to {
         opacity: 1;
         transform: translateX(0);
     }
 }
 
-.monthly-row-animated {
-    animation: monthlyRowSlideIn 0.4s ease-out forwards;
-    opacity: 0;
-}
 
-/* Animation for bars - grow from left */
-@keyframes monthlyBarGrow {
-    from {
-        width: 0 !important;
-        opacity: 0;
-    }
-    to {
-        opacity: 1;
-    }
-}
-
-.monthly-bar-animated {
-    animation: monthlyBarGrow 0.6s ease-out 0.2s forwards;
-}
 
 
 /* Smooth transitions */
@@ -2407,6 +2391,5 @@ select.modern-input {
 
 .monthly-row:hover {
     transform: translateX(2px);
-    background: rgba(255,255,255,0.03) !important;
+    background: rgba(255, 255, 255, 0.03) !important;
 }
-

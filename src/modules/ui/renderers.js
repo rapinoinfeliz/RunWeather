@@ -1885,7 +1885,7 @@ export function renderMonthlyAverages(data) {
         }
 
         html += `
-        <div class="monthly-row monthly-row-animated" style="display:flex; align-items:center; margin-bottom:8px; padding:6px 8px; font-size:0.85rem; ${rowBg}; animation-delay:${m.index * 0.05}s;">
+        <div class="monthly-row" style="display:flex; align-items:center; margin-bottom:8px; padding:6px 8px; font-size:0.85rem; ${rowBg};">
             <div style="width:35px; color:var(--text-secondary); font-weight:500; text-transform:capitalize;">${m.name}</div>
             
             <!-- Temperature Section -->
@@ -1895,7 +1895,7 @@ export function renderMonthlyAverages(data) {
                 </div>
                 <div style="flex:1; position:relative; height:20px;">
                     <div style="background:rgba(255,255,255,0.08); height:4px; border-radius:2px; width:100%; position:absolute; top:50%; transform:translateY(-50%);"></div>
-                    <div class="monthly-bar-animated" style="${tempBarStyle}"></div>
+                    <div style="${tempBarStyle}"></div>
                 </div>
                 <div class="monthly-label" style="width:30px; text-align:left; color:var(--text-primary); font-weight:600; margin-left:8px; font-variant-numeric:tabular-nums; font-size:0.8rem;">
                     ${tempLabelR}
