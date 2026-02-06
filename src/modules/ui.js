@@ -695,7 +695,9 @@ export function update(els, hapCalc) {
         temp: parseFloat(els.temp.value),
         dew: parseFloat(els.dew.value),
         wind: parseFloat(els.wind ? els.wind.value : 0),
-        runnerWeight: window.runnerWeight || 65
+        runnerWeight: window.runnerWeight || 65,
+        age: parseInt(els.age ? els.age.value : 0),
+        gender: els.gender ? els.gender.value : ''
     };
 
     // Logic Rule: Dew Point cannot be > Temp

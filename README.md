@@ -14,6 +14,13 @@ A comprehensive, weather-aware running pace calculator that helps runners optimi
   - Subthreshold intervals (3, 6, and 10-minute reps)
   - Threshold pace
 
+### Age-Graded Calculator
+- **Performance Normalization**: Compare your times against open standards using WMA 2025 Factors
+- **Dynamic Scoring**:
+  - Score percentage (e.g. 76.4%)
+  - Performance Class (Regional, National, World Class)
+- **Riegel Projection**: Accurately handles non-standard distances for age grading
+
 ###  Weather-Aware Adjustments
 - **Heat Impact Analysis**: Automatically adjusts paces based on temperature and humidity 
   - Real-time heat impact percentage calculation
@@ -57,6 +64,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Pace Calculator**: Methodology by [James Copeland - Norwegian Singles Method: Subthreshold Running Kept Simple](https://mybook.to/XzwWbK3)
 - **Heat Calculator**: Methodology by [John Davis - Running Writings](https://apps.runningwritings.com/heat-adjusted-pace/)
 - **Wind Calculator**: Methodology by [John Davis - Running Writings](https://apps.runningwritings.com/wind-calculator)
+- **Age-Graded Calculator**: 2025 Tables by [Alan Lytton Jones / WMA](https://github.com/AlanLyttonJones/Age-Grade-Tables)
 - **VDOT Formula**: Jack Daniels' Running Formula
 - **Weather Data**: [Open-Meteo API](https://open-meteo.com/)
 - **Geocoding**: [Nominatim OpenStreetMap](https://nominatim.org/)

@@ -87,6 +87,9 @@ async function init() {
         inputPace: document.getElementById('input-pace'),
         pred5k: document.getElementById('pred-5k'),
         vdot: document.getElementById('vdot-val'),
+        // Age Grading Inputs
+        age: document.getElementById('runner-age'),
+        gender: document.getElementById('runner-gender'),
         pace10: document.getElementById('pace-10min'),
         dist10: document.getElementById('dist-10min'),
         pace6: document.getElementById('pace-6min'),
@@ -351,6 +354,8 @@ async function init() {
         const closeBtn = document.getElementById('close-settings');
         const saveBtn = document.getElementById('save-settings');
         const weightInput = document.getElementById('runner-weight');
+        const ageInput = document.getElementById('runner-age'); // New
+        const genderInput = document.getElementById('runner-gender'); // New
         const radios = document.getElementsByName('unit-system');
 
         const closeSettings = () => {
@@ -370,7 +375,11 @@ async function init() {
                 weightInput.value = val;
             }
 
-            // 2. Set Radio
+            // 2. Set Age/Gender
+            if (ageInput) ageInput.value = window.runnerAge || '';
+            if (genderInput) genderInput.value = window.runnerGender || '';
+
+            // 3. Set Radio
             const currentSystem = window.unitSystem || 'metric';
             for (const radio of radios) {
                 if (radio.value === currentSystem) radio.checked = true;
@@ -403,6 +412,29 @@ async function init() {
 
                 window.runnerWeight = weightKg;
                 saveToStorage('runner_weight', weightKg);
+
+                // 3. Age & Gender
+                if (ageInput) {
+                    const age = parseInt(ageInput.value);
+                    if (!isNaN(age) && age > 0) {
+                        window.runnerAge = age;
+                        saveToStorage('runner_age', age);
+                    } else {
+                        window.runnerAge = null;
+                        saveToStorage('runner_age', null);
+                    }
+                }
+
+                if (genderInput) {
+                    const gender = genderInput.value;
+                    if (gender) {
+                        window.runnerGender = gender;
+                        saveToStorage('runner_gender', gender);
+                    } else {
+                        window.runnerGender = null;
+                        saveToStorage('runner_gender', null);
+                    }
+                }
 
                 UI.update(els, window.hapCalc);
                 closeSettings();
@@ -449,8 +481,15 @@ async function init() {
     if (savedWeight) {
         window.runnerWeight = parseFloat(savedWeight);
     } else {
-        window.runnerWeight = 65;
+        window.runnerWeight = 65; // Default
     }
+
+    // Load Age/Gender on Init
+    const savedAge = loadFromStorage('runner_age');
+    if (savedAge) window.runnerAge = parseInt(savedAge);
+
+    const savedGender = loadFromStorage('runner_gender');
+    if (savedGender) window.runnerGender = savedGender;
 
     // Time Input: Calculate Pace from Time + Distance
     if (els.time) {

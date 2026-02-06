@@ -814,9 +814,51 @@
                     <span class="unit-suffix">kg</span>
                 </div>
 
-                <div class="settings-helper">
-                    Necessary for calculating wind resistance and metabolic cost.
+                <div class="settings-helper" style="margin-bottom:20px;">
+                    Necessary for calculating wind resistance.
                 </div>
+            </div>
+
+            <!-- Gender & Age (Side by Side) -->
+            <div style="display:flex; gap:16px; margin-bottom:12px;">
+                <div style="flex:1;">
+                    <label for="runner-gender" class="settings-label">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <path d="M12 16v-4"></path>
+                            <path d="M12 8h.01"></path>
+                        </svg>
+                        Gender
+                    </label>
+                    <div class="settings-input-wrapper">
+                        <select id="runner-gender" class="settings-input">
+                            <option value="">Select</option>
+                            <option value="M">Male</option>
+                            <option value="F">Female</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="flex:1;">
+                    <label for="runner-age" class="settings-label">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                        Age
+                    </label>
+                    <div class="settings-input-wrapper">
+                        <input type="number" id="runner-age" class="settings-input" placeholder="30" step="1" min="5"
+                            max="100">
+                        <span class="unit-suffix">yrs</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="settings-helper" style="margin-bottom:8px;">
+                Used for Age-Graded Performance calculations.
             </div>
 
             <button id="save-settings" class="modern-button"

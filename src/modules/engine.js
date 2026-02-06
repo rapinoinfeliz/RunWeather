@@ -1,5 +1,68 @@
 import { VDOT_MATH, getEasyPace } from './core.js';
 import { WindCalc } from './wind.js';
+import { AGE_GRADE_TABLES } from '../../data/age_grade_tables.js';
+
+// Riegel exponent for distance projection
+const RIEGEL_EXP = 1.06;
+
+export function calculateAgeGrade(distanceMeters, timeSec, age, gender) {
+    if (!distanceMeters || !timeSec || !age || !gender || !AGE_GRADE_TABLES) return null;
+
+    // 1. Find closest standard table
+    let closestDist = null;
+    let minDiff = Infinity;
+    let table = null;
+
+    Object.keys(AGE_GRADE_TABLES).forEach(key => {
+        const d = AGE_GRADE_TABLES[key].distance;
+        const diff = Math.abs(distanceMeters - d);
+        if (diff < minDiff) {
+            minDiff = diff;
+            closestDist = d;
+            table = AGE_GRADE_TABLES[key];
+        }
+    });
+
+    if (!table
+        || !table.factors[gender] || !table.factors[gender][age]) return null;
+
+    // 2. Get Factor and Open Standard
+    const factor = table.factors[gender][age];
+    const openStdSource = table.open[gender];
+
+    // 3. Project Open Standard to Input Distance (Riegel)
+    // T2 = T1 * (D2/D1)^1.06
+    const projectedOpenStd = openStdSource * Math.pow((distanceMeters / closestDist), RIEGEL_EXP);
+
+    // 4. Calculate Age Graded Time (User's time adjusted to Open equivalent)
+    // Actually, "Age Graded Time" usually means "What your time would be if you were Open age"
+    // GradedTime = InputTime * Factor
+    const ageGradedTime = timeSec * factor;
+
+    // 5. Calculate Score
+    // Score = OpenStandard / AgeGradedTime
+    // Logic: If I run 20:00 (1200) and factor is 1.0 (Open), Score = Std/1200.
+    // If I run 20:00 and factor is 0.9. Graded = 18:00 (1080). Score = Std/1080.
+    // Wait, let's verify if OpenStd needs projection.
+    // Yes. If I run 6k, I compare to 6k WR.
+    const score = (projectedOpenStd / ageGradedTime) * 100;
+
+    let clss = '';
+    if (score >= 100) clss = 'World Record Level';
+    else if (score >= 90) clss = 'World Class';
+    else if (score >= 80) clss = 'National Class';
+    else if (score >= 70) clss = 'Regional Class';
+    else if (score >= 60) clss = 'Local Class';
+    else clss = '';
+
+    return {
+        score: parseFloat(score.toFixed(2)),
+        ageGradedTime: Math.round(ageGradedTime),
+        class: clss,
+        closestDist: closestDist,
+        factor: factor
+    };
+}
 
 export function calculatePacingState(inputs, hapCalc) {
     const { distance, timeSec, temp, dew } = inputs;

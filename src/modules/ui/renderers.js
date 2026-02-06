@@ -1,7 +1,7 @@
 import { UIState } from './state.js';
 import { infoIcon, getImpactColor, getDewColor, getCondColor, getImpactCategory, getBasePaceSec, getDateFromWeek, getWeatherIcon } from './utils.js';
 import { HAPCalculator, VDOT_MATH, parseTime, formatTime, getEasyPace, getISOWeek } from '../core.js';
-import { calculatePacingState, calculateWBGT } from '../engine.js';
+import { calculatePacingState, calculateWBGT, calculateAgeGrade } from '../engine.js';
 import { loadFromStorage, saveToStorage } from '../storage.js';
 // Chart.js is loaded globally via script tag 
 // No, the code likely uses global Chart or dynamic import. 
@@ -58,7 +58,31 @@ export function renderVDOTDetails() {
         { l: '800m', d: 800 }
     ];
 
-    let html = `
+    let html = '';
+
+    // Age Grade Section
+    const age = window.runnerAge;
+    const gender = window.runnerGender;
+    if (age && gender && calculateAgeGrade) {
+        const agRes = calculateAgeGrade(dInput, tInput, age, gender);
+        if (agRes) {
+            const tooltipTable = '<table style="width:100%; text-align:left; font-size:0.9em; border-collapse:collapse; margin-top:4px;"><tr style="border-bottom:1px solid rgba(255,255,255,0.1);"><th style="padding:2px 0;">Level</th><th style="text-align:right; padding:2px 0;">Class</th></tr><tr><td style="padding:2px 0;">100%</td><td style="text-align:right; color:#e2e8f0;">World Record</td></tr><tr><td style="padding:2px 0;">90%+</td><td style="text-align:right; color:#e2e8f0;">World Class</td></tr><tr><td style="padding:2px 0;">80%+</td><td style="text-align:right; color:#e2e8f0;">National Class</td></tr><tr><td style="padding:2px 0;">70%+</td><td style="text-align:right; color:#e2e8f0;">Regional Class</td></tr><tr><td style="padding:2px 0;">60%+</td><td style="text-align:right; color:#e2e8f0;">Local Class</td></tr></table>';
+
+            const infoHtml = infoIcon('Age Grade Standards', tooltipTable);
+
+            html += `
+             <div style="margin-bottom:16px; padding:12px; background:var(--bg-secondary); border-radius:12px; text-align:center; border:1px solid var(--border-color);">
+                <div style="font-size:0.7rem; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">
+                    Age Grade (${age}${gender}) ${infoHtml}
+                </div>
+                <div style="font-size:1.5rem; font-weight:800; color:var(--accent-color); line-height:1.2;">${agRes.score.toFixed(1)}%</div>
+                <div style="font-size:0.85rem; color:var(--text-primary); font-weight:500; margin-top:2px;">${agRes.class}</div>
+             </div>
+             `;
+        }
+    }
+
+    html += `
         <table class="vdot-details-table">
             <thead>
                 <tr>
