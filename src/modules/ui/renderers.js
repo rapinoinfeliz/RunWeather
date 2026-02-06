@@ -645,17 +645,31 @@ export function renderClimateHeatmap(data) {
         }
 
         // Build Dawn Path (Top Night)
+        // Start at Top-Left Corner
         let pathTop = `M ${labelW} ${headerH} `;
+        // Line down to Left-Edge Start-of-Curve
+        if (curvePoints.length > 0) pathTop += `L ${labelW} ${curvePoints[0].ySr} `;
+        // Curve points
         curvePoints.forEach(p => pathTop += `L ${p.x} ${p.ySr} `);
+        // Line to Right-Edge End-of-Curve
+        if (curvePoints.length > 0) pathTop += `L ${totalW} ${curvePoints[curvePoints.length - 1].ySr} `;
+        // Line to Top-Right Corner and Close
         pathTop += `L ${totalW} ${headerH} Z`;
 
         // Build Dusk Path (Bottom Night)
+        // Start at Bottom-Left Corner
         let pathBottom = `M ${labelW} ${totalH} `;
+        // Line up to Left-Edge Start-of-Curve
+        if (curvePoints.length > 0) pathBottom += `L ${labelW} ${curvePoints[0].ySs} `;
+        // Curve points
         curvePoints.forEach(p => pathBottom += `L ${p.x} ${p.ySs} `);
+        // Line to Right-Edge End-of-Curve
+        if (curvePoints.length > 0) pathBottom += `L ${totalW} ${curvePoints[curvePoints.length - 1].ySs} `;
+        // Line to Bottom-Right Corner and Close
         pathBottom += `L ${totalW} ${totalH} Z`;
 
-        svgInner += `<path d="${pathTop}" fill="#000" fill-opacity="0.15" pointer-events="none" />`;
-        svgInner += `<path d="${pathBottom}" fill="#000" fill-opacity="0.15" pointer-events="none" />`;
+        svgInner += `<path d="${pathTop}" fill="#000" fill-opacity="0.3" pointer-events="none" />`;
+        svgInner += `<path d="${pathBottom}" fill="#000" fill-opacity="0.3" pointer-events="none" />`;
 
     } catch (e) { console.warn('Climate curve error', e); }
 
