@@ -671,6 +671,25 @@
             </div>
         </div>
 
+        <!-- Monthly Averages Card -->
+        <div
+            style="background:var(--card-bg); border-radius:12px; padding:15px; margin-bottom:20px; border:1px solid var(--border-color);">
+            <div onclick="window.toggleMonthlyAverages()"
+                style="display:flex; align-items:center; justify-content:space-between; cursor:pointer;">
+                <h3 style="margin:0; font-size:1rem; font-weight:600; color:var(--text-primary);">
+                    Monthly Averages
+                </h3>
+                <span id="monthly-toggle-icon" style="transition:transform 0.2s; color:var(--text-secondary);">▼</span>
+            </div>
+
+            <div id="monthly-averages-wrapper" style="margin-top:15px; transition:all 0.3s ease-out; overflow:hidden;">
+                <div id="monthly-averages-content" class="monthly-list">
+                    <!-- JS Injected Rows -->
+                    <div style="text-align:center; padding:20px; color:var(--text-secondary);">Loading...</div>
+                </div>
+            </div>
+        </div>
+
         <!-- Data Table -->
         <div style="margin-bottom:15px; display:flex; justify-content:flex-start; align-items:center;">
             <span style="font-size:0.9rem; font-weight:600; color:var(--text-primary); margin-right:12px;">Historical

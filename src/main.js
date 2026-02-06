@@ -699,6 +699,14 @@ function setupGlobalEvents() {
                     parseInt(target.dataset.len)
                 );
                 break;
+            case 'monthly-type':
+                window.selectedMonthlyType = target.dataset.type;
+                if (target.parentElement) {
+                    target.parentElement.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+                    target.classList.add('active');
+                }
+                UI.renderMonthlyAverages();
+                break;
         }
     });
 

@@ -2258,6 +2258,7 @@ select.modern-input {
     /* Yellow-500 */
     stroke: #eab308;
 }
+
 /* Floating Action Button (Refresh) */
 .fab-btn {
     position: fixed;
@@ -2269,7 +2270,7 @@ select.modern-input {
     background: var(--accent-color);
     color: white;
     border: none;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -2290,11 +2291,12 @@ select.modern-input {
 
 .fab-btn:active {
     transform: scale(0.95);
-    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
 .fab-btn:hover {
-    background: var(--accent-light); /* fallback if accent-light not defined, brightness filter ok */
+    background: var(--accent-light);
+    /* fallback if accent-light not defined, brightness filter ok */
     filter: brightness(1.1);
 }
 
@@ -2303,7 +2305,9 @@ select.modern-input {
 }
 
 @keyframes spin {
-    100% { transform: rotate(360deg); }
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 @media (max-width: 600px) {
@@ -2321,3 +2325,88 @@ select.modern-input {
         display: none !important;
     }
 }
+
+/* Monthly Averages Row */
+.monthly-row:last-child {
+    border-bottom: none !important;
+}
+
+.monthly-row:hover {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+:root {
+    --input-bg: #21262d;
+}
+
+/* Toggle Button (Segmented Control) */
+.toggle-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    font-weight: 500;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.toggle-btn:hover {
+    color: var(--text-primary);
+}
+
+.toggle-btn.active {
+    background: var(--card-bg);
+    /* Use card bg to "lift" it from input-bg container */
+    color: var(--text-primary);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    font-weight: 600;
+}
+/* ========================================
+   Monthly Averages Enhancements
+   ======================================== */
+
+/* Animation for monthly rows - stagger entrance */
+@keyframes monthlyRowSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.monthly-row-animated {
+    animation: monthlyRowSlideIn 0.4s ease-out forwards;
+    opacity: 0;
+}
+
+/* Animation for bars - grow from left */
+@keyframes monthlyBarGrow {
+    from {
+        width: 0 !important;
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.monthly-bar-animated {
+    animation: monthlyBarGrow 0.6s ease-out 0.2s forwards;
+}
+
+
+/* Smooth transitions */
+.monthly-row {
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.monthly-row:hover {
+    transform: translateX(2px);
+    background: rgba(255,255,255,0.03) !important;
+}
+
