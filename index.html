@@ -214,13 +214,17 @@
                     </div>
                 </div>
 
-                <div class="input-row-grid cols-2 impact-grid" style="margin-top:12px; gap:8px;">
+                <div class="input-row-grid cols-3 impact-grid" style="margin-top:12px; gap:8px;">
                     <div id="weather-impact" class="impact-box clickable-card" data-toggle-target="heat" role="button"
                         tabindex="0" style="color:var(--text-secondary);">
                         <!-- Content injected via JS -->
                     </div>
                     <div id="wind-impact" class="impact-box clickable-card" data-toggle-target="wind" role="button"
                         tabindex="0" style="color:var(--text-secondary);">
+                        <!-- Content injected via JS -->
+                    </div>
+                    <div id="altitude-impact-card" class="impact-box clickable-card" data-toggle-target="altitude"
+                        role="button" tabindex="0" style="color:var(--text-secondary); display:none;">
                         <!-- Content injected via JS -->
                     </div>
                 </div>
@@ -819,6 +823,32 @@
 
                 <div class="settings-helper" style="margin-bottom:20px;">
                     Necessary for calculating wind resistance.
+                </div>
+            </div>
+
+            <!-- Base Altitude -->
+            <div>
+                <label for="base-altitude" class="settings-label">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M8 3v2"></path>
+                        <path d="M16 3v2"></path>
+                        <path d="M12 3v6"></path>
+                        <path d="m17 8-5 5-5-5"></path>
+                        <path d="M3 18h18"></path>
+                        <path d="M6 21h12"></path>
+                    </svg>
+                    Base Altitude (Acclimatized)
+                </label>
+
+                <div class="settings-input-wrapper">
+                    <input type="number" id="base-altitude" class="settings-input" placeholder="0" step="100"
+                        inputmode="numeric" value="0">
+                    <span class="unit-suffix">m</span>
+                </div>
+
+                <div class="settings-helper" style="margin-bottom:20px;">
+                    Your home altitude. Used to calculate pace penalty when running higher.
                 </div>
             </div>
 

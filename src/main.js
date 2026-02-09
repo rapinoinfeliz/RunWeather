@@ -127,7 +127,7 @@ async function init() {
 
     // Attach Event Listeners
     // Initialize Pace View State
-    window.pace_view = { heat: false, headwind: false, tailwind: false };
+    window.pace_view = { heat: false, headwind: false, tailwind: false, altitude: false };
 
     // Impact Card Toggle Logic
     const updateImpactCards = () => {
@@ -144,6 +144,12 @@ async function init() {
             if (window.pace_view.headwind || window.pace_view.tailwind) windCard.classList.add('active');
             else windCard.classList.remove('active');
         }
+
+        const altCard = document.querySelector('[data-toggle-target="altitude"]');
+        if (altCard) {
+            if (window.pace_view.altitude) altCard.classList.add('active');
+            else altCard.classList.remove('active');
+        }
     };
 
     document.querySelectorAll('.clickable-card').forEach(card => {
@@ -157,6 +163,8 @@ async function init() {
                 const newState = !window.pace_view.headwind; // Toggle based on one
                 window.pace_view.headwind = newState;
                 window.pace_view.tailwind = newState;
+            } else if (target === 'altitude') {
+                window.pace_view.altitude = !window.pace_view.altitude;
             }
 
             updateImpactCards();
@@ -356,6 +364,7 @@ async function init() {
         const weightInput = document.getElementById('runner-weight');
         const ageInput = document.getElementById('runner-age'); // New
         const genderInput = document.getElementById('runner-gender'); // New
+        const altitudeInput = document.getElementById('base-altitude'); // Altitude
         const radios = document.getElementsByName('unit-system');
 
         const closeSettings = () => {
@@ -379,7 +388,10 @@ async function init() {
             if (ageInput) ageInput.value = window.runnerAge || '';
             if (genderInput) genderInput.value = window.runnerGender || '';
 
-            // 3. Set Radio
+            // 3. Set Base Altitude
+            if (altitudeInput) altitudeInput.value = window.baseAltitude || 0;
+
+            // 4. Set Radio
             const currentSystem = window.unitSystem || 'metric';
             for (const radio of radios) {
                 if (radio.value === currentSystem) radio.checked = true;
@@ -436,6 +448,13 @@ async function init() {
                     }
                 }
 
+                // 4. Base Altitude
+                if (altitudeInput) {
+                    const alt = parseInt(altitudeInput.value) || 0;
+                    window.baseAltitude = alt;
+                    saveToStorage('base_altitude', alt);
+                }
+
                 UI.update(els, window.hapCalc);
                 closeSettings();
 
@@ -490,6 +509,10 @@ async function init() {
 
     const savedGender = loadFromStorage('runner_gender');
     if (savedGender) window.runnerGender = savedGender;
+
+    // Load Base Altitude on Init
+    const savedAltitude = loadFromStorage('base_altitude');
+    window.baseAltitude = savedAltitude ? parseInt(savedAltitude) : 0;
 
     // Time Input: Calculate Pace from Time + Distance
     if (els.time) {
@@ -651,6 +674,10 @@ async function refreshWeather(force = false) {
             if (els.wind) els.wind.value = weather.current.wind_speed_10m;
             UI.update(els, window.hapCalc);
         }
+
+        // Store Elevation for Altitude Impact
+        window.currentElevation = weather.elevation || 0;
+        UI.renderAltitudeCard();
 
     } catch (e) {
         console.error("Weather Refresh Failed", e);

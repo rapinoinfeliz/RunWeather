@@ -1,5 +1,6 @@
 import { VDOT_MATH, getEasyPace } from './core.js';
 import { WindCalc } from './wind.js';
+import { AltitudeCalc } from './altitude.js';
 import { AGE_GRADE_TABLES } from '../../data/age_grade_tables.js';
 
 // Riegel exponent for distance projection
@@ -88,6 +89,14 @@ export function calculatePacingState(inputs, hapCalc) {
             adjustedPaces: {}, // key: paceSec
             temp: temp,
             dew: dew
+        },
+        altitude: {
+            valid: false,
+            impactPct: 0,
+            deltaAlt: 0,
+            targetAlt: 0,
+            baseAlt: 0,
+            adjustedPaces: {}
         }
     };
 
@@ -176,6 +185,39 @@ export function calculatePacingState(inputs, hapCalc) {
                     headwind: hwSpeed > 0 ? 1000 / hwSpeed : 0,
                     tailwind: twSpeed > 0 ? 1000 / twSpeed : 0
                 };
+            }
+        });
+    }
+
+    // Altitude Calculations
+    const baseAlt = inputs.baseAltitude || 0;
+    const targetAlt = inputs.currentElevation || 0;
+    const altDelta = Math.abs(targetAlt - baseAlt);
+
+    // Calculate if there's a meaningful altitude difference (>100m)
+    if (altDelta > 100) {
+        result.altitude.valid = true;
+        result.altitude.baseAlt = baseAlt;
+        result.altitude.targetAlt = targetAlt;
+        result.altitude.deltaAlt = targetAlt - baseAlt;
+
+        if (targetAlt > baseAlt) {
+            // Ascending - pace penalty
+            const altImpact = AltitudeCalc.getAltitudeImpact(baseAlt, targetAlt);
+            result.altitude.impactPct = altImpact.impactPct;
+            result.altitude.vo2Drop = altImpact.vo2Drop;
+        } else {
+            // Descending - pace boost (negative impact = faster)
+            const altImpact = AltitudeCalc.getAltitudeImpact(targetAlt, baseAlt);
+            result.altitude.impactPct = -altImpact.impactPct; // Negative = faster
+            result.altitude.vo2Drop = -altImpact.vo2Drop;
+        }
+
+        // Apply altitude adjustment to all paces (works for both directions)
+        Object.keys(result.paces).forEach(key => {
+            const val = result.paces[key];
+            if (val > 0) {
+                result.altitude.adjustedPaces[key] = AltitudeCalc.calculatePaceAtAltitude(val, baseAlt, targetAlt);
             }
         });
     }

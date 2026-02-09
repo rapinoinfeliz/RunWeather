@@ -355,6 +355,63 @@ export function toggleVDOTDetails() {
     }
 }
 
+// Altitude Impact Card Renderer
+export function renderAltitudeCard() {
+    const card = document.getElementById('altitude-impact-card');
+    if (!card) return;
+
+    const baseAlt = window.baseAltitude || 0;
+    const currentAlt = window.currentElevation || 0;
+    const delta = currentAlt - baseAlt;
+    const absDelta = Math.abs(delta);
+
+    // Only show if at least 100m difference
+    if (absDelta < 100) {
+        card.style.display = 'none';
+        return;
+    }
+
+    // Match Wind Card Style: Centered vertically, aligned left horizontally
+    card.style.display = 'flex';
+    card.style.flexDirection = 'column';
+    card.style.justifyContent = 'center'; // Center vertically
+    card.style.alignItems = 'flex-start'; // Align left horizontally
+    card.style.textAlign = 'left';        // Text aligned left
+    card.style.paddingLeft = '12px';      // Add some padding for visual balance
+
+    import('./altitude.js').then(({ AltitudeCalc }) => {
+        const isAscending = delta > 0;
+
+        if (isAscending) {
+            // Going UP - pace penalty
+            const impact = AltitudeCalc.getAltitudeImpact(baseAlt, currentAlt);
+
+            if (impact.impactPct > 0.5) {
+                card.style.display = 'flex';
+                // Add Info Icon using exact Wind card pattern
+                const infoIcon = `<span onclick="window.showInfoTooltip(event, '', 'Pace adjustment from altitude by &lt;a href=&quot;https://pubmed.ncbi.nlm.nih.gov/16311764/&quot; target=&quot;_blank&quot;&gt;Wehrlin &amp; Hallén (2006)&lt;/a&gt; for ascending, &lt;a href=&quot;https://pubmed.ncbi.nlm.nih.gov/9216951/&quot; target=&quot;_blank&quot;&gt;Levine &amp; Stray-Gundersen (1997)&lt;/a&gt; for descending.')" style="cursor:pointer; opacity:0.5; position:absolute; top:4px; right:4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></span>`;
+
+                card.innerHTML = `<div>Altitude<br><span style="color:#f87171">~${impact.impactPct.toFixed(1)}% slowdown</span></div>${infoIcon}`;
+            } else {
+                card.style.display = 'none';
+            }
+        } else {
+            // Going DOWN - pace boost
+            const boost = AltitudeCalc.calculateDescentBoost(300, baseAlt, currentAlt); // Use ref pace
+
+            if (boost.gainPercent > 0.5) {
+                card.style.display = 'flex';
+                // Add Info Icon using exact Wind card pattern
+                const infoIcon = `<span onclick="window.showInfoTooltip(event, '', 'Pace adjustment from altitude by &lt;a href=&quot;https://pubmed.ncbi.nlm.nih.gov/16311764/&quot; target=&quot;_blank&quot;&gt;Wehrlin &amp; Hallén (2006)&lt;/a&gt; for ascending, &lt;a href=&quot;https://pubmed.ncbi.nlm.nih.gov/9216951/&quot; target=&quot;_blank&quot;&gt;Levine &amp; Stray-Gundersen (1997)&lt;/a&gt; for descending.')" style="cursor:pointer; opacity:0.5; position:absolute; top:4px; right:4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></span>`;
+
+                card.innerHTML = `<div>Altitude<br><span style="color:#22c55e">~${boost.gainPercent.toFixed(1)}% faster</span></div>${infoIcon}`;
+            } else {
+                card.style.display = 'none';
+            }
+        }
+    });
+}
+
 export function handleChartHover(e, totalW, chartW, padLeft, dataLen) {
     const rect = e.target.getBoundingClientRect();
     // Adjust mouseX to be relative to the chart area (padLeft offset)
@@ -697,7 +754,9 @@ export function update(els, hapCalc) {
         wind: parseFloat(els.wind ? els.wind.value : 0),
         runnerWeight: window.runnerWeight || 65,
         age: parseInt(els.age ? els.age.value : 0),
-        gender: els.gender ? els.gender.value : ''
+        gender: els.gender ? els.gender.value : '',
+        baseAltitude: window.baseAltitude || 0,
+        currentElevation: window.currentElevation || 0
     };
 
     // Logic Rule: Dew Point cannot be > Temp
@@ -793,6 +852,20 @@ export function update(els, hapCalc) {
                     label: "Tailwind",
                     paceSec: wp.tailwind,
                     color: "#4ade80" // Soft Green (Tailwind Green-400)
+                });
+            }
+        }
+
+        // 4. Altitude Adjusted (if valid AND toggled)
+        if (view.altitude && res.altitude && res.altitude.valid && res.altitude.adjustedPaces[key]) {
+            const altAdj = res.altitude.adjustedPaces[key];
+            const isGain = altAdj < pace; // Faster pace = gain (descending)
+            // Show only if meaningful difference (> 0.5s)
+            if (altAdj > 0 && Math.abs(altAdj - pace) > 0.5) {
+                cols.push({
+                    label: isGain ? "Alt ↓" : "Alt ↑",
+                    paceSec: altAdj,
+                    color: isGain ? "#4ade80" : "#a78bfa" // Green for gain, Purple for penalty
                 });
             }
         }
