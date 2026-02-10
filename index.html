@@ -54,11 +54,11 @@
         <div class="header">
             <div class="header-left">
                 <h1>Calculator</h1>
-                <div class="subtitle" style="display:flex; align-items:center;">
+                <div class="subtitle flex-center">
                     NSA
                     <span
                         onclick="window.showInfoTooltip(event, 'Norwegian Singles Approach', 'Structured running method emphasizing three weekly sub-threshold sessions plus easy volume to maximize sustainable aerobic load and long-term progression. Developed by &lt;a href=&quot;https://mybook.to/XzwWbK3&quot; target=&quot;_blank&quot;&gt;James Copeland&lt;/a&gt;.')"
-                        style="cursor:pointer; opacity:0.5; margin-left:4px; display:inline-flex; vertical-align:middle;">
+                        class="fav-star-btn">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2">
                             <circle cx="12" cy="12" r="10"></circle>
@@ -82,10 +82,10 @@
             <!-- Location Group -->
             <div class="location-group" style="position:relative; margin-right:8px;">
                 <div
-                    style="display:flex; align-items:center; background:var(--input-bg); border:1px solid var(--border-color); border-radius:8px; padding:2px 8px 2px 4px;">
+                    class="location-search-btn">
                     <!-- Star Button -->
                     <button onclick="toggleLocationFavorite()" class="icon-btn btn-favorite" title="Toggle Favorite"
-                        style="padding:6px; color:var(--text-secondary);">
+                        class="location-search-icon">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2">
                             <polygon
@@ -96,20 +96,20 @@
 
                     <!-- Location Dropdown Trigger -->
                     <button class="location-btn" onclick="toggleLocationDropdown(this)" aria-label="Change Location"
-                        style="background:transparent; border:none; margin:0; padding-left:4px;">
-                        <div class="loc-text-col" style="text-align:left;">
+                        class="location-name-btn">
+                        <div class="loc-text-col text-left">
                             <span class="current-location-name">Florianópolis</span>
-                            <span class="elevation-display" style="font-size:0.7em; opacity:0.6;">--m</span>
+                            <span class="elevation-display location-subtitle">--m</span>
                         </div>
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2" style="margin-left:6px; opacity:0.5;">
+                            stroke-width="2" class="location-chevron">
                             <polyline points="6 9 12 15 18 9"></polyline>
                         </svg>
                     </button>
                 </div>
 
                 <!-- Dropdown Menu -->
-                <div class="dropdown-menu" style="display:none; right:0; left:auto;">
+                <div class="dropdown-menu dropdown-menu-right">
                     <!-- JS Injected Content -->
                 </div>
             </div>
@@ -320,10 +320,10 @@
         <div class="header">
             <div class="header-left">
                 <h1>Conditions</h1>
-                <div class="subtitle" style="display:flex; align-items:center;">
+                <div class="subtitle flex-center">
                     Real-time Weather
                     <span onclick="window.showInfoTooltip(event, '', 'Weather data provided by Open-Meteo.')"
-                        style="cursor:pointer; opacity:0.5; margin-left:4px; display:inline-flex; vertical-align:middle;">
+                        class="fav-star-btn">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2">
                             <circle cx="12" cy="12" r="10"></circle>
@@ -336,10 +336,10 @@
             <!-- Location Group -->
             <div class="location-group" style="position:relative; margin-left:auto; margin-right:8px;">
                 <div
-                    style="display:flex; align-items:center; background:var(--input-bg); border:1px solid var(--border-color); border-radius:8px; padding:2px 8px 2px 4px;">
+                    class="location-search-btn">
                     <!-- Star Button -->
                     <button onclick="toggleLocationFavorite()" class="icon-btn btn-favorite" title="Toggle Favorite"
-                        style="padding:6px; color:var(--text-secondary);">
+                        class="location-search-icon">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2">
                             <polygon
@@ -350,20 +350,20 @@
 
                     <!-- Location Dropdown Trigger -->
                     <button class="location-btn" onclick="toggleLocationDropdown(this)" aria-label="Change Location"
-                        style="background:transparent; border:none; margin:0; padding-left:4px;">
-                        <div class="loc-text-col" style="text-align:left;">
+                        class="location-name-btn">
+                        <div class="loc-text-col text-left">
                             <span class="current-location-name">Florianópolis</span>
-                            <span class="elevation-display" style="font-size:0.7em; opacity:0.6;">--m</span>
+                            <span class="elevation-display location-subtitle">--m</span>
                         </div>
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2" style="margin-left:6px; opacity:0.5;">
+                            stroke-width="2" class="location-chevron">
                             <polyline points="6 9 12 15 18 9"></polyline>
                         </svg>
                     </button>
                 </div>
 
                 <!-- Dropdown Menu -->
-                <div class="dropdown-menu" style="display:none; right:0; left:auto;">
+                <div class="dropdown-menu dropdown-menu-right">
                     <!-- JS Injected Content -->
                 </div>
             </div>
@@ -408,10 +408,10 @@
             <!-- Location Group -->
             <div class="location-group" style="position:relative;">
                 <div
-                    style="display:flex; align-items:center; background:var(--input-bg); border:1px solid var(--border-color); border-radius:8px; padding:2px 8px 2px 4px;">
+                    class="location-search-btn">
                     <!-- Star Button -->
                     <button onclick="toggleLocationFavorite()" class="icon-btn btn-favorite" title="Toggle Favorite"
-                        style="padding:6px; color:var(--text-secondary);">
+                        class="location-search-icon">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2">
                             <polygon
@@ -422,20 +422,20 @@
 
                     <!-- Location Dropdown Trigger -->
                     <button class="location-btn" onclick="toggleLocationDropdown(this)" aria-label="Change Location"
-                        style="background:transparent; border:none; margin:0; padding-left:4px;">
-                        <div class="loc-text-col" style="text-align:left;">
+                        class="location-name-btn">
+                        <div class="loc-text-col text-left">
                             <span class="current-location-name">Florianópolis</span>
-                            <span class="elevation-display" style="font-size:0.7em; opacity:0.6;">--m</span>
+                            <span class="elevation-display location-subtitle">--m</span>
                         </div>
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2" style="margin-left:6px; opacity:0.5;">
+                            stroke-width="2" class="location-chevron">
                             <polyline points="6 9 12 15 18 9"></polyline>
                         </svg>
                     </button>
                 </div>
 
                 <!-- Dropdown Menu -->
-                <div class="dropdown-menu" style="display:none; right:0; left:auto;">
+                <div class="dropdown-menu dropdown-menu-right">
                     <!-- JS Injected Content -->
                 </div>
             </div>
@@ -459,7 +459,7 @@
 
         <!-- Weekly Heatmap -->
         <div
-            style="background:var(--card-bg); border-radius:12px; padding:15px; margin-bottom:20px; border:1px solid var(--border-color);">
+            class="forecast-card">
             <h3 class="h3-title">
                 Forecast Heatmap</h3>
             <div style="overflow-x:auto;">
@@ -468,30 +468,29 @@
                 </div>
             </div>
             <!-- Legend -->
-            <div class="legend-container" id="legend-container-16"
-                style="display:flex; justify-content:center; gap:8px; margin-top:10px; font-size:0.75rem; color:var(--text-secondary); align-items:center; flex-wrap:wrap;">
+            <div class="legend-container heatmap-legend" id="legend-container-16">
                 <!-- JS Injected -->
             </div>
         </div>
 
         <!-- Trend Chart -->
         <div
-            style="background:var(--card-bg); border-radius:12px; padding:15px; margin-bottom:20px; border:1px solid var(--border-color);">
+            class="forecast-card">
             <div onclick="toggleTempChart()"
-                style="display:flex; align-items:center; justify-content:space-between; cursor:pointer;">
-                <h3 class="h3-title" style="margin-bottom:0;">
+                class="chart-toggle-header">
+                <h3 class="h3-title table-heading-no-margin">
                     Temperature & Dew Point</h3>
-                <span id="temp-toggle-icon" style="transition:transform 0.2s; color:var(--text-secondary);">▼</span>
+                <span id="temp-toggle-icon" class="chart-toggle-icon">▼</span>
             </div>
 
-            <div id="temp-chart-wrapper" style="margin-top:20px; transition:all 0.3s ease-out; overflow:hidden;">
+            <div id="temp-chart-wrapper" class="chart-wrapper">
                 <div id="forecast-chart-container-16" class="chart-box">
                     <!-- JS Injected SVG -->
-                    <div style="text-align:center; color:var(--text-secondary); font-size:0.8rem; padding-top:60px;">
+                    <div class="chart-placeholder">
                         Loading
                         Chart...</div>
                 </div>
-                <div style="display:flex; justify-content:center; gap:16px; margin-top:10px; font-size:0.75rem;">
+                <div class="chart-legend">
                     <div style="color:#f87171; display:flex; align-items:center; gap:4px;"><span
                             style="width:8px; height:8px; border-radius:50%; background:#f87171;"></span> Temp</div>
                     <div style="color:#60a5fa; display:flex; align-items:center; gap:4px;"><span
@@ -503,22 +502,22 @@
 
         <!-- Rain Chart -->
         <div
-            style="background:var(--card-bg); border-radius:12px; padding:15px; margin-bottom:20px; border:1px solid var(--border-color);">
+            class="forecast-card">
             <div onclick="toggleRainChart()"
-                style="display:flex; align-items:center; justify-content:space-between; cursor:pointer;">
-                <h3 class="h3-title" style="margin-bottom:0;">
+                class="chart-toggle-header">
+                <h3 class="h3-title table-heading-no-margin">
                     Precipitation</h3>
-                <span id="rain-toggle-icon" style="transition:transform 0.2s; color:var(--text-secondary);">▼</span>
+                <span id="rain-toggle-icon" class="chart-toggle-icon">▼</span>
             </div>
 
-            <div id="rain-chart-wrapper" style="margin-top:20px; transition:all 0.3s ease-out; overflow:hidden;">
+            <div id="rain-chart-wrapper" class="chart-wrapper">
                 <div id="forecast-rain-chart-container-16" class="chart-box">
                     <!-- JS Injected SVG -->
-                    <div style="text-align:center; color:var(--text-secondary); font-size:0.8rem; padding-top:60px;">
+                    <div class="chart-placeholder">
                         Loading
                         Chart...</div>
                 </div>
-                <div style="display:flex; justify-content:center; gap:16px; margin-top:10px; font-size:0.75rem;">
+                <div class="chart-legend">
                     <div style="color:#60a5fa; display:flex; align-items:center; gap:4px;"><span
                             style="width:8px; height:8px; background:#60a5fa;"></span> Rain (mm)</div>
                     <div style="color:#93c5fd; display:flex; align-items:center; gap:4px;"><span
@@ -529,22 +528,22 @@
 
         <!-- Wind Chart -->
         <div
-            style="background:var(--card-bg); border-radius:12px; padding:15px; margin-bottom:20px; border:1px solid var(--border-color);">
+            class="forecast-card">
             <div onclick="toggleWindChart()"
-                style="display:flex; align-items:center; justify-content:space-between; cursor:pointer;">
-                <h3 class="h3-title" style="margin-bottom:0;">
+                class="chart-toggle-header">
+                <h3 class="h3-title table-heading-no-margin">
                     Wind Speed</h3>
-                <span id="wind-toggle-icon" style="transition:transform 0.2s; color:var(--text-secondary);">▼</span>
+                <span id="wind-toggle-icon" class="chart-toggle-icon">▼</span>
             </div>
 
-            <div id="wind-chart-wrapper" style="margin-top:20px; transition:all 0.3s ease-out; overflow:hidden;">
+            <div id="wind-chart-wrapper" class="chart-wrapper">
                 <div id="forecast-wind-chart-container-16" class="chart-box">
                     <!-- JS Injected SVG -->
-                    <div style="text-align:center; color:var(--text-secondary); font-size:0.8rem; padding-top:60px;">
+                    <div class="chart-placeholder">
                         Loading
                         Chart...</div>
                 </div>
-                <div style="display:flex; justify-content:center; gap:16px; margin-top:10px; font-size:0.75rem;">
+                <div class="chart-legend">
                     <div style="color:#c084fc; display:flex; align-items:center; gap:4px;"><span
                             style="width:8px; height:2px; background:#c084fc;"></span> Wind (km/h)</div>
                 </div>
@@ -601,11 +600,11 @@
         <div class="header">
             <div class="header-left">
                 <h1>Climate Analysis</h1>
-                <div class="subtitle" style="display:flex; align-items:center;">
+                <div class="subtitle flex-center">
                     Historical Trends
                     <span
                         onclick="window.showInfoTooltip(event, '', 'Analysis based on the last 6 years of historical weather data from Open-Meteo.')"
-                        style="cursor:pointer; opacity:0.5; margin-left:4px; display:inline-flex; vertical-align:middle;">
+                        class="fav-star-btn">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2">
                             <circle cx="12" cy="12" r="10"></circle>
@@ -618,10 +617,10 @@
             <!-- Location Group -->
             <div class="location-group" style="position:relative;">
                 <div
-                    style="display:flex; align-items:center; background:var(--input-bg); border:1px solid var(--border-color); border-radius:8px; padding:2px 8px 2px 4px;">
+                    class="location-search-btn">
                     <!-- Star Button -->
                     <button onclick="toggleLocationFavorite()" class="icon-btn btn-favorite" title="Toggle Favorite"
-                        style="padding:6px; color:var(--text-secondary);">
+                        class="location-search-icon">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2">
                             <polygon
@@ -632,27 +631,27 @@
 
                     <!-- Location Dropdown Trigger -->
                     <button class="location-btn" onclick="toggleLocationDropdown(this)" aria-label="Change Location"
-                        style="background:transparent; border:none; margin:0; padding-left:4px;">
-                        <div class="loc-text-col" style="text-align:left;">
+                        class="location-name-btn">
+                        <div class="loc-text-col text-left">
                             <span class="current-location-name">Florianópolis</span>
-                            <span class="elevation-display" style="font-size:0.7em; opacity:0.6;">--m</span>
+                            <span class="elevation-display location-subtitle">--m</span>
                         </div>
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2" style="margin-left:6px; opacity:0.5;">
+                            stroke-width="2" class="location-chevron">
                             <polyline points="6 9 12 15 18 9"></polyline>
                         </svg>
                     </button>
                 </div>
 
                 <!-- Dropdown Menu -->
-                <div class="dropdown-menu" style="display:none; right:0; left:auto;">
+                <div class="dropdown-menu dropdown-menu-right">
                     <!-- JS Injected Content -->
                 </div>
             </div>
         </div>
 
         <div
-            style="background:var(--card-bg); border-radius:12px; padding:15px; margin-bottom:20px; border:1px solid var(--border-color); overflow-x:auto;">
+            class="forecast-card" style="overflow-x:auto;">
             <h3 style="margin-top:0; margin-bottom:15px; font-size:1rem; font-weight:600; color:var(--text-primary);">
                 Seasonal Heat Impact
             </h3>
@@ -671,7 +670,7 @@
                 </div>
 
                 <div id="climate-legend-container"
-                    style="display:flex; justify-content:center; gap:8px; margin-top:10px; font-size:0.75rem; color:var(--text-secondary); align-items:center; flex-wrap:wrap;">
+                    class="heatmap-legend">
                     <!-- JS Injected -->
                 </div>
             </div>
@@ -679,13 +678,13 @@
 
         <!-- Monthly Averages Card -->
         <div
-            style="background:var(--card-bg); border-radius:12px; padding:15px; margin-bottom:20px; border:1px solid var(--border-color);">
+            class="forecast-card">
             <div onclick="window.toggleMonthlyAverages()"
-                style="display:flex; align-items:center; justify-content:space-between; cursor:pointer;">
+                class="chart-toggle-header">
                 <h3 style="margin:0; font-size:1rem; font-weight:600; color:var(--text-primary);">
                     Monthly Averages
                 </h3>
-                <span id="monthly-toggle-icon" style="transition:transform 0.2s; color:var(--text-secondary);">▼</span>
+                <span id="monthly-toggle-icon" class="chart-toggle-icon">▼</span>
             </div>
 
             <div id="monthly-averages-wrapper" style="margin-top:15px; transition:all 0.3s ease-out; overflow:hidden;">

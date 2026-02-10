@@ -2203,6 +2203,7 @@ select.modern-input {
 
 /* Drops & Menus */
 .dropdown-menu {
+    display: none;
     position: absolute;
     top: 100%;
     left: 0;
@@ -2392,4 +2393,140 @@ select.modern-input {
 .monthly-row:hover {
     transform: translateX(2px);
     background: rgba(255, 255, 255, 0.03) !important;
+}
+
+/* ===== Phase 3: Extracted Inline Styles ===== */
+
+.forecast-card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 20px;
+    border: 1px solid var(--border-color);
+}
+
+.chart-toggle-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+}
+
+.chart-toggle-icon {
+    transition: transform 0.2s;
+    color: var(--text-secondary);
+}
+
+.chart-wrapper {
+    margin-top: 20px;
+    transition: all 0.3s ease-out;
+    overflow: hidden;
+}
+
+.chart-placeholder {
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    padding-top: 60px;
+}
+
+.chart-legend {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 10px;
+    font-size: 0.75rem;
+}
+
+.flex-center {
+    display: flex;
+    align-items: center;
+}
+
+.location-search-btn {
+    display: flex;
+    align-items: center;
+    background: var(--input-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 2px 8px 2px 4px;
+}
+
+.location-search-icon {
+    padding: 6px;
+    color: var(--text-secondary);
+}
+
+.location-name-btn {
+    background: transparent;
+    border: none;
+    margin: 0;
+    padding-left: 4px;
+}
+
+.location-subtitle {
+    font-size: 0.7em;
+    opacity: 0.6;
+}
+
+.fav-star-btn {
+    cursor: pointer;
+    opacity: 0.5;
+    margin-left: 4px;
+    display: inline-flex;
+    vertical-align: middle;
+}
+
+.dropdown-menu-right {
+    display: none;
+    right: 0;
+    left: auto;
+}
+
+.heatmap-legend {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 10px;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.table-heading-no-margin {
+    margin-bottom: 0;
+}
+
+.section-header-flex {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.legend-dot {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.legend-dot-circle {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.legend-dot-line {
+    width: 8px;
+    height: 2px;
+}
+
+.text-left {
+    text-align: left;
+}
+
+.location-chevron {
+    margin-left: 6px;
+    opacity: 0.5;
 }

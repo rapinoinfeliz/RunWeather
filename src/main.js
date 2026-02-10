@@ -6,6 +6,8 @@ import { HAP_GRID } from '../data/hap_grid.js'; // Import data module
 
 import * as UI from './modules/ui.js';
 import { loadFromStorage, saveToStorage } from './modules/storage.js';
+import { formatTimeInput, handleTimeInput, setupFineTuning, saveCalcState } from './modules/inputs.js';
+import { initSettings, loadSavedSettings } from './modules/settings.js';
 
 console.log("Main JS Starting... v1.0.16");
 
@@ -107,25 +109,10 @@ async function init() {
     // Attach Window Helpers (Tooltips, specific onclicks)
     UI.setupWindowHelpers();
 
-    // Auto-format time inputs on blur (e.g., "1920" -> "19:20")
-    const formatTimeInput = (el) => {
-        if (!el) return;
-        el.addEventListener('blur', () => {
-            let val = el.value.replace(/[^0-9]/g, ''); // Remove all non-digits
-            if (val.length === 0) return;
-            // Pad to at least 3 digits for proper parsing
-            if (val.length === 1) val = '0' + val; // "5" -> "05" (5 seconds)
-            if (val.length === 2) val = '0' + val; // "30" -> "030" (30 seconds)
-            // Now split: last 2 are seconds, rest are minutes
-            const secs = val.slice(-2);
-            const mins = val.slice(0, -2) || '0';
-            el.value = `${parseInt(mins, 10)}:${secs}`;
-        });
-    };
+    // Auto-format time inputs on blur
     formatTimeInput(els.time);
     formatTimeInput(els.inputPace);
 
-    // Attach Event Listeners
     // Initialize Pace View State
     window.pace_view = { heat: false, headwind: false, tailwind: false, altitude: false };
 
@@ -140,7 +127,6 @@ async function init() {
         }
 
         if (windCard) {
-            // Active if either headwind or tailwind is enabled (they are synced now)
             if (window.pace_view.headwind || window.pace_view.tailwind) windCard.classList.add('active');
             else windCard.classList.remove('active');
         }
@@ -201,324 +187,26 @@ async function init() {
                 }
             }
             UI.update(els, window.hapCalc);
-            saveCalcState();
+            saveCalcState(els);
         });
     });
 
-    // --- Auto-Save Helper ---
-    const saveCalcState = () => {
-        const state = {
-            distance: els.distance ? els.distance.value : '',
-            time: els.time ? els.time.value : ''
-        };
-        saveToStorage('vdot_calc_state', state);
-    };
+    // Fine-Tuning (arrow key acceleration)
+    setupFineTuning(els.time, 'time', els, UI.update);
+    setupFineTuning(els.inputPace, 'time', els, UI.update);
+    setupFineTuning(els.distance, 'dist', els, UI.update);
 
-    // --- Fine-Tuning Helpers ---
-    // Inline robust parsers to avoid import issues
-    const localParseTime = (str) => {
-        if (!str) return 0;
-        str = str.toString().trim();
-        if (str === '' || str === '--:--') return 0;
-        const parts = str.split(':').map(Number);
-        if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
-            return parts[0] * 60 + parts[1];
-        }
-        if (parts.length === 3) {
-            return parts[0] * 3600 + parts[1] * 60 + parts[2];
-        }
-        // Fallback to just digits
-        const digits = str.replace(/[^0-9]/g, '');
-        if (!digits) return 0;
-        if (digits.length <= 2) return parseInt(digits, 10);
-        const s = parseInt(digits.slice(-2), 10);
-        const m = parseInt(digits.slice(0, -2), 10);
-        return m * 60 + s;
-    };
+    // Settings Modal
+    initSettings(els, UI.update);
 
-    const localFormatTime = (sec) => {
-        if (isNaN(sec) || sec < 0) return "0:00";
-        let m = Math.floor(sec / 60);
-        let s = Math.round(sec % 60);
-        if (s === 60) { m++; s = 0; }
-        return `${m}:${s.toString().padStart(2, '0')}`;
-    };
-
-    const adjustTime = (valStr, deltaSec) => {
-        const sec = localParseTime(valStr);
-        let newSec = sec + deltaSec;
-        if (newSec < 0) newSec = 0;
-        return localFormatTime(newSec);
-    };
-
-    const adjustDistance = (valStr, deltaMeters) => {
-        let val = parseFloat(valStr) || 0;
-        let newVal = val + deltaMeters;
-        if (newVal < 0) newVal = 0;
-        return newVal; // Return number, input type number handles it
-    };
-
-    const setupFineTuning = (el, type) => {
-        if (!el) return;
-
-        // Acceleration State
-        let repeatCount = 0;
-        let lastKey = null;
-
-        el.addEventListener('keyup', (e) => {
-            repeatCount = 0;
-            lastKey = null;
-        });
-
-        el.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
-                e.preventDefault();
-
-                // Track Repeats for Acceleration
-                if (lastKey === e.key) {
-                    repeatCount++;
-                } else {
-                    repeatCount = 0;
-                    lastKey = e.key;
-                }
-
-                const isUp = e.key === 'ArrowUp';
-                const dir = isUp ? 1 : -1;
-
-                if (type === 'time') {
-                    // Time Acceleration (Optional, but nice consistency)
-                    // Default: 1s. Turbo: 10s. Shift: 10s.
-                    // Let's keep it simple for time as requested: 1s default. Shift 10s.
-                    // Maybe add light acceleration? 
-                    // Let's stick to the requested Distance logic first, but consistent turbo valid.
-                    const turbo = e.shiftKey ? 10 : 1;
-                    el.value = adjustTime(el.value, dir * turbo);
-                } else if (type === 'dist') {
-                    // Distance Acceleration
-                    // Base: 1m
-                    // Shift: 100m (Instant Turbo)
-                    // Acceleration (Holding Key):
-                    // < 5 repeats: 1m
-                    // 5-20 repeats: 10m
-                    // > 20 repeats: 100m
-
-                    let step = 1;
-                    if (e.shiftKey) {
-                        step = 100;
-                    } else {
-                        if (repeatCount > 20) step = 100;
-                        else if (repeatCount > 5) step = 10;
-                        else step = 1;
-                    }
-
-                    el.value = adjustDistance(el.value, dir * step);
-                }
-
-                // Trigger standard input event so auto-select logic works
-                // This input listener ALREADY calls UI.update and saveCalcState (see inputs.forEach listener)
-                el.dispatchEvent(new Event('input'));
-
-                // Specific Input Logic (Calculated fields)
-                if (el === els.time) {
-                    // Update Pace from Time/Dist
-                    const tSec = localParseTime(els.time.value);
-                    const d = parseFloat(els.distance.value);
-                    if (tSec > 0 && d > 0 && els.inputPace) {
-                        const pacePerKm = tSec / (d / 1000);
-                        els.inputPace.value = localFormatTime(pacePerKm);
-                    }
-                } else if (el === els.inputPace) {
-                    // Update Time from Pace/Dist
-                    const p = localParseTime(els.inputPace.value);
-                    const dStr = els.distance.value;
-                    if (p > 0 && dStr) {
-                        const d = parseFloat(dStr);
-                        const tSec = (d / 1000.0) * p;
-                        els.time.value = localFormatTime(tSec);
-                        UI.update(els, window.hapCalc); // Update again with new time
-                    }
-                } else if (el === els.distance) {
-                    // Update pace based on new distance (keeping time constant)
-                    const tSec = localParseTime(els.time.value);
-                    const d = parseFloat(els.distance.value);
-                    if (tSec > 0 && d > 0 && els.inputPace) {
-                        const pacePerKm = tSec / (d / 1000);
-                        els.inputPace.value = localFormatTime(pacePerKm);
-                    }
-                }
-            }
-        });
-    };
-
-    setupFineTuning(els.time, 'time');
-    setupFineTuning(els.inputPace, 'time'); // Treated same as time (MM:SS)
-    setupFineTuning(els.distance, 'dist');
-    const savedUnitSystem = loadFromStorage('unit_system');
-    window.unitSystem = savedUnitSystem || 'metric';
-
-    // Settings Button Logic (Modal)
-    const settingsModal = document.getElementById('settings-modal');
-    if (els.btnSettings && settingsModal) {
-        const closeBtn = document.getElementById('close-settings');
-        const saveBtn = document.getElementById('save-settings');
-        const weightInput = document.getElementById('runner-weight');
-        const ageInput = document.getElementById('runner-age'); // New
-        const genderInput = document.getElementById('runner-gender'); // New
-        const altitudeInput = document.getElementById('base-altitude'); // Altitude
-        const radios = document.getElementsByName('unit-system');
-
-        const closeSettings = () => {
-            settingsModal.classList.remove('open');
-            settingsModal.style.removeProperty('display');
-        };
-
-        const openSettings = () => {
-            // 1. Set Weight
-            if (weightInput) {
-                // Convert stored KG to LBS if in Imperial
-                let val = window.runnerWeight || 65;
-                if (window.unitSystem === 'imperial') {
-                    val = val * 2.20462;
-                    val = Math.round(val * 10) / 10;
-                }
-                weightInput.value = val;
-            }
-
-            // 2. Set Age/Gender
-            if (ageInput) ageInput.value = window.runnerAge || '';
-            if (genderInput) genderInput.value = window.runnerGender || '';
-
-            // 3. Set Base Altitude
-            if (altitudeInput) altitudeInput.value = window.baseAltitude || 0;
-
-            // 4. Set Radio
-            const currentSystem = window.unitSystem || 'metric';
-            for (const radio of radios) {
-                if (radio.value === currentSystem) radio.checked = true;
-            }
-
-            settingsModal.classList.add('open');
-            settingsModal.style.display = 'flex';
-        };
-
-        const saveSettings = () => {
-            // 1. Unit System
-            let newSystem = 'metric';
-            for (const radio of radios) {
-                if (radio.checked) newSystem = radio.value;
-            }
-
-            // Check if system changed
-            const systemChanged = newSystem !== window.unitSystem;
-            window.unitSystem = newSystem;
-            saveToStorage('unit_system', newSystem);
-
-            // 2. Weight
-            const val = parseFloat(weightInput.value);
-            if (!isNaN(val) && val > 0) {
-                let weightKg = val;
-                if (newSystem === 'imperial') {
-                    // Input was lbs, convert to kg for storage
-                    weightKg = val / 2.20462;
-                }
-
-                window.runnerWeight = weightKg;
-                saveToStorage('runner_weight', weightKg);
-
-                // 3. Age & Gender
-                if (ageInput) {
-                    const age = parseInt(ageInput.value);
-                    if (!isNaN(age) && age > 0) {
-                        window.runnerAge = age;
-                        saveToStorage('runner_age', age);
-                    } else {
-                        window.runnerAge = null;
-                        saveToStorage('runner_age', null);
-                    }
-                }
-
-                if (genderInput) {
-                    const gender = genderInput.value;
-                    if (gender) {
-                        window.runnerGender = gender;
-                        saveToStorage('runner_gender', gender);
-                    } else {
-                        window.runnerGender = null;
-                        saveToStorage('runner_gender', null);
-                    }
-                }
-
-                // 4. Base Altitude
-                if (altitudeInput) {
-                    const alt = parseInt(altitudeInput.value) || 0;
-                    window.baseAltitude = alt;
-                    saveToStorage('base_altitude', alt);
-                }
-
-                UI.update(els, window.hapCalc);
-                closeSettings();
-
-            } else {
-                alert("Please enter a valid weight.");
-            }
-        };
-
-        els.btnSettings.addEventListener('click', openSettings);
-
-        if (closeBtn) closeBtn.addEventListener('click', closeSettings);
-        if (saveBtn) saveBtn.addEventListener('click', saveSettings);
-
-        // Click outside to close
-        settingsModal.addEventListener('click', (e) => {
-            if (e.target === settingsModal) closeSettings();
-        });
-
-        // Dynamic Label Updates on Radio Change
-        radios.forEach(r => {
-            r.addEventListener('change', () => {
-                const lbl = document.querySelector('label[for="runner-weight"]');
-                if (lbl) {
-                    lbl.textContent = `Runner Weight (${r.value === 'imperial' ? 'lbs' : 'kg'})`;
-                }
-                if (weightInput.value) {
-                    let v = parseFloat(weightInput.value);
-                    if (!isNaN(v)) {
-                        if (r.value === 'imperial') {
-                            v = v * 2.20462;
-                        } else {
-                            v = v / 2.20462;
-                        }
-                        weightInput.value = Math.round(v * 10) / 10;
-                    }
-                }
-            });
-        });
-    }
-
-    // Load Weight on Init
-    const savedWeight = loadFromStorage('runner_weight');
-    if (savedWeight) {
-        window.runnerWeight = parseFloat(savedWeight);
-    } else {
-        window.runnerWeight = 65; // Default
-    }
-
-    // Load Age/Gender on Init
-    const savedAge = loadFromStorage('runner_age');
-    if (savedAge) window.runnerAge = parseInt(savedAge);
-
-    const savedGender = loadFromStorage('runner_gender');
-    if (savedGender) window.runnerGender = savedGender;
-
-    // Load Base Altitude on Init
-    const savedAltitude = loadFromStorage('base_altitude');
-    window.baseAltitude = savedAltitude ? parseInt(savedAltitude) : 0;
+    // Load saved settings (weight, age, gender, altitude, units)
+    loadSavedSettings();
 
     // Time Input: Calculate Pace from Time + Distance
     if (els.time) {
         els.time.addEventListener('input', () => {
             UI.update(els, window.hapCalc);
-            saveCalcState();
+            saveCalcState(els);
             // Also update Pace field if distance is set
             const tSec = parseTime(els.time.value);
             const d = parseFloat(els.distance.value);
@@ -529,16 +217,7 @@ async function init() {
         });
     }
 
-    // Time Input Formatting (numeric keypad support)
-    const handleTimeInput = (e) => {
-        let val = e.target.value.replace(/\D/g, ''); // Remove non-digits
-        if (val.length > 4) val = val.slice(0, 4); // Max 4 digits (MMSS)
-
-        if (val.length >= 3) {
-            val = val.slice(0, val.length - 2) + ':' + val.slice(val.length - 2);
-        }
-        e.target.value = val;
-    };
+    // Time Input Formatting (numeric keypad support) — imported from inputs.js
 
     if (els.inputPace) {
         els.inputPace.oninput = (e) => {
@@ -564,7 +243,7 @@ async function init() {
             if (val !== 'custom') {
                 els.distance.value = val;
                 UI.update(els, window.hapCalc);
-                saveCalcState();
+                saveCalcState(els);
             }
         });
     }
@@ -590,7 +269,7 @@ async function init() {
                 const tSec = (d / 1000.0) * p;
                 els.time.value = formatTime(tSec);
                 UI.update(els, window.hapCalc);
-                saveCalcState();
+                saveCalcState(els);
             }
         });
     }
