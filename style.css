@@ -313,7 +313,7 @@ h1 {
     position: relative;
     width: 100px;
     height: 55px;
-    margin-top: -4px;
+    margin-top: -12px;
 }
 
 .vdot-gauge-svg {
@@ -343,7 +343,7 @@ h1 {
 
 .vdot-gauge-value {
     position: absolute;
-    bottom: 0;
+    bottom: 4px;
     left: 50%;
     transform: translateX(-50%);
     font-size: 1.6rem;
@@ -354,7 +354,7 @@ h1 {
 
 .vdot-gauge-label {
     position: absolute;
-    bottom: -14px;
+    bottom: -10px;
     left: 50%;
     transform: translateX(-50%);
     font-size: 0.55rem;
