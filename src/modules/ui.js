@@ -344,9 +344,11 @@ export function toggleForeSelection(isoTime, e) {
     renderAllForecasts();
 }
 
-export function toggleVDOTDetails() {
+export function toggleVDOTDetails(e) {
     const el = document.getElementById('vdot-details');
     if (!el) return;
+    // If click originated from within the details panel, don't toggle
+    if (e && e.target && el.contains(e.target)) return;
     if (el.style.display === 'none') {
         el.style.display = 'block';
         renderVDOTDetails();

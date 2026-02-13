@@ -437,7 +437,7 @@ function setupGlobalEvents() {
                 UI.useGPS();
                 break;
             case 'vdot-details':
-                UI.toggleVDOTDetails();
+                UI.toggleVDOTDetails(e);
                 break;
             case 'insight-range':
                 UI.setBestRunRange(target.dataset.range, e);

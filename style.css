@@ -1781,7 +1781,7 @@ select.modern-input {
     position: relative;
     display: flex;
     align-items: center;
-    margin-top: 8px;
+    margin-top: 6px;
 }
 
 .settings-input {
@@ -1789,11 +1789,18 @@ select.modern-input {
     background: rgba(0, 0, 0, 0.3);
     border: 1px solid var(--border-color);
     border-radius: 8px;
-    padding: 12px 40px 12px 12px;
-    /* Space for kg unit */
-    font-size: 1rem;
+    padding: 10px 36px 10px 12px;
+    font-size: 0.95rem;
     color: #fff;
     transition: all 0.2s ease;
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+.settings-input::-webkit-inner-spin-button,
+.settings-input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
 }
 
 .settings-input:focus {
@@ -1802,21 +1809,47 @@ select.modern-input {
     box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.15);
 }
 
+select.settings-input {
+    padding-right: 12px;
+    cursor: pointer;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238b949e' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+}
+
 .unit-suffix {
     position: absolute;
     right: 12px;
     color: var(--text-secondary);
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     pointer-events: none;
 }
 
 .settings-label {
-    font-size: 0.95rem;
+    font-size: 0.85rem;
     font-weight: 500;
     color: var(--text-primary);
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
+}
+
+.settings-label svg {
+    opacity: 0.6;
+}
+
+.settings-section-label {
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .settings-helper {

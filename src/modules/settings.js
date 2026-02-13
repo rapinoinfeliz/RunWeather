@@ -13,6 +13,7 @@ export function initSettings(els, updateFn) {
     const closeBtn = document.getElementById('close-settings');
     const saveBtn = document.getElementById('save-settings');
     const weightInput = document.getElementById('runner-weight');
+    const heightInput = document.getElementById('runner-height');
     const ageInput = document.getElementById('runner-age');
     const genderInput = document.getElementById('runner-gender');
     const altitudeInput = document.getElementById('base-altitude');
@@ -32,6 +33,11 @@ export function initSettings(els, updateFn) {
                 val = Math.round(val * 10) / 10;
             }
             weightInput.value = val;
+        }
+
+        // 1b. Set Height
+        if (heightInput) {
+            heightInput.value = window.runnerHeight || '';
         }
 
         // 2. Set Age/Gender
@@ -72,6 +78,18 @@ export function initSettings(els, updateFn) {
 
             window.runnerWeight = weightKg;
             saveToStorage('runner_weight', weightKg);
+
+            // 2b. Height
+            if (heightInput) {
+                const h = parseInt(heightInput.value);
+                if (!isNaN(h) && h > 0) {
+                    window.runnerHeight = h;
+                    saveToStorage('runner_height', h);
+                } else {
+                    window.runnerHeight = null;
+                    saveToStorage('runner_height', null);
+                }
+            }
 
             // 3. Age & Gender
             if (ageInput) {
@@ -154,6 +172,10 @@ export function loadSavedSettings() {
     // Weight
     const savedWeight = loadFromStorage('runner_weight');
     window.runnerWeight = savedWeight ? parseFloat(savedWeight) : 65;
+
+    // Height
+    const savedHeight = loadFromStorage('runner_height');
+    window.runnerHeight = savedHeight ? parseInt(savedHeight) : null;
 
     // Age & Gender
     const savedAge = loadFromStorage('runner_age');
