@@ -3,6 +3,7 @@ import { getImpactColor, getImpactCategory, getBasePaceSec } from './utils.js';
 import { getISOWeek } from '../core.js';
 import { renderClimateTable } from './tables.js';
 import { renderMonthlyAverages } from './climate.js';
+import { AppState } from '../appState.js';
 
 export function renderForecastHeatmap(contId, legSelector, dayLimit) {
     const cont = document.getElementById(contId);
@@ -77,8 +78,8 @@ export function renderForecastHeatmap(contId, legSelector, dayLimit) {
                 let color = 'var(--card-bg)';
                 let category = 'Ideal';
 
-                if (d.temp != null && d.dew != null && window.hapCalc) {
-                    const adjPace = window.hapCalc.calculatePaceInHeat(baseSec, d.temp, d.dew);
+                if (d.temp != null && d.dew != null && AppState.hapCalc) {
+                    const adjPace = AppState.hapCalc.calculatePaceInHeat(baseSec, d.temp, d.dew);
                     pct = ((adjPace - baseSec) / baseSec) * 100;
                     color = getImpactColor(pct);
                     category = getImpactCategory(pct);
@@ -196,7 +197,7 @@ export function renderClimateHeatmap(data) {
     if (!container) return;
 
     // Use passed data, or module state, or window fallback
-    const rawData = data || UIState.climateData || window.climateData;
+    const rawData = data || UIState.climateData;
 
     if (!rawData || !Array.isArray(rawData) || rawData.length === 0) {
         // Only warn if we actually expected data (e.g. not just initial load)
@@ -278,8 +279,8 @@ export function renderClimateHeatmap(data) {
             let stroke = '';
 
             // Dimming Logic (Filter by Selection)
-            if (window.selectedClimateKey) {
-                const [sw, sh] = window.selectedClimateKey.split('-').map(Number);
+            if (UIState.selectedClimateKey) {
+                const [sw, sh] = UIState.selectedClimateKey.split('-').map(Number);
                 if (sw !== w || sh !== h) opacity = '0.1';
             } else if (UIState.climateImpactFilter !== null) {
                 // If filter is active, check data
@@ -311,7 +312,7 @@ export function renderClimateHeatmap(data) {
                 // Highlight Current Time
                 if (w === curW && h === curH) {
                     stroke = 'stroke="#3b82f6" stroke-width="2" paint-order="stroke"';
-                } else if (window.selectedClimateKey === `${w}-${h}`) {
+                } else if (UIState.selectedClimateKey === `${w}-${h}`) {
                     stroke = 'stroke="#fff" stroke-width="2" paint-order="stroke"';
                 }
 
@@ -319,10 +320,9 @@ export function renderClimateHeatmap(data) {
                 svgInner += `<rect x="${x}" y="${y}" width="${cellW}" height="${cellH}" rx="1"
                         fill="${color}" fill-opacity="${opacity}" ${stroke}
                         style="cursor:pointer; transition: fill-opacity 0.2s;"
-                        onclick="window.toggleClimateFilter(${w}, ${h}, event)"
-                        onmouseenter="window.showClimateTooltip(event, ${w}, ${h}, ${val}, ${pt.mean_temp}, ${pt.mean_dew}, ${pt.count})"
-                        onmousemove="window.moveClimateTooltip(event)"
-                        onmouseleave="window.hideClimateTooltip()"
+                        data-action="climate-cell"
+                        data-week="${w}" data-hour="${h}"
+                        data-impact="${val}" data-temp="${pt.mean_temp}" data-dew="${pt.mean_dew}" data-count="${pt.count}"
                     />`;
 
 
@@ -337,7 +337,7 @@ export function renderClimateHeatmap(data) {
 
     // --- Smooth Night Curve Overlay ---
     try {
-        const lat = (window.locManager && window.locManager.current) ? window.locManager.current.lat : 0;
+        const lat = (AppState.locManager && AppState.locManager.current) ? AppState.locManager.current.lat : 0;
 
         // Calculate points for every week (column center)
         const curvePoints = [];
@@ -430,7 +430,7 @@ export function renderClimateLegend() {
         if (isActive) border = '2px solid #fff';
 
         html += `
-                        <div class="legend-item" onclick="window.filterClimateByImpact('${l.label}', this)" style="cursor:pointer; opacity:${opacity}; transition:all 0.2s;">
+                        <div class="legend-item" data-action="filter-climate-impact" data-label="${l.label}" style="cursor:pointer; opacity:${opacity}; transition:all 0.2s;">
                             <div class="legend-color" style="background-color:${l.color}; border:${border}; box-shadow: ${isActive ? '0 0 8px ' + l.color : 'none'};"></div>
                             <span>${l.label} <span style="font-size:0.75em; opacity:0.7">(${l.sub})</span></span>
                         </div>

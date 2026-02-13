@@ -1,6 +1,7 @@
 import { UIState } from './state.js';
 import { getImpactColor, getImpactCategory } from './utils.js';
 import { loadFromStorage, saveToStorage } from '../storage.js';
+import { AppState } from '../appState.js';
 
 export function renderOverview() {
     // Placeholder if needed
@@ -14,9 +15,9 @@ export function calculateBestRunTime(data) {
     let end;
 
     // Range Logic
-    if (window.selectedBestRunRange === '7d') {
+    if (UIState.selectedBestRunRange === '7d') {
         end = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-    } else if (window.selectedBestRunRange === '14d') {
+    } else if (UIState.selectedBestRunRange === '14d') {
         end = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
     } else {
         // Default 24h
@@ -40,13 +41,13 @@ export function calculateBestRunTime(data) {
     let minImpact = 999;
     let bestHour = null;
 
-    if (!window.hapCalc) {
+    if (!AppState.hapCalc) {
         // console.warn('hapCalc not initialized for best run calculation');
         return;
     }
 
     windowData.forEach((d) => {
-        const adj = window.hapCalc.calculatePaceInHeat(baseSec, d.temp, d.dew);
+        const adj = AppState.hapCalc.calculatePaceInHeat(baseSec, d.temp, d.dew);
         const imp = ((adj - baseSec) / baseSec) * 100;
         if (imp < minImpact) {
             minImpact = imp;
@@ -95,7 +96,7 @@ export function renderMonthlyAverages(data) {
     if (!container) return;
 
     // Use passed data or global
-    const rawData = data || UIState.climateData || window.climateData;
+    const rawData = data || UIState.climateData;
     if (!rawData || !Array.isArray(rawData)) {
         container.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-secondary);">No data available</div>';
         return;
@@ -259,9 +260,9 @@ export function renderMonthlyAverages(data) {
 }
 
 // Remove global type since we don't use toggles anymore
-// window.selectedMonthlyType is no longer needed
+// selectedMonthlyType is no longer needed
 
-window.toggleMonthlyAverages = () => {
+export function toggleMonthlyAverages() {
     const wrap = document.getElementById('monthly-averages-wrapper');
     const icon = document.getElementById('monthly-toggle-icon');
     if (!wrap) return;
@@ -278,4 +279,4 @@ window.toggleMonthlyAverages = () => {
         // Save collapsed state
         saveToStorage('monthly_averages_collapsed', true);
     }
-};
+}

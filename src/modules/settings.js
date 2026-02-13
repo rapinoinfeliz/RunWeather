@@ -1,5 +1,6 @@
 // Settings modal logic extracted from main.js init()
 import { loadFromStorage, saveToStorage } from './storage.js';
+import { AppState } from './appState.js';
 
 /**
  * Initialize the settings modal: open, close, save, and unit radio change handlers.
@@ -27,8 +28,8 @@ export function initSettings(els, updateFn) {
     function openSettings() {
         // 1. Set Weight
         if (weightInput) {
-            let val = window.runnerWeight || 65;
-            if (window.unitSystem === 'imperial') {
+            let val = AppState.runner.weight || 65;
+            if (AppState.unitSystem === 'imperial') {
                 val = val * 2.20462;
                 val = Math.round(val * 10) / 10;
             }
@@ -37,18 +38,18 @@ export function initSettings(els, updateFn) {
 
         // 1b. Set Height
         if (heightInput) {
-            heightInput.value = window.runnerHeight || '';
+            heightInput.value = AppState.runner.height || '';
         }
 
         // 2. Set Age/Gender
-        if (ageInput) ageInput.value = window.runnerAge || '';
-        if (genderInput) genderInput.value = window.runnerGender || '';
+        if (ageInput) ageInput.value = AppState.runner.age || '';
+        if (genderInput) genderInput.value = AppState.runner.gender || '';
 
         // 3. Set Base Altitude
-        if (altitudeInput) altitudeInput.value = window.baseAltitude || 0;
+        if (altitudeInput) altitudeInput.value = AppState.altitude.base || 0;
 
         // 4. Set Radio
-        const currentSystem = window.unitSystem || 'metric';
+        const currentSystem = AppState.unitSystem || 'metric';
         for (const radio of radios) {
             if (radio.value === currentSystem) radio.checked = true;
         }
@@ -64,8 +65,8 @@ export function initSettings(els, updateFn) {
             if (radio.checked) newSystem = radio.value;
         }
 
-        const systemChanged = newSystem !== window.unitSystem;
-        window.unitSystem = newSystem;
+        const systemChanged = newSystem !== AppState.unitSystem;
+        AppState.unitSystem = newSystem;
         saveToStorage('unit_system', newSystem);
 
         // 2. Weight
@@ -76,17 +77,17 @@ export function initSettings(els, updateFn) {
                 weightKg = val / 2.20462;
             }
 
-            window.runnerWeight = weightKg;
+            AppState.runner.weight = weightKg;
             saveToStorage('runner_weight', weightKg);
 
             // 2b. Height
             if (heightInput) {
                 const h = parseInt(heightInput.value);
                 if (!isNaN(h) && h > 0) {
-                    window.runnerHeight = h;
+                    AppState.runner.height = h;
                     saveToStorage('runner_height', h);
                 } else {
-                    window.runnerHeight = null;
+                    AppState.runner.height = null;
                     saveToStorage('runner_height', null);
                 }
             }
@@ -95,10 +96,10 @@ export function initSettings(els, updateFn) {
             if (ageInput) {
                 const age = parseInt(ageInput.value);
                 if (!isNaN(age) && age > 0) {
-                    window.runnerAge = age;
+                    AppState.runner.age = age;
                     saveToStorage('runner_age', age);
                 } else {
-                    window.runnerAge = null;
+                    AppState.runner.age = null;
                     saveToStorage('runner_age', null);
                 }
             }
@@ -106,10 +107,10 @@ export function initSettings(els, updateFn) {
             if (genderInput) {
                 const gender = genderInput.value;
                 if (gender) {
-                    window.runnerGender = gender;
+                    AppState.runner.gender = gender;
                     saveToStorage('runner_gender', gender);
                 } else {
-                    window.runnerGender = null;
+                    AppState.runner.gender = null;
                     saveToStorage('runner_gender', null);
                 }
             }
@@ -117,11 +118,11 @@ export function initSettings(els, updateFn) {
             // 4. Base Altitude
             if (altitudeInput) {
                 const alt = parseInt(altitudeInput.value) || 0;
-                window.baseAltitude = alt;
+                AppState.altitude.base = alt;
                 saveToStorage('base_altitude', alt);
             }
 
-            updateFn(els, window.hapCalc);
+            updateFn(els, AppState.hapCalc);
             closeSettings();
         } else {
             alert("Please enter a valid weight.");
@@ -162,29 +163,29 @@ export function initSettings(els, updateFn) {
 
 /**
  * Load saved user settings (weight, age, gender, altitude, units) from storage
- * and assign to window globals.
+ * and assign to AppState.
  */
 export function loadSavedSettings() {
     // Unit System
     const savedUnitSystem = loadFromStorage('unit_system');
-    window.unitSystem = savedUnitSystem || 'metric';
+    AppState.unitSystem = savedUnitSystem || 'metric';
 
     // Weight
     const savedWeight = loadFromStorage('runner_weight');
-    window.runnerWeight = savedWeight ? parseFloat(savedWeight) : 65;
+    AppState.runner.weight = savedWeight ? parseFloat(savedWeight) : 65;
 
     // Height
     const savedHeight = loadFromStorage('runner_height');
-    window.runnerHeight = savedHeight ? parseInt(savedHeight) : null;
+    AppState.runner.height = savedHeight ? parseInt(savedHeight) : null;
 
     // Age & Gender
     const savedAge = loadFromStorage('runner_age');
-    if (savedAge) window.runnerAge = parseInt(savedAge);
+    if (savedAge) AppState.runner.age = parseInt(savedAge);
 
     const savedGender = loadFromStorage('runner_gender');
-    if (savedGender) window.runnerGender = savedGender;
+    if (savedGender) AppState.runner.gender = savedGender;
 
     // Base Altitude
     const savedAltitude = loadFromStorage('base_altitude');
-    window.baseAltitude = savedAltitude ? parseInt(savedAltitude) : 0;
+    AppState.altitude.base = savedAltitude ? parseInt(savedAltitude) : 0;
 }

@@ -1,11 +1,7 @@
 import { UIState } from './state.js';
 import { renderAllForecasts, renderClimateHeatmap, renderClimateTable, renderClimateLegend, calculateBestRunTime } from './renderers.js';
 import { formatTime } from '../core.js';
-import { getCondColor, showToast } from './utils.js'; // used in handleCellHover maybe?
-
-// Some events might use window.hapCalc?
-// ui.js had it globally available or via module scope if defined.
-// events.js will access window.hapCalc if needed.
+import { getCondColor, showToast } from './utils.js';
 
 export function copyConditions() {
     if (!UIState.currentWeatherData) return;
@@ -100,7 +96,7 @@ export function handleCellHover(e, el) {
                             <span class="tooltip-label">Impact:</span> <span class="tooltip-val" style="color:${color}">${pct}%</span>
                         </div>
                     `;
-    window.showForeTooltip(e, html);
+    showForeTooltip(e, html);
 }
 
 export function sortForecastTable(col) {
@@ -121,7 +117,7 @@ export function toggleImpactFilter(cat) {
 
 export function setBestRunRange(range, event) {
     if (event) event.stopPropagation();
-    window.selectedBestRunRange = range;
+    UIState.selectedBestRunRange = range;
 
     // Update UI
     const btns = document.querySelectorAll('.insight-btn');
@@ -135,7 +131,6 @@ export function setBestRunRange(range, event) {
     const bestTime = calculateBestRunTime(UIState.forecastData);
     if (bestTime) {
         UIState.selectedForeHour = bestTime;
-        window.selectedForeHour = bestTime; // Sync for global listener
         renderAllForecasts(); // Re-render heatmaps to show selection
     }
 }
@@ -161,7 +156,7 @@ export function toggleForeSort(col) {
 }
 
 export function setPaceMode(mode) {
-    window.currentPaceMode = mode;
+    UIState.currentPaceMode = mode;
     // Update Buttons (Sync across both tabs - now just one actually, but safe to keep)
     ['pace-tag-container-16'].forEach(id => {
         const container = document.getElementById(id);
@@ -203,14 +198,14 @@ export function openTab(tabName, btn) {
         tooltip.style.opacity = '0';
         tooltip.style.display = 'none'; // Force hide
     }
-    if (window.hideForeTooltip) window.hideForeTooltip();
+    hideForeTooltip();
 
     // Trigger Chart Render if Forecast/Climate Tab
-    if (tabName === 'climate' && window.renderClimateHeatmap) {
-        setTimeout(window.renderClimateHeatmap, 50);
+    if (tabName === 'climate') {
+        setTimeout(renderClimateHeatmap, 50);
     }
-    if ((tabName === 'forecast' || tabName === 'forecast16') && window.renderAllForecasts) {
-        setTimeout(window.renderAllForecasts, 100);
+    if (tabName === 'forecast' || tabName === 'forecast16') {
+        setTimeout(renderAllForecasts, 100);
     }
 }
 
@@ -220,6 +215,5 @@ export function toggleForeSelection(time, event) {
     } else {
         UIState.selectedForeHour = time;
     }
-    window.selectedForeHour = UIState.selectedForeHour; // Sync for global listener
     renderAllForecasts();
 }

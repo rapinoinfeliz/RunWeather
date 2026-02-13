@@ -1,5 +1,6 @@
 // Input handling helpers extracted from main.js init()
 import { saveToStorage } from './storage.js';
+import { AppState } from './appState.js';
 
 /**
  * Parse a time string (MM:SS or H:MM:SS) into total seconds.
@@ -158,7 +159,7 @@ export function setupFineTuning(el, type, els, updateFn) {
                     const d = parseFloat(dStr);
                     const tSec = (d / 1000.0) * p;
                     els.time.value = localFormatTime(tSec);
-                    updateFn(els, window.hapCalc);
+                    updateFn(els, AppState.hapCalc);
                 }
             } else if (el === els.distance) {
                 const tSec = localParseTime(els.time.value);

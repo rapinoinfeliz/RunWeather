@@ -1,6 +1,7 @@
 import { UIState } from './state.js';
 import { infoIcon, getCondColor, getDewColor } from './utils.js';
 import { calculateWBGT } from '../engine.js';
+import { AppState } from '../appState.js';
 
 export function renderCurrentTab(w, a, prob2h = 0, precip2h = 0, daily, elevation) {
     const container = document.getElementById('current-content');
@@ -61,8 +62,8 @@ export function renderCurrentTab(w, a, prob2h = 0, precip2h = 0, daily, elevatio
 
     // Run Score
     let runScore = 100;
-    if (window.hapCalc) {
-        const res = hapCalc.calculatePaceInHeat(300, w.temperature_2m, w.dew_point_2m);
+    if (AppState.hapCalc) {
+        const res = AppState.hapCalc.calculatePaceInHeat(300, w.temperature_2m, w.dew_point_2m);
         runScore = Math.max(0, Math.round(100 - (res.percentImpact * 12)));
     }
     const getScoreColor = (s) => s >= 90 ? '#4ade80' : s >= 75 ? '#a3e635' : s >= 60 ? '#facc15' : s >= 40 ? '#fb923c' : '#f87171';

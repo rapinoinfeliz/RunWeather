@@ -8,7 +8,7 @@ export { renderForecastChart, renderRainChart, renderWindChart } from './charts.
 export { renderForecastHeatmap, renderClimateHeatmap, renderClimateLegend } from './heatmaps.js';
 export { renderVDOTDetails, renderForecastTable, renderClimateTable } from './tables.js';
 export { renderCurrentTab } from './current.js';
-export { renderOverview, calculateBestRunTime, renderMonthlyAverages } from './climate.js';
+export { renderOverview, calculateBestRunTime, renderMonthlyAverages, toggleMonthlyAverages } from './climate.js';
 
 // --- Imports for orchestrator ---
 import { renderForecastHeatmap } from './heatmaps.js';

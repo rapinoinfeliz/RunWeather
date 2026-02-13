@@ -1,11 +1,12 @@
 
 // UI Module - Reconstructed
 import { HAPCalculator, VDOT_MATH, parseTime, formatTime, getEasyPace, getISOWeek } from './core.js';
-import { calculatePacingState, calculateWBGT } from './engine.js';
+import { calculatePacingState, calculateWBGT, calculateAgeGrade } from './engine.js';
 import { fetchWeatherData, searchCity, fetchIpLocation, reverseGeocode } from './api.js';
 import { saveToStorage, loadFromStorage } from './storage.js';
-import { renderCurrentTab, renderForecastChart, renderRainChart, renderWindChart, renderClimateTable, renderClimateLegend, renderClimateHeatmap, renderForecastHeatmap, renderForecastTable, renderVDOTDetails, renderAllForecasts, renderOverview, calculateBestRunTime, renderMonthlyAverages } from './ui/renderers.js';
-export { renderCurrentTab, renderForecastChart, renderRainChart, renderWindChart, renderClimateTable, renderClimateLegend, renderClimateHeatmap, renderForecastHeatmap, renderForecastTable, renderVDOTDetails, renderAllForecasts, renderOverview, calculateBestRunTime, renderMonthlyAverages };
+import { AppState } from './appState.js';
+import { renderCurrentTab, renderForecastChart, renderRainChart, renderWindChart, renderClimateTable, renderClimateLegend, renderClimateHeatmap, renderForecastHeatmap, renderForecastTable, renderVDOTDetails, renderAllForecasts, renderOverview, calculateBestRunTime, renderMonthlyAverages, toggleMonthlyAverages } from './ui/renderers.js';
+export { renderCurrentTab, renderForecastChart, renderRainChart, renderWindChart, renderClimateTable, renderClimateLegend, renderClimateHeatmap, renderForecastHeatmap, renderForecastTable, renderVDOTDetails, renderAllForecasts, renderOverview, calculateBestRunTime, renderMonthlyAverages, toggleMonthlyAverages };
 import { UIState } from './ui/state.js';
 export { UIState };
 import { infoIcon, getImpactColor, getDewColor, getCondColor, getImpactCategory, getBasePaceSec, getDateFromWeek, animateValue, showToast } from './ui/utils.js';
@@ -14,14 +15,9 @@ import { openTab, setPaceMode, toggleForeSort, setBestRunRange, toggleImpactFilt
 export { openTab, setPaceMode, toggleForeSort, setBestRunRange, toggleImpactFilter, copyConditions, sortForecastTable, handleCellHover, showForeTooltip, moveForeTooltip, hideForeTooltip };
 import { initRipple } from './ui/effects.js';
 
-// Legacy Window Bindings for HTML Event Handlers
-window.openTab = openTab;
-window.setPaceMode = setPaceMode;
-window.toggleForeSort = toggleForeSort;
-window.setBestRunRange = setBestRunRange;
 
-
-window.toggleTempChart = () => {
+// --- Chart Toggle Functions ---
+export function toggleTempChart() {
     const wrapper = document.getElementById('temp-chart-wrapper');
     const icon = document.getElementById('temp-toggle-icon');
     if (!wrapper || !icon) return;
@@ -30,14 +26,13 @@ window.toggleTempChart = () => {
         wrapper.style.display = 'block';
         icon.style.transform = 'rotate(0deg)';
         saveToStorage('temp_chart_collapsed', false);
-        // Re-render to ensure size is correct if it was hidden
         renderForecastChart('forecast-chart-container-16', 14);
     } else {
         wrapper.style.display = 'none';
         icon.style.transform = 'rotate(-90deg)';
         saveToStorage('temp_chart_collapsed', true);
     }
-};
+}
 
 // Restore Temp Chart State
 const savedTempState = loadFromStorage('temp_chart_collapsed');
@@ -48,7 +43,7 @@ if (savedTempState === true) {
     if (icon) icon.style.transform = 'rotate(-90deg)';
 }
 
-window.toggleWindChart = () => {
+export function toggleWindChart() {
     const wrapper = document.getElementById('wind-chart-wrapper');
     const icon = document.getElementById('wind-toggle-icon');
     if (!wrapper || !icon) return;
@@ -63,7 +58,7 @@ window.toggleWindChart = () => {
         icon.style.transform = 'rotate(-90deg)';
         saveToStorage('wind_chart_collapsed', true);
     }
-};
+}
 
 // Restore Wind Chart State
 const savedWindState = loadFromStorage('wind_chart_collapsed');
@@ -74,7 +69,7 @@ if (savedWindState === true) {
     if (icon) icon.style.transform = 'rotate(-90deg)';
 }
 
-window.toggleRainChart = () => {
+export function toggleRainChart() {
     const wrapper = document.getElementById('rain-chart-wrapper');
     const icon = document.getElementById('rain-toggle-icon');
     if (!wrapper || !icon) return;
@@ -83,14 +78,13 @@ window.toggleRainChart = () => {
         wrapper.style.display = 'block';
         icon.style.transform = 'rotate(0deg)';
         saveToStorage('rain_chart_collapsed', false);
-        // Re-render to ensure size is correct if it was hidden
         renderRainChart('forecast-rain-chart-container-16', 14);
     } else {
         wrapper.style.display = 'none';
         icon.style.transform = 'rotate(-90deg)';
         saveToStorage('rain_chart_collapsed', true);
     }
-};
+}
 
 // Restore Rain Chart State
 const savedRainState = loadFromStorage('rain_chart_collapsed');
@@ -102,14 +96,13 @@ if (savedRainState === true) {
 }
 
 
-
 // --- Favorites / Quick Switch UI ---
-window.toggleLocationFavorite = () => {
-    const isFav = window.locManager.toggleFavorite();
+export function toggleLocationFavorite() {
+    AppState.locManager.toggleFavorite();
     updateFavoriteStar();
-};
+}
 
-window.toggleLocationDropdown = (arg) => {
+export function toggleLocationDropdown(arg) {
     let trigger = (arg && arg.nodeType === 1) ? arg : (arg && arg.currentTarget ? arg.currentTarget : null);
     if (arg && arg.stopPropagation) arg.stopPropagation();
 
@@ -133,18 +126,18 @@ window.toggleLocationDropdown = (arg) => {
     dropdown.innerHTML = '';
 
     // Favorites
-    if (window.locManager.favorites.length > 0) {
+    if (AppState.locManager.favorites.length > 0) {
         const hFav = document.createElement('div');
         hFav.className = 'dropdown-header';
         hFav.textContent = 'Favorites';
         dropdown.appendChild(hFav);
 
-        window.locManager.favorites.forEach(fav => {
+        AppState.locManager.favorites.forEach(fav => {
             const item = document.createElement('div');
             item.className = 'dropdown-item';
             item.innerHTML = `<span>${fav.name}</span> <span class="sub">${fav.country}</span>`;
             item.onclick = () => {
-                window.locManager.setLocation(fav.lat, fav.lon, fav.name, fav.country);
+                AppState.locManager.setLocation(fav.lat, fav.lon, fav.name, fav.country);
                 dropdown.style.display = 'none';
             };
             dropdown.appendChild(item);
@@ -156,7 +149,7 @@ window.toggleLocationDropdown = (arg) => {
     }
 
     // Recents
-    const recentsToUse = window.locManager.recents.filter(r => !window.locManager.isFavorite(r)).slice(0, 5);
+    const recentsToUse = AppState.locManager.recents.filter(r => !AppState.locManager.isFavorite(r)).slice(0, 5);
     if (recentsToUse.length > 0) {
         const hRec = document.createElement('div');
         hRec.className = 'dropdown-header';
@@ -168,7 +161,7 @@ window.toggleLocationDropdown = (arg) => {
             item.className = 'dropdown-item';
             item.innerHTML = `<span>${rec.name}</span> <span class="sub">${rec.country}</span>`;
             item.onclick = () => {
-                window.locManager.setLocation(rec.lat, rec.lon, rec.name, rec.country);
+                AppState.locManager.setLocation(rec.lat, rec.lon, rec.name, rec.country);
                 dropdown.style.display = 'none';
             };
             dropdown.appendChild(item);
@@ -187,26 +180,25 @@ window.toggleLocationDropdown = (arg) => {
     searchItem.innerHTML = `<span style="display:flex; align-items:center; gap:6px;"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg> Search...</span>`;
     searchItem.onclick = () => {
         dropdown.style.display = 'none';
-        window.openLocationModal();
+        openLocationModal();
     };
     dropdown.appendChild(searchItem);
 
     dropdown.style.display = 'block';
 
-    // Click outside to close (Class-based)
+    // Click outside to close
     const closeMenu = (e) => {
         if (!dropdown.contains(e.target) && (!trigger || !trigger.contains(e.target))) {
             dropdown.style.display = 'none';
             document.removeEventListener('click', closeMenu);
         }
     };
-    // Delay to prevent immediate close
     setTimeout(() => document.addEventListener('click', closeMenu), 0);
-};
+}
 
-window.updateFavoriteStar = () => {
-    if (!window.locManager) return;
-    const isFav = window.locManager.isFavorite();
+export function updateFavoriteStar() {
+    if (!AppState.locManager) return;
+    const isFav = AppState.locManager.isFavorite();
     document.querySelectorAll('.btn-favorite').forEach(btn => {
         const svg = btn.querySelector('svg');
         if (isFav) {
@@ -219,71 +211,94 @@ window.updateFavoriteStar = () => {
             btn.style.opacity = '0.5';
         }
     });
-};
-
-window.copyConditions = copyConditions;
-window.sortForecastTable = sortForecastTable;
-window.handleCellHover = handleCellHover;
-window.showForeTooltip = showForeTooltip;
-window.moveForeTooltip = moveForeTooltip;
-// Internal handlers remaining in ui.js need window binding for HTML
-window.toggleForeSelection = toggleForeSelection;
-window.toggleVDOTDetails = toggleVDOTDetails;
-window.handleChartHover = handleChartHover;
-window.handleChartClick = handleChartClick;
-window.showClimateTooltip = showClimateTooltip;
-window.moveClimateTooltip = moveClimateTooltip;
-window.hideClimateTooltip = hideClimateTooltip;
-window.filterClimateByImpact = filterClimateByImpact;
-window.toggleDarkMode = toggleDarkMode; // Was exported but maybe used in HTML?
+}
 
 // FAB Click Listener
 document.addEventListener('DOMContentLoaded', () => {
     const fab = document.getElementById('fab-refresh');
     if (fab) {
         fab.addEventListener('click', async () => {
-            if (window.refreshWeather) {
+            if (AppState.refreshWeather) {
                 fab.classList.add('fab-spin');
-                await window.refreshWeather(true); // Force update 
-                // Artificial delay to ensure spin is felt if refresh is too fast
+                await AppState.refreshWeather(true);
                 setTimeout(() => fab.classList.remove('fab-spin'), 1000);
             }
         });
     }
 });
-// Assuming core.js has HAPCalculator
-// But app.js code used `window.hapCalc`.
-
-// Expose these via window for legacy compatibility (read from window in funcs)
-// OR just rely on module scope if functions use them directly.
-// To support "window.selectedImpactFilter" style in existing code, we might need to sync them
-// But based on errors, code is trying to read variable directly in module scope?
-// "ReferenceError: UIState.selectedImpactFilter is not defined" suggests code uses bare variable.
-// If code uses `window.selectedImpactFilter`, it wouldn't be RefErr (it would be undefined).
 
 export function toggleDarkMode() {
     UIState.isDark = !UIState.isDark;
-    window.isDark = UIState.isDark;
     if (UIState.isDark) {
         document.documentElement.classList.add('dark');
     } else {
         document.documentElement.classList.remove('dark');
     }
-    // Re-render things that depend on theme colors
     renderClimateHeatmap();
 }
 
 export function setForecastData(d) { UIState.forecastData = d; }
 export function setClimateData(d) {
     UIState.climateData = d;
-    window.climateData = d;
 }
 
-// We will rely on window.hapCalc for now to minimize breakage inside the extracted blocks.
+
+// --- VDOT Gauge ---
+function getAgeGradeColor(score) {
+    if (score >= 90) return '#7c3aed'; // Purple - World Class
+    if (score >= 80) return '#3b82f6'; // Blue - National Class
+    if (score >= 70) return '#22c55e'; // Green - Regional Class
+    if (score >= 60) return '#f97316'; // Orange - Local Class
+    return '#ef4444';                  // Red - Below
+}
+
+function getAgeGradeLabel(score) {
+    if (score >= 100) return 'World Record';
+    if (score >= 90) return 'World Class';
+    if (score >= 80) return 'National Class';
+    if (score >= 70) return 'Regional Class';
+    if (score >= 60) return 'Local Class';
+    return '';
+}
+
+export function updateVDOTGauge(vdot, ageGradeScore) {
+    const arc = document.getElementById('vdot-gauge-arc');
+    const label = document.getElementById('vdot-gauge-label');
+    if (!arc) return;
+
+    // Arc total length = π * r = π * 50 ≈ 157
+    const ARC_LENGTH = 157;
+
+    let fillPercent, color;
+
+    if (ageGradeScore !== null && ageGradeScore !== undefined) {
+        // Use age grade score (0-100) for arc fill and color
+        fillPercent = Math.min(ageGradeScore / 100, 1);
+        color = getAgeGradeColor(ageGradeScore);
+        const gradeLabel = getAgeGradeLabel(ageGradeScore);
+
+        if (label) {
+            label.textContent = gradeLabel;
+            label.style.color = color;
+        }
+    } else {
+        // Fallback: use VDOT range (30-85) for arc fill
+        const minVDOT = 30, maxVDOT = 85;
+        fillPercent = Math.min(Math.max((vdot - minVDOT) / (maxVDOT - minVDOT), 0), 1);
+        color = 'var(--accent-color)';
+
+        if (label) {
+            label.textContent = '';
+        }
+    }
+
+    const offset = ARC_LENGTH * (1 - fillPercent);
+    arc.style.strokeDashoffset = offset;
+    arc.style.stroke = color;
+    arc.style.filter = `drop-shadow(0 0 6px ${color})`;
+}
 
 // --- Helpers ---
-// infoIcon was local in renderCurrentTab, duplicating here for shared use if needed
-// infoIcon was local in renderCurrentTab, duplicating here for shared use if needed
 // date/time format helpers
 // formatTime imported from core.js
 
@@ -338,7 +353,6 @@ export function toggleForeSelection(isoTime, e) {
             UIState.selectedForeHour = null;
         } else {
             UIState.selectedForeHour = isoTime;
-            window.selectedForeHour = isoTime;
         }
     }
     renderAllForecasts();
@@ -349,7 +363,8 @@ export function toggleVDOTDetails(e) {
     if (!el) return;
     // If click originated from within the details panel, don't toggle
     if (e && e.target && el.contains(e.target)) return;
-    if (el.style.display === 'none') {
+    const isHidden = getComputedStyle(el).display === 'none';
+    if (isHidden) {
         el.style.display = 'block';
         renderVDOTDetails();
     } else {
@@ -362,8 +377,8 @@ export function renderAltitudeCard() {
     const card = document.getElementById('altitude-impact-card');
     if (!card) return;
 
-    const baseAlt = window.baseAltitude || 0;
-    const currentAlt = window.currentElevation || 0;
+    const baseAlt = AppState.altitude.base || 0;
+    const currentAlt = AppState.altitude.current || 0;
     const delta = currentAlt - baseAlt;
     const absDelta = Math.abs(delta);
 
@@ -391,7 +406,7 @@ export function renderAltitudeCard() {
             if (impact.impactPct > 0.5) {
                 card.style.display = 'flex';
                 // Add Info Icon using exact Wind card pattern
-                const infoIcon = `<span onclick="window.showInfoTooltip(event, '', 'Pace adjustment from altitude by &lt;a href=&quot;https://pubmed.ncbi.nlm.nih.gov/16311764/&quot; target=&quot;_blank&quot;&gt;Wehrlin &amp; Hallén (2006)&lt;/a&gt; for ascending, &lt;a href=&quot;https://pubmed.ncbi.nlm.nih.gov/9216951/&quot; target=&quot;_blank&quot;&gt;Levine &amp; Stray-Gundersen (1997)&lt;/a&gt; for descending.')" style="cursor:pointer; opacity:0.5; position:absolute; top:4px; right:4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></span>`;
+                const infoIcon = `<span data-action="info-tooltip" data-title="" data-text="Pace adjustment from altitude by &lt;a href=&quot;https://pubmed.ncbi.nlm.nih.gov/16311764/&quot; target=&quot;_blank&quot;&gt;Wehrlin &amp; Hallén (2006)&lt;/a&gt; for ascending, &lt;a href=&quot;https://pubmed.ncbi.nlm.nih.gov/9216951/&quot; target=&quot;_blank&quot;&gt;Levine &amp; Stray-Gundersen (1997)&lt;/a&gt; for descending." style="cursor:pointer; opacity:0.5; position:absolute; top:4px; right:4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></span>`;
 
                 card.innerHTML = `<div>Altitude<br><span style="color:#f87171">~${impact.impactPct.toFixed(1)}% slowdown</span></div>${infoIcon}`;
             } else {
@@ -404,7 +419,7 @@ export function renderAltitudeCard() {
             if (boost.gainPercent > 0.5) {
                 card.style.display = 'flex';
                 // Add Info Icon using exact Wind card pattern
-                const infoIcon = `<span onclick="window.showInfoTooltip(event, '', 'Pace adjustment from altitude by &lt;a href=&quot;https://pubmed.ncbi.nlm.nih.gov/16311764/&quot; target=&quot;_blank&quot;&gt;Wehrlin &amp; Hallén (2006)&lt;/a&gt; for ascending, &lt;a href=&quot;https://pubmed.ncbi.nlm.nih.gov/9216951/&quot; target=&quot;_blank&quot;&gt;Levine &amp; Stray-Gundersen (1997)&lt;/a&gt; for descending.')" style="cursor:pointer; opacity:0.5; position:absolute; top:4px; right:4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></span>`;
+                const infoIcon = `<span data-action="info-tooltip" data-title="" data-text="Pace adjustment from altitude by &lt;a href=&quot;https://pubmed.ncbi.nlm.nih.gov/16311764/&quot; target=&quot;_blank&quot;&gt;Wehrlin &amp; Hallén (2006)&lt;/a&gt; for ascending, &lt;a href=&quot;https://pubmed.ncbi.nlm.nih.gov/9216951/&quot; target=&quot;_blank&quot;&gt;Levine &amp; Stray-Gundersen (1997)&lt;/a&gt; for descending." style="cursor:pointer; opacity:0.5; position:absolute; top:4px; right:4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></span>`;
 
                 card.innerHTML = `<div>Altitude<br><span style="color:#22c55e">~${boost.gainPercent.toFixed(1)}% faster</span></div>${infoIcon}`;
             } else {
@@ -453,7 +468,7 @@ export function handleChartHover(e, totalW, chartW, padLeft, dataLen) {
         } else {
             // Standard Temp/Impact Tooltip
             let baseSec = getBasePaceSec();
-            const adjPace = window.hapCalc ? window.hapCalc.calculatePaceInHeat(baseSec, d.temp, d.dew) : baseSec;
+            const adjPace = AppState.hapCalc ? AppState.hapCalc.calculatePaceInHeat(baseSec, d.temp, d.dew) : baseSec;
             const pct = ((adjPace - baseSec) / baseSec) * 100;
             const color = getImpactColor(pct);
 
@@ -466,7 +481,7 @@ export function handleChartHover(e, totalW, chartW, padLeft, dataLen) {
                 </div>
             `;
         }
-        window.showForeTooltip(e, html);
+        showForeTooltip(e, html);
     }
 }
 
@@ -478,7 +493,7 @@ export function handleChartClick(e, totalW, chartW, padLeft, dataLen) {
     const idx = Math.round(ratio * (len - 1));
     if (idx >= 0 && idx < UIState.forecastData.length) {
         const d = UIState.forecastData[idx];
-        window.toggleForeSelection(d.time, e);
+        toggleForeSelection(d.time, e);
     }
 }
 
@@ -519,7 +534,7 @@ export function showClimateTooltip(e, w, h, impact, temp, dew, count) {
     el.style.opacity = '1';
 
     // Initial Position (Reusing logic from showForeTooltip/moveForeTooltip is best, but inline here works)
-    window.moveClimateTooltip(e);
+    moveClimateTooltip(e);
 }
 
 export function moveClimateTooltip(e) {
@@ -546,7 +561,6 @@ export function filterClimateByImpact(idx, el) {
         if (el && el.parentElement) el.parentElement.querySelectorAll('.legend-item').forEach(e => e.classList.remove('opacity-20'));
     } else {
         UIState.climateImpactFilter = idx;
-        window.climateImpactFilter = idx;
         // Set dimming
         if (el && el.parentElement) {
             el.parentElement.querySelectorAll('.legend-item').forEach(e => e.classList.add('opacity-20'));
@@ -580,9 +594,7 @@ export function toggleClimateFilter(w, h, e) {
             UIState.selectedClimateKey = key;
         }
     }
-    // Sync window for any legacy listeners
-    window.selectedClimateKey = UIState.selectedClimateKey;
-
+    // Sync UIState
     renderClimateTable();
     renderClimateHeatmap(); // Update opacity
     renderClimateLegend(); // Update legend
@@ -599,7 +611,7 @@ export async function fetchIPLocation(originalError) {
         const data = await res.json();
         if (data.success) {
             console.log("IP Location Success:", data);
-            window.locManager.setLocation(data.latitude, data.longitude, data.city, data.country);
+            AppState.locManager.setLocation(data.latitude, data.longitude, data.city, data.country);
             if (btn) btn.innerHTML = originalText;
         } else {
             throw new Error(data.message || "IP Location failed");
@@ -622,17 +634,17 @@ export function openLocationModal() {
             searchIn.value = ''; // Clear search
             list.innerHTML = ''; // Clear list
 
-            if (window.locManager && window.locManager.recents && window.locManager.recents.length > 0) {
+            if (AppState.locManager && AppState.locManager.recents && AppState.locManager.recents.length > 0) {
                 var header = document.createElement('div');
                 header.style.cssText = "font-size:0.75rem; color:var(--text-secondary); margin:10px 0 5px 0; text-transform:uppercase; letter-spacing:0.5px;";
                 header.textContent = "Recent Locations";
                 list.appendChild(header);
-                window.locManager.recents.forEach(function (item) {
+                AppState.locManager.recents.forEach(function (item) {
                     var div = document.createElement('div');
                     div.className = 'loc-item';
                     var country = item.country || '';
                     div.innerHTML = `<div>${item.name} <span class="loc-sub">${country}</span></div>`;
-                    div.onclick = function () { window.locManager.setLocation(item.lat, item.lon, item.name, country); };
+                    div.onclick = function () { AppState.locManager.setLocation(item.lat, item.lon, item.name, country); };
                     list.appendChild(div);
                 });
             }
@@ -646,8 +658,8 @@ export function openLocationModal() {
                     const q = e.target.value;
                     if (q.length < 3) return;
 
-                    const res = await window.locManager.searchCity(q);
-                    list.innerHTML = ''; // Clear recents
+                    const res = await AppState.locManager.searchCity(q);
+                    list.innerHTML = '';
                     if (res && res.length > 0) {
                         res.forEach(item => {
                             var div = document.createElement('div');
@@ -656,7 +668,7 @@ export function openLocationModal() {
                             var country = item.country || '';
                             var subText = [state, country].filter(Boolean).join(', ');
                             div.innerHTML = `<div>${item.name} <span class="loc-sub">${subText}</span></div>`;
-                            div.onclick = function () { window.locManager.setLocation(item.latitude, item.longitude, item.name, country); };
+                            div.onclick = function () { AppState.locManager.setLocation(item.latitude, item.longitude, item.name, country); };
                             list.appendChild(div);
                         });
                     }
@@ -683,7 +695,7 @@ export function setupWindowHelpers() {
         if (!document.body.contains(e.target)) return;
 
         // Forecast Deselection
-        if (window.selectedForeHour) {
+        if (UIState.selectedForeHour) {
             // Updated IDs for 16-day forecast
             const charContainer = document.getElementById('forecast-chart-container-16');
             const rainChart = document.getElementById('forecast-rain-chart-container-16');
@@ -709,7 +721,7 @@ export function setupWindowHelpers() {
         }
 
         // Climate Deselection
-        if (window.selectedClimateKey) {
+        if (UIState.selectedClimateKey) {
             const cmap = document.getElementById('climate-heatmap-container');
             const cleg = document.getElementById('climate-legend-container'); // Check if this ID is correct in renderers
             if ((!cmap || !cmap.contains(e.target)) && (!cleg || !cleg.contains(e.target))) {
@@ -720,7 +732,7 @@ export function setupWindowHelpers() {
         const tooltip = document.getElementById('forecast-tooltip');
         if (tooltip && tooltip.style.opacity === '1') {
             // Check if click is on an info icon (has showInfoTooltip onclick)
-            const isInfoIcon = e.target.closest('[onclick*="showInfoTooltip"]');
+            const isInfoIcon = e.target.closest('[data-action="info-tooltip"]');
             if (!isInfoIcon && !tooltip.contains(e.target)) {
                 tooltip.style.opacity = '0';
                 tooltip.style.display = 'none';
@@ -754,11 +766,11 @@ export function update(els, hapCalc) {
         temp: parseFloat(els.temp.value),
         dew: parseFloat(els.dew.value),
         wind: parseFloat(els.wind ? els.wind.value : 0),
-        runnerWeight: window.runnerWeight || 65,
+        runnerWeight: AppState.runner.weight || 65,
         age: parseInt(els.age ? els.age.value : 0),
         gender: els.gender ? els.gender.value : '',
-        baseAltitude: window.baseAltitude || 0,
-        currentElevation: window.currentElevation || 0
+        baseAltitude: AppState.altitude.base || 0,
+        currentElevation: AppState.altitude.current || 0
     };
 
     // Logic Rule: Dew Point cannot be > Temp
@@ -793,6 +805,16 @@ export function update(els, hapCalc) {
         elThreshold.textContent = `${formatTime(res.paces.threshold)}/km`;
     }
 
+    // Update VDOT Gauge with Age Grade
+    const age = AppState.runner.age;
+    const gender = AppState.runner.gender;
+    let ageGradeScore = null;
+    if (age && gender) {
+        const agRes = calculateAgeGrade(state.distance, state.timeSec, age, gender);
+        if (agRes) ageGradeScore = agRes.score;
+    }
+    updateVDOTGauge(res.vdot, ageGradeScore);
+
     // Live Update of VDOT Details if Open
     const vdotDetails = document.getElementById('vdot-details');
     if (vdotDetails && vdotDetails.style.display !== 'none') {
@@ -821,7 +843,7 @@ export function update(els, hapCalc) {
             isBase: true
         });
         // Toggle State (Global or default to false)
-        const view = window.pace_view || { heat: false, headwind: false, tailwind: false };
+        const view = AppState.paceView || { heat: false, headwind: false, tailwind: false };
 
         // 2. Heat Adjusted (if valid AND toggled)
         if (view.heat && res.weather.valid && res.weather.adjustedPaces[key]) {
@@ -931,7 +953,7 @@ export function update(els, hapCalc) {
     // Impact Text - Heat
     if (res.weather.valid) {
         if (els.weatherImpact) {
-            const heatInfoIcon = `<span onclick="window.showInfoTooltip(event, '', 'Pace adjustment from Hot-weather pace calculator by &lt;a href=&quot;https://apps.runningwritings.com/heat-adjusted-pace/&quot; target=&quot;_blank&quot;&gt;John Davis&lt;/a&gt;.')" style="cursor:pointer; opacity:0.5; position:absolute; top:4px; right:4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></span>`;
+            const heatInfoIcon = `<span data-action="info-tooltip" data-title="" data-text="Pace adjustment from Hot-weather pace calculator by &lt;a href=&quot;https://apps.runningwritings.com/heat-adjusted-pace/&quot; target=&quot;_blank&quot;&gt;John Davis&lt;/a&gt;." style="cursor:pointer; opacity:0.5; position:absolute; top:4px; right:4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></span>`;
             els.weatherImpact.innerHTML = `Heat Impact: <span style="color:${impactColor}">~${res.weather.impactPct.toFixed(1)}% slowdown</span>${heatInfoIcon}`;
         }
     } else {
@@ -957,7 +979,7 @@ export function update(els, hapCalc) {
                 html += `<div>Tailwind<br><span style="color:#22c55e">~${val.toFixed(1)}% faster</span></div>`;
             }
             if (!html) html = "Wind Impact: Negligible";
-            const windInfoIcon = `<span onclick="window.showInfoTooltip(event, '', 'Pace adjustment from Headwind and tailwind calculator by &lt;a href=&quot;https://apps.runningwritings.com/wind-calculator&quot; target=&quot;_blank&quot;&gt;John Davis&lt;/a&gt;.')" style="cursor:pointer; opacity:0.5; position:absolute; top:4px; right:4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></span>`;
+            const windInfoIcon = `<span data-action="info-tooltip" data-title="" data-text="Pace adjustment from Headwind and tailwind calculator by &lt;a href=&quot;https://apps.runningwritings.com/wind-calculator&quot; target=&quot;_blank&quot;&gt;John Davis&lt;/a&gt;." style="cursor:pointer; opacity:0.5; position:absolute; top:4px; right:4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></span>`;
 
             els.windImpact.innerHTML = html + windInfoIcon;
         } else {
@@ -999,7 +1021,7 @@ export function copyResults(els) {
 }
 export function useGPS() {
     if (!navigator.geolocation) {
-        if (window.fetchIPLocation) window.fetchIPLocation({ message: "Geolocation not supported" });
+        fetchIPLocation({ message: "Geolocation not supported" });
         return;
     }
     const btn = document.getElementById('gps-btn');
@@ -1018,21 +1040,16 @@ export function useGPS() {
             const city = await reverseGeocode(lat, lon);
             const name = city ? city.name : "My Location";
             const country = city ? city.country : "";
-            if (window.locManager) window.locManager.setLocation(lat, lon, name, country);
+            if (AppState.locManager) AppState.locManager.setLocation(lat, lon, name, country);
         } catch (e) {
             console.error("GPS Reverse Geocode Error", e);
-            if (window.locManager) window.locManager.setLocation(lat, lon, "My Location", "");
+            if (AppState.locManager) AppState.locManager.setLocation(lat, lon, "My Location", "");
         }
         if (btn) btn.innerHTML = originalText;
     }, (err) => {
         console.warn("Native GPS Error:", err);
         // Fallback to IP location if GPS fails (e.g., kCLErrorLocationUnknown)
-        if (window.fetchIPLocation) {
-            window.fetchIPLocation(err);
-        } else {
-            console.error("fetchIPLocation not found for fallback");
-            if (btn) btn.innerHTML = originalText;
-        }
+        fetchIPLocation(err);
     }, options);
 }
 

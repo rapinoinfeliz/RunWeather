@@ -2,26 +2,15 @@
 import { HAPCalculator, parseTime, formatTime } from './modules/core.js';
 import { LocationManager } from './modules/managers.js';
 import { fetchWeatherData } from './modules/api.js';
-import { HAP_GRID } from '../data/hap_grid.js'; // Import data module
+import { HAP_GRID } from '../data/hap_grid.js';
+import { AppState } from './modules/appState.js';
 
 import * as UI from './modules/ui.js';
 import { loadFromStorage, saveToStorage } from './modules/storage.js';
 import { formatTimeInput, handleTimeInput, setupFineTuning, saveCalcState } from './modules/inputs.js';
 import { initSettings, loadSavedSettings } from './modules/settings.js';
 
-console.log("Main JS Starting... v1.0.16");
-
-// --- Expose UI to Window (Legacy Support) ---
-console.log("UI Keys:", Object.keys(UI));
-Object.keys(UI).forEach(key => {
-    window[key] = UI[key];
-});
-console.log("UI Exposed. openTab is:", typeof window.openTab);
-
-// --- Global State ---
-window.hapCalc = null; // Will be init with data
-window.locManager = null;
-window.climateManager = null;
+console.log("Main JS Starting... v1.0.17");
 
 // --- Initialization ---
 async function init() {
@@ -29,25 +18,21 @@ async function init() {
 
     // 1. Core Logic
     if (HAP_GRID) {
-        window.hapCalc = new HAPCalculator(HAP_GRID);
+        AppState.hapCalc = new HAPCalculator(HAP_GRID);
     } else {
         console.error("HAP_GRID failed to load");
     }
 
     // 2. Managers
-    window.locManager = new LocationManager(async (loc) => {
+    AppState.locManager = new LocationManager(async (loc) => {
         // On Location Change
-
-        // 1. Update UI Text Immediately
         document.querySelectorAll('.current-location-name').forEach(el => {
             el.textContent = loc.name;
         });
         UI.closeLocationModal();
 
-        // 2. Clear/Update Calc
-        UI.update(window.els, window.hapCalc);
+        UI.update(AppState.els, AppState.hapCalc);
 
-        // 3. Trigger Loads Independently
         UI.setLoading('current', true);
         UI.setLoading('forecast', true);
 
@@ -58,24 +43,21 @@ async function init() {
                 UI.setLoading('forecast', false);
             });
 
-        if (window.climateManager) {
+        if (AppState.climateManager) {
             UI.setLoading('climate', true);
-            window.climateManager.loadDataForCurrentLocation()
+            AppState.climateManager.loadDataForCurrentLocation()
                 .catch(console.error)
                 .finally(() => UI.setLoading('climate', false));
         }
 
-        // 4. Update Star Status
-        if (window.updateFavoriteStar) window.updateFavoriteStar();
+        UI.updateFavoriteStar();
     });
-
-
 
     // Set initial location button text from saved state
     document.querySelectorAll('.current-location-name').forEach(el => {
-        el.textContent = window.locManager.current.name;
+        el.textContent = AppState.locManager.current.name;
     });
-    if (window.updateFavoriteStar) window.updateFavoriteStar();
+    UI.updateFavoriteStar();
 
     // 3. UI Setup
     const els = {
@@ -104,17 +86,14 @@ async function init() {
         weatherImpact: document.getElementById('weather-impact'),
         windImpact: document.getElementById('wind-impact') // New
     };
-    window.els = els; // Export for UI module if it uses window.els (my implementation passed 'els' to update)
+    AppState.els = els;
 
-    // Attach Window Helpers (Tooltips, specific onclicks)
+    // Attach global click helpers (deselection, resize)
     UI.setupWindowHelpers();
 
     // Auto-format time inputs on blur
     formatTimeInput(els.time);
     formatTimeInput(els.inputPace);
-
-    // Initialize Pace View State
-    window.pace_view = { heat: false, headwind: false, tailwind: false, altitude: false };
 
     // Impact Card Toggle Logic
     const updateImpactCards = () => {
@@ -122,39 +101,41 @@ async function init() {
         const windCard = document.querySelector('[data-toggle-target="wind"]');
 
         if (heatCard) {
-            if (window.pace_view.heat) heatCard.classList.add('active');
+            if (AppState.paceView.heat) heatCard.classList.add('active');
             else heatCard.classList.remove('active');
         }
 
         if (windCard) {
-            if (window.pace_view.headwind || window.pace_view.tailwind) windCard.classList.add('active');
+            if (AppState.paceView.headwind || AppState.paceView.tailwind) windCard.classList.add('active');
             else windCard.classList.remove('active');
         }
 
         const altCard = document.querySelector('[data-toggle-target="altitude"]');
         if (altCard) {
-            if (window.pace_view.altitude) altCard.classList.add('active');
+            if (AppState.paceView.altitude) altCard.classList.add('active');
             else altCard.classList.remove('active');
         }
     };
 
     document.querySelectorAll('.clickable-card').forEach(card => {
         card.addEventListener('click', (e) => {
-            const target = e.currentTarget.dataset.toggleTarget; // using currentTarget to get the card div
+            // Skip if click was on an info tooltip icon
+            if (e.target.closest('[data-action="info-tooltip"]')) return;
+
+            const target = e.currentTarget.dataset.toggleTarget;
 
             if (target === 'heat') {
-                window.pace_view.heat = !window.pace_view.heat;
+                AppState.paceView.heat = !AppState.paceView.heat;
             } else if (target === 'wind') {
-                // Toggle both together
-                const newState = !window.pace_view.headwind; // Toggle based on one
-                window.pace_view.headwind = newState;
-                window.pace_view.tailwind = newState;
+                const newState = !AppState.paceView.headwind;
+                AppState.paceView.headwind = newState;
+                AppState.paceView.tailwind = newState;
             } else if (target === 'altitude') {
-                window.pace_view.altitude = !window.pace_view.altitude;
+                AppState.paceView.altitude = !AppState.paceView.altitude;
             }
 
             updateImpactCards();
-            UI.update(els, window.hapCalc);
+            UI.update(els, AppState.hapCalc);
         });
 
         // Basic keyboard accessibility
@@ -186,7 +167,7 @@ async function init() {
                     els.preset.value = 'custom';
                 }
             }
-            UI.update(els, window.hapCalc);
+            UI.update(els, AppState.hapCalc);
             saveCalcState(els);
         });
     });
@@ -205,7 +186,7 @@ async function init() {
     // Time Input: Calculate Pace from Time + Distance
     if (els.time) {
         els.time.addEventListener('input', () => {
-            UI.update(els, window.hapCalc);
+            UI.update(els, AppState.hapCalc);
             saveCalcState(els);
             // Also update Pace field if distance is set
             const tSec = parseTime(els.time.value);
@@ -222,8 +203,8 @@ async function init() {
     if (els.inputPace) {
         els.inputPace.oninput = (e) => {
             handleTimeInput(e);
-            window.setPaceMode(null); // Clear mode on manual input
-            UI.update(els, window.hapCalc);
+            UI.setPaceMode(null);
+            UI.update(els, AppState.hapCalc);
         }
     }
 
@@ -231,7 +212,7 @@ async function init() {
     if (els.time) {
         els.time.oninput = (e) => {
             handleTimeInput(e);
-            UI.update(els, window.hapCalc);
+            UI.update(els, AppState.hapCalc);
             saveToStorage('last_time', e.target.value);
         }
     }
@@ -242,7 +223,7 @@ async function init() {
             const val = els.preset.value;
             if (val !== 'custom') {
                 els.distance.value = val;
-                UI.update(els, window.hapCalc);
+                UI.update(els, AppState.hapCalc);
                 saveCalcState(els);
             }
         });
@@ -268,7 +249,7 @@ async function init() {
                 const d = parseFloat(dStr);
                 const tSec = (d / 1000.0) * p;
                 els.time.value = formatTime(tSec);
-                UI.update(els, window.hapCalc);
+                UI.update(els, AppState.hapCalc);
                 saveCalcState(els);
             }
         });
@@ -309,7 +290,7 @@ async function init() {
     }
 
     // Initial Update
-    UI.update(els, window.hapCalc);
+    UI.update(els, AppState.hapCalc);
 
     // Weather Fetch
     UI.setLoading('current', true);
@@ -322,40 +303,35 @@ async function init() {
 }
 
 async function refreshWeather(force = false) {
-    window.refreshWeather = refreshWeather; // Expose for UI/FAB
-    const loc = window.locManager.current;
+    AppState.refreshWeather = refreshWeather;
+    const loc = AppState.locManager.current;
     if (!loc) return;
 
     try {
         const { weather, air } = await fetchWeatherData(loc.lat, loc.lon);
 
-        // Update Globals/UI State
-        UI.setForecastData(processForecast(weather.hourly)); // We need to process it
-        window.weatherData = weather; // for legacy
-        window.airData = air;
+        UI.setForecastData(processForecast(weather.hourly));
+        AppState.weatherData = weather;
+        AppState.airData = air;
 
-        // Render Current
         UI.renderCurrentTab(weather.current, air.current,
             weather.hourly.precipitation_probability[0],
             weather.hourly.precipitation[0],
             weather.daily,
-            weather.elevation // Pass Elevation
+            weather.elevation
         );
 
-        // Render Forecasts
         UI.renderAllForecasts();
 
-        // Update Inputs if empty?
-        const els = window.els;
+        const els = AppState.els;
         if ((!els.temp.value && !els.dew.value) || force) {
             els.temp.value = weather.current.temperature_2m;
             els.dew.value = weather.current.dew_point_2m;
             if (els.wind) els.wind.value = weather.current.wind_speed_10m;
-            UI.update(els, window.hapCalc);
+            UI.update(els, AppState.hapCalc);
         }
 
-        // Store Elevation for Altitude Impact
-        window.currentElevation = weather.elevation || 0;
+        AppState.altitude.current = weather.elevation || 0;
         UI.renderAltitudeCard();
 
     } catch (e) {
@@ -384,20 +360,19 @@ function processForecast(hourly) {
 }
 
 // --- Lazy Loader ---
-// --- Lazy Loader ---
 async function loadClimateModule() {
-    if (window.climateManager) return;
+    if (AppState.climateManager) return;
 
     UI.setLoading('climate', true);
 
     try {
         const { ClimateManager } = await import('./modules/climate_manager.js');
-        window.climateManager = new ClimateManager(window.locManager, (data) => {
+        AppState.climateManager = new ClimateManager(AppState.locManager, (data) => {
             UI.setClimateData(data);
             UI.renderClimateHeatmap();
             UI.renderClimateTable();
         });
-        await window.climateManager.loadDataForCurrentLocation();
+        await AppState.climateManager.loadDataForCurrentLocation();
     } catch (e) {
         console.error("Failed to lazy load Climate Manager", e);
     } finally {
@@ -473,12 +448,48 @@ function setupGlobalEvents() {
                 );
                 break;
             case 'monthly-type':
-                window.selectedMonthlyType = target.dataset.type;
+                UI.UIState.selectedMonthlyType = target.dataset.type;
                 if (target.parentElement) {
                     target.parentElement.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
                     target.classList.add('active');
                 }
                 UI.renderMonthlyAverages();
+                break;
+            case 'toggle-favorite':
+                UI.toggleLocationFavorite();
+                break;
+            case 'toggle-dropdown':
+                UI.toggleLocationDropdown(target);
+                break;
+            case 'info-tooltip':
+                e.preventDefault();
+                e.stopPropagation();
+                UI.showInfoTooltip(e, target.dataset.title || '', target.dataset.text || '');
+                break;
+            case 'toggle-temp-chart':
+                UI.toggleTempChart();
+                break;
+            case 'toggle-rain-chart':
+                UI.toggleRainChart();
+                break;
+            case 'toggle-wind-chart':
+                UI.toggleWindChart();
+                break;
+            case 'toggle-monthly':
+                UI.toggleMonthlyAverages();
+                break;
+            case 'copy-conditions':
+                UI.copyConditions();
+                break;
+            case 'climate-cell':
+                UI.toggleClimateFilter(
+                    parseInt(target.dataset.week),
+                    parseInt(target.dataset.hour),
+                    e
+                );
+                break;
+            case 'filter-climate-impact':
+                UI.filterClimateByImpact(target.dataset.label, target);
                 break;
         }
     });
@@ -500,8 +511,12 @@ function setupGlobalEvents() {
                 parseFloat(target.dataset.padLeft),
                 parseInt(target.dataset.len)
             );
-            // Chart hover handles tooltip positioning internally? No, handleCellHover uses moveForeTooltip.
-            // handleChartHover shows/moves tooltip itself.
+        }
+
+        // Climate heatmap tooltip move
+        target = e.target.closest('[data-action="climate-cell"]');
+        if (target) {
+            UI.moveClimateTooltip(e);
         }
     });
 
@@ -509,6 +524,19 @@ function setupGlobalEvents() {
         const target = e.target.closest('[data-action="select-forecast"]');
         if (target) {
             UI.handleCellHover(e, target);
+            return;
+        }
+        // Climate heatmap hover enter
+        const climateTarget = e.target.closest('[data-action="climate-cell"]');
+        if (climateTarget) {
+            UI.showClimateTooltip(e,
+                parseInt(climateTarget.dataset.week),
+                parseInt(climateTarget.dataset.hour),
+                parseFloat(climateTarget.dataset.impact),
+                parseFloat(climateTarget.dataset.temp),
+                parseFloat(climateTarget.dataset.dew),
+                parseInt(climateTarget.dataset.count)
+            );
         }
     });
 
@@ -521,6 +549,11 @@ function setupGlobalEvents() {
         const chartTarget = e.target.closest('[data-action="chart-interact"]');
         if (chartTarget) {
             UI.hideForeTooltip();
+            return;
+        }
+        const climateTarget = e.target.closest('[data-action="climate-cell"]');
+        if (climateTarget) {
+            UI.hideClimateTooltip();
         }
     });
 }
@@ -532,32 +565,5 @@ if (document.readyState === 'loading') {
     init();
 }
 
-// Call setup in init
-
-// Wait, I can't modify Line 31 easily with this block which is at line 200.
-// I will just run it at the end of the file? No, listeners should be set up early.
-// I'll call it right before defining init? 
-// Actually, I will replace the end of the file and invoke it.
-
 setupGlobalEvents();
 UI.setupTableScrollListeners();
-// Globals for legacy (still needed until HTML is fully stripped)
-window.fetchWeather = () => refreshWeather(true);
-window.openTab = UI.openTab;
-window.setBestRunRange = UI.setBestRunRange;
-window.toggleForeSelection = UI.toggleForeSelection;
-window.setPaceMode = UI.setPaceMode;
-window.toggleForeSort = UI.toggleForeSort;
-window.toggleClimateFilter = UI.toggleClimateFilter;
-window.sortClimate = UI.sortClimate;
-window.useGPS = UI.useGPS;
-window.openLocationModal = UI.openLocationModal;
-window.closeLocationModal = UI.closeLocationModal;
-window.toggleVDOTDetails = UI.toggleVDOTDetails;
-window.toggleImpactFilter = UI.toggleImpactFilter;
-// handleCellHover etc needed?
-// window.handleCellHover = UI.handleCellHover; // Not used inline anymore?
-// window.moveForeTooltip = UI.moveForeTooltip;
-// window.hideForeTooltip = UI.hideForeTooltip;
-// window.handleChartHover = UI.handleChartHover;
-// window.handleChartClick = UI.handleChartClick;

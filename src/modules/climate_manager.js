@@ -1,5 +1,6 @@
 import { getCachedClimate, cacheClimate } from './storage.js';
 import { fetchClimateHistory } from './api.js';
+import { AppState } from './appState.js';
 
 export class ClimateManager {
     constructor(locManager, onUpdateUI) {
@@ -87,8 +88,8 @@ export class ClimateManager {
 
             // Impact Calculation
             let impact = 0;
-            if (window.hapCalc) {
-                const adj = window.hapCalc.getAdjustment(avgTemp, avgDew);
+            if (AppState.hapCalc) {
+                const adj = AppState.hapCalc.getAdjustment(avgTemp, avgDew);
                 // Impact % = ((1/ speedFactor) - 1) * 100
                 // speedFactor = exp(adj)
                 impact = ((1.0 / Math.exp(adj)) - 1.0) * 100.0;

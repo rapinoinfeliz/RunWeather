@@ -2,9 +2,13 @@ import { UIState } from './state.js';
 import { infoIcon, getImpactColor, getDewColor, getCondColor, getImpactCategory, getBasePaceSec, getDateFromWeek, getWeatherIcon } from './utils.js';
 import { VDOT_MATH, parseTime, formatTime } from '../core.js';
 import { calculateAgeGrade } from '../engine.js';
+import { AppState } from '../appState.js';
+
+let _vdotWeightActive = false;
+let _vdotWeightTimer = null;
 
 export function renderVDOTDetails() {
-    const els = window.els;
+    const els = AppState.els;
     if (!els) return;
 
     const cont = document.getElementById('vdot-details');
@@ -42,21 +46,20 @@ export function renderVDOTDetails() {
     let html = '';
 
     // --- State ---
-    const age = window.runnerAge;
-    const gender = window.runnerGender;
-    const currentWeight = window.runnerWeight || 65;
-    const runnerHeight = window.runnerHeight;
+    const age = AppState.runner.age;
+    const gender = AppState.runner.gender;
+    const currentWeight = AppState.runner.weight || 65;
+    const runnerHeight = AppState.runner.height;
     const existingInput = cont.querySelector('#vdot-target-weight');
     const prevTargetVal = existingInput ? existingInput.value : '';
 
     // Toggle state (default OFF)
-    if (window._vdotWeightActive === undefined) window._vdotWeightActive = false;
     const existingToggle = cont.querySelector('#vdot-weight-toggle');
-    if (existingToggle) window._vdotWeightActive = existingToggle.checked;
+    if (existingToggle) _vdotWeightActive = existingToggle.checked;
 
     const targetWeight = prevTargetVal ? parseFloat(prevTargetVal) : null;
     const canProject = targetWeight && targetWeight > 0 && targetWeight !== currentWeight;
-    const isActive = window._vdotWeightActive && canProject;
+    const isActive = _vdotWeightActive && canProject;
     const weightRatio = isActive ? targetWeight / currentWeight : 1;
 
     // Adjusted time for header + age grade
@@ -98,9 +101,9 @@ export function renderVDOTDetails() {
     const weightTooltipText = 'Running metabolic cost scales linearly with body weight — each 1% weight loss yields ~1% VO2 savings. <a href=https://doi.org/10.1242/jeb.004481 target=_blank style=color:var(--accent-color);text-decoration:underline>Teunissen, Grabowski &amp; Kram (2007).</a>';
     const weightInfoHtml = infoIcon('Weight-Pace Model', weightTooltipText);
 
-    const toggleChecked = window._vdotWeightActive ? 'checked' : '';
-    const toggleBg = window._vdotWeightActive && canProject ? 'var(--accent-color)' : 'rgba(255,255,255,0.15)';
-    const toggleDot = window._vdotWeightActive && canProject ? 'translateX(16px)' : 'translateX(0)';
+    const toggleChecked = _vdotWeightActive ? 'checked' : '';
+    const toggleBg = _vdotWeightActive && canProject ? 'var(--accent-color)' : 'rgba(255,255,255,0.15)';
+    const toggleDot = _vdotWeightActive && canProject ? 'translateX(16px)' : 'translateX(0)';
 
     html += `
     <div style="flex:1; min-width:130px; padding:10px; background:var(--bg-secondary); border-radius:10px; border:1px solid var(--border-color); text-align:center;">
@@ -203,18 +206,83 @@ export function renderVDOTDetails() {
         const threshColor = adjThreshold < origThreshold ? '#4ade80' : '#f87171';
 
         const vdotEl = document.getElementById('vdot-val');
-        if (vdotEl) vdotEl.innerHTML = `${origVDOT.toFixed(1)}<div style="font-size:0.5em; color:${vdotColor}; font-weight:700; text-align:center;">${adjVDOT.toFixed(1)}</div>`;
+        if (vdotEl) vdotEl.textContent = origVDOT.toFixed(1);
+
+        // Show adjusted VDOT in gauge label
+        const gaugeLabel = document.getElementById('vdot-gauge-label');
+        if (gaugeLabel) {
+            gaugeLabel.textContent = `→ ${adjVDOT.toFixed(1)}`;
+            gaugeLabel.style.color = vdotColor;
+        }
+
         const pred5kEl = document.getElementById('pred-5k');
         if (pred5kEl) {
             pred5kEl.style.display = 'inline-block';
             pred5kEl.style.verticalAlign = 'top';
-            pred5kEl.innerHTML = `${formatTime(orig5k)}<br><span style="font-size:0.85em; color:${timeColor}; font-weight:600;">${formatTime(adj5k)}</span>`;
+            pred5kEl.innerHTML = `${formatTime(orig5k)}<br><span style="font-size:0.85em; color:${timeColor}; font-weight:600;">→ ${formatTime(adj5k)}</span>`;
         }
         const threshEl = document.getElementById('vdot-threshold');
         if (threshEl) {
             threshEl.style.display = 'inline-block';
             threshEl.style.verticalAlign = 'top';
-            threshEl.innerHTML = `${formatTime(origThreshold)}/km<br><span style="font-size:0.85em; color:${threshColor}; font-weight:600;">${formatTime(adjThreshold)}/km</span>`;
+            threshEl.innerHTML = `${formatTime(origThreshold)}/km<br><span style="font-size:0.85em; color:${threshColor}; font-weight:600;">→ ${formatTime(adjThreshold)}/km</span>`;
+        }
+
+        // Update gauge arc for adjusted age grade
+        const adjAgRes = calculateAgeGrade(dInput, adjTInput, age, gender);
+        const arc = document.getElementById('vdot-gauge-arc');
+        if (arc && adjAgRes) {
+            const ARC_LEN = 157;
+            const s = adjAgRes.score;
+            const c = s >= 90 ? '#7c3aed' : s >= 80 ? '#3b82f6' : s >= 70 ? '#22c55e' : s >= 60 ? '#f97316' : '#ef4444';
+            arc.style.strokeDashoffset = ARC_LEN * (1 - Math.min(s / 100, 1));
+            arc.style.stroke = c;
+            arc.style.filter = `drop-shadow(0 0 6px ${c})`;
+        }
+    } else {
+        // Reset header to original values
+        const origVDOT = VDOT_MATH.calculateVDOT(dInput, tInput);
+        const orig5k = VDOT_MATH.solveTime(origVDOT, 5000);
+        const origThreshold = VDOT_MATH.calculateThresholdPace(origVDOT);
+
+        const vdotEl = document.getElementById('vdot-val');
+        if (vdotEl) vdotEl.textContent = origVDOT.toFixed(1);
+
+        const gaugeLabel = document.getElementById('vdot-gauge-label');
+        if (gaugeLabel) {
+            // Reset to age grade label
+            const agRes = calculateAgeGrade(dInput, tInput, age, gender);
+            if (agRes) {
+                const s = agRes.score;
+                const c = s >= 90 ? '#7c3aed' : s >= 80 ? '#3b82f6' : s >= 70 ? '#22c55e' : s >= 60 ? '#f97316' : '#ef4444';
+                const lbl = s >= 100 ? 'World Record' : s >= 90 ? 'World Class' : s >= 80 ? 'National Class' : s >= 70 ? 'Regional Class' : s >= 60 ? 'Local Class' : '';
+                gaugeLabel.textContent = lbl;
+                gaugeLabel.style.color = c;
+
+                // Reset gauge arc
+                const arc = document.getElementById('vdot-gauge-arc');
+                if (arc) {
+                    const ARC_LEN = 157;
+                    arc.style.strokeDashoffset = ARC_LEN * (1 - Math.min(s / 100, 1));
+                    arc.style.stroke = c;
+                    arc.style.filter = `drop-shadow(0 0 6px ${c})`;
+                }
+            } else {
+                gaugeLabel.textContent = '';
+            }
+        }
+
+        const pred5kEl = document.getElementById('pred-5k');
+        if (pred5kEl) {
+            pred5kEl.style.display = '';
+            pred5kEl.style.verticalAlign = '';
+            pred5kEl.textContent = formatTime(orig5k);
+        }
+        const threshEl = document.getElementById('vdot-threshold');
+        if (threshEl) {
+            threshEl.style.display = '';
+            threshEl.style.verticalAlign = '';
+            threshEl.textContent = `${formatTime(origThreshold)}/km`;
         }
     }
 
@@ -229,16 +297,16 @@ export function renderVDOTDetails() {
     if (targetInput) {
         targetInput.addEventListener('input', () => {
             _updateWeightDelta(targetInput, deltaEl, warningEl, currentWeight, runnerHeight);
-            clearTimeout(window._vdotWeightTimer);
-            window._vdotWeightTimer = setTimeout(() => renderVDOTDetails(), 700);
+            clearTimeout(_vdotWeightTimer);
+            _vdotWeightTimer = setTimeout(() => renderVDOTDetails(), 700);
         });
     }
 
     if (toggleInput) {
         toggleInput.addEventListener('change', () => {
-            window._vdotWeightActive = toggleInput.checked;
+            _vdotWeightActive = toggleInput.checked;
             // If turning off, restore original values
-            if (!toggleInput.checked && window.els) {
+            if (!toggleInput.checked && AppState.els) {
                 const origVDOT = VDOT_MATH.calculateVDOT(dInput, tInput);
                 const orig5k = VDOT_MATH.solveTime(origVDOT, 5000);
                 const origThreshold = VDOT_MATH.calculateThresholdPace(origVDOT);
@@ -353,7 +421,7 @@ export function renderForecastTable(tableBodyId, dayLimit, isAppend = false) {
 
     if (UIState.selectedImpactFilter) {
         viewData = viewData.filter(d => {
-            const adj = window.hapCalc.calculatePaceInHeat(baseSec, d.temp, d.dew);
+            const adj = AppState.hapCalc.calculatePaceInHeat(baseSec, d.temp, d.dew);
             const p = ((adj - baseSec) / baseSec) * 100;
             return getImpactCategory(p) === UIState.selectedImpactFilter;
         });
@@ -371,9 +439,9 @@ export function renderForecastTable(tableBodyId, dayLimit, isAppend = false) {
         else if (UIState.forecastSortCol === 'prob') { valA = a.prob || 0; valB = b.prob || 0; }
         else if (UIState.forecastSortCol === 'wind') { valA = a.wind || 0; valB = b.wind || 0; }
         else {
-            const adjA = window.hapCalc.calculatePaceInHeat(baseSec, a.temp, a.dew);
+            const adjA = AppState.hapCalc.calculatePaceInHeat(baseSec, a.temp, a.dew);
             const pctA = ((adjA - baseSec) / baseSec);
-            const adjB = window.hapCalc.calculatePaceInHeat(baseSec, b.temp, b.dew);
+            const adjB = AppState.hapCalc.calculatePaceInHeat(baseSec, b.temp, b.dew);
             const pctB = ((adjB - baseSec) / baseSec);
             valA = pctA; valB = pctB;
         }
@@ -406,8 +474,8 @@ export function renderForecastTable(tableBodyId, dayLimit, isAppend = false) {
         let impactColor = '#333';
         let adjPace = baseSec;
 
-        if (h.temp != null && h.dew != null && window.hapCalc) {
-            adjPace = window.hapCalc.calculatePaceInHeat(baseSec, h.temp, h.dew);
+        if (h.temp != null && h.dew != null && AppState.hapCalc) {
+            adjPace = AppState.hapCalc.calculatePaceInHeat(baseSec, h.temp, h.dew);
             pct = ((adjPace - baseSec) / baseSec) * 100;
             impactColor = getImpactColor(pct);
         }
@@ -418,14 +486,14 @@ export function renderForecastTable(tableBodyId, dayLimit, isAppend = false) {
         const dir = h.dir != null ? h.dir : 0;
         const arrowStyle = `display:inline-block; transform:rotate(${dir}deg); font-size:0.8em; margin-left:2px;`;
 
-        const tempColor = window.getCondColor ? window.getCondColor('air', h.temp) : 'inherit';
-        const probColor = window.getCondColor ? window.getCondColor('prob', prob) : 'inherit';
-        const windColor = window.getCondColor ? window.getCondColor('wind', wind) : 'inherit';
+        const tempColor = getCondColor('air', h.temp);
+        const probColor = getCondColor('prob', prob);
+        const windColor = getCondColor('wind', wind);
         const rainColor = rain > 0 ? '#60a5fa' : 'inherit';
-        const dewColor = window.getDewColor ? window.getDewColor(h.dew) : 'inherit';
+        const dewColor = getDewColor(h.dew);
 
         return `
-        <tr style="${window.selectedForeHour && h.time === window.selectedForeHour ? 'background:var(--card-bg); font-weight:bold;' : ''}">
+        <tr style="${UIState.selectedForeHour && h.time === UIState.selectedForeHour ? 'background:var(--card-bg); font-weight:bold;' : ''}">
             <td style="padding:6px; color:var(--text-secondary); white-space:nowrap;">
                 <div style="font-size:0.75em; display:flex; align-items:center; gap:1px;">
                     ${getWeatherIcon(h.weathercode)} 
@@ -480,7 +548,7 @@ export function renderClimateTable(isAppend = false) {
         UIState.climateRenderLimit += UIState.SCROLL_BATCH_SIZE;
     }
 
-    let data = (UIState.climateData || window.climateData || []).slice();
+    let data = (UIState.climateData || []).slice();
 
     // 1. Filter by Clicked Heatmap Cell (Week-Hour)
     if (UIState.selectedClimateKey) {
@@ -554,13 +622,13 @@ export function renderClimateTable(isAppend = false) {
 
         // Rain/Wind logic similar to Forecast
         const rainColor = d.mean_precip > 0 ? '#60a5fa' : 'inherit';
-        const tempColor = window.getCondColor ? window.getCondColor('air', d.mean_temp) : 'inherit';
-        const dewColor = window.getDewColor ? window.getDewColor(d.mean_dew || 0) : 'inherit';
-        const windColor = window.getCondColor ? window.getCondColor('wind', d.mean_wind || 0) : 'inherit';
+        const tempColor = getCondColor('air', d.mean_temp);
+        const dewColor = getDewColor(d.mean_dew || 0);
+        const windColor = getCondColor('wind', d.mean_wind || 0);
 
         // Match Forecast Table Row structure exactly
         return `
-            <tr style="${window.selectedClimateKey === `${d.week}-${d.hour}` ? 'background:var(--card-bg); font-weight:bold;' : ''}">
+            <tr style="${UIState.selectedClimateKey === `${d.week}-${d.hour}` ? 'background:var(--card-bg); font-weight:bold;' : ''}">
                 <td style="padding:10px; color:var(--text-secondary); white-space:nowrap;">
                     <div style="font-size:0.75em;">${dateStr}</div>
                     <div style="font-size:1em; color:var(--text-primary); font-weight:500;">${timeStr}</div>

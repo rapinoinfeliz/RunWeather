@@ -1,7 +1,9 @@
+import { UIState } from './state.js';
+
 export function infoIcon(title, text) {
     const tSafe = title.replace(/'/g, "\\'").replace(/"/g, "&quot;");
     const txtSafe = text.replace(/'/g, "\\'").replace(/"/g, "&quot;");
-    return `<span onclick="window.showInfoTooltip(event, '${tSafe}', '${txtSafe}')" style="cursor:pointer; opacity:0.5; margin-left:4px; display:inline-flex; vertical-align:middle;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></span>`;
+    return `<span data-action="info-tooltip" data-title="${tSafe}" data-text="${txtSafe}" style="cursor:pointer; opacity:0.5; margin-left:4px; display:inline-flex; vertical-align:middle;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></span>`;
 }
 
 export function getImpactColor(pct) {
@@ -103,7 +105,7 @@ export function getImpactCategory(pct) {
 // Note: This relies on DOM elements. Passing document as dependency or assuming global?
 // DOM access in utils is okay if utils is UI-specific.
 export function getBasePaceSec() {
-    const mode = window.currentPaceMode || 'HMP';
+    const mode = UIState.currentPaceMode || 'HMP';
     const parseEl = (id) => {
         const el = document.getElementById(id);
         if (!el || !el.innerText) return 300;
