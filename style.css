@@ -323,6 +323,7 @@ h1 {
 }
 
 .vdot-gauge-track {
+    display: none;
     fill: none;
     stroke: rgba(255, 255, 255, 0.08);
     stroke-width: 6;
@@ -330,6 +331,7 @@ h1 {
 }
 
 .vdot-gauge-arc {
+    display: none;
     fill: none;
     stroke: var(--accent-color);
     stroke-width: 6;

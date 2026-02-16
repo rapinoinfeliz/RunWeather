@@ -330,10 +330,10 @@ export function showInfoTooltip(e, title, text) {
     el.style.display = 'block';
     el.style.opacity = '1';
     el.style.pointerEvents = 'auto'; // Fix: Re-enable clicks
-    el.style.maxWidth = '200px';
+    el.style.maxWidth = '400px';
     el.dataset.currentTitle = title;
     // Position
-    const tooltipWidth = 200;
+    const tooltipWidth = 400;
     let left = e.clientX + 10;
     if (left + tooltipWidth > window.innerWidth) {
         left = e.clientX - tooltipWidth - 10;

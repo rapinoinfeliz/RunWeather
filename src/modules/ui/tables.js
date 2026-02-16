@@ -71,7 +71,65 @@ export function renderVDOTDetails() {
     if (age && gender && calculateAgeGrade) {
         const agRes = calculateAgeGrade(dInput, tInput, age, gender);
         if (agRes) {
-            const tooltipTable = '<table style="width:100%; text-align:left; font-size:0.9em; border-collapse:collapse; margin-top:4px;"><tr style="border-bottom:1px solid rgba(255,255,255,0.1);"><th style="padding:2px 0;">Level</th><th style="text-align:right; padding:2px 0;">Class</th></tr><tr><td style="padding:2px 0;">100%</td><td style="text-align:right; color:#e2e8f0;">World Record</td></tr><tr><td style="padding:2px 0;">90%+</td><td style="text-align:right; color:#e2e8f0;">World Class</td></tr><tr><td style="padding:2px 0;">80%+</td><td style="text-align:right; color:#e2e8f0;">National Class</td></tr><tr><td style="padding:2px 0;">70%+</td><td style="text-align:right; color:#e2e8f0;">Regional Class</td></tr><tr><td style="padding:2px 0;">60%+</td><td style="text-align:right; color:#e2e8f0;">Local Class</td></tr></table>';
+            // Calculate 5k Benchmarks
+            let rowsHtml = '';
+
+            // Dummy call for 5k to get factor & open standard
+            const ag5k = calculateAgeGrade(5000, 1200, age, gender);
+            let col5kHeader = '';
+
+            const levels = [
+                { score: 100, label: 'World Record' },
+                { score: 90, label: 'World Class' },
+                { score: 80, label: 'National Class' },
+                { score: 70, label: 'Regional Class' },
+                { score: 60, label: 'Local Class' }
+            ];
+
+            if (ag5k) {
+                col5kHeader = '<th style="text-align:center; padding:2px 0;">5k Time</th>';
+
+                // Back-calculate Open Standard for 5k
+                // Score = (OpenStd / AgeGradedTime) * 100
+                // OpenStd = (Score * AgeGradedTime) / 100
+                const projectedOpenStd = (ag5k.score * ag5k.ageGradedTime) / 100;
+                const factor = ag5k.factor;
+
+                const getTargetTime5k = (targetScore) => {
+                    // TargetScore = (OpenStd / (Time * Factor)) * 100
+                    // Time = (OpenStd * 100) / (TargetScore * Factor)
+                    if (targetScore <= 0 || factor <= 0) return '--:--';
+                    const sec = (projectedOpenStd * 100) / (targetScore * factor);
+                    return formatTime(sec);
+                };
+
+                rowsHtml = levels.map(aaa => {
+                    return `<tr>
+                        <td style="padding:2px 0; white-space:nowrap;">${aaa.score}%${aaa.score === 100 ? '' : '+'}</td>
+                        <td style="padding:2px 0; text-align:center; color:var(--text-secondary); white-space:nowrap;">${getTargetTime5k(aaa.score)}</td>
+                        <td style="text-align:right; color:#e2e8f0; white-space:nowrap;">${aaa.label}</td>
+                    </tr>`;
+                }).join('');
+
+            } else {
+                // Fallback if 5k calculation fails (unlikely)
+                rowsHtml = levels.map(aaa => {
+                    return `<tr>
+                        <td style="padding:2px 0; white-space:nowrap;">${aaa.score}%${aaa.score === 100 ? '' : '+'}</td>
+                        <td style="text-align:right; color:#e2e8f0; white-space:nowrap;">${aaa.label}</td>
+                    </tr>`;
+                }).join('');
+            }
+
+            const tooltipTable = `<table style="width:100%; text-align:left; font-size:0.9em; border-collapse:collapse; margin-top:4px;">
+                <tr style="border-bottom:1px solid rgba(255,255,255,0.1);">
+                    <th style="padding:2px 0; white-space:nowrap;">Level</th>
+                    ${col5kHeader}
+                    <th style="text-align:right; padding:2px 0; white-space:nowrap;">Class</th>
+                </tr>
+                ${rowsHtml}
+            </table>`;
+
             const agInfoHtml = infoIcon('Age Grade Standards', tooltipTable);
 
             let agAdjHtml = '';
