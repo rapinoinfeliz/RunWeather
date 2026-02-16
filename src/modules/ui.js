@@ -9,8 +9,8 @@ import { renderCurrentTab, renderForecastChart, renderRainChart, renderWindChart
 export { renderCurrentTab, renderForecastChart, renderRainChart, renderWindChart, renderClimateTable, renderClimateLegend, renderClimateHeatmap, renderForecastHeatmap, renderForecastTable, renderVDOTDetails, renderAllForecasts, renderOverview, calculateBestRunTime, renderMonthlyAverages, toggleMonthlyAverages };
 import { UIState } from './ui/state.js';
 export { UIState };
-import { infoIcon, getImpactColor, getDewColor, getCondColor, getImpactCategory, getBasePaceSec, getDateFromWeek, animateValue, showToast } from './ui/utils.js';
-export { infoIcon, getImpactColor, getDewColor, getCondColor, getImpactCategory, getBasePaceSec, getDateFromWeek, animateValue, showToast };
+import { infoIcon, getImpactColor, getDewColor, getCondColor, getImpactCategory, getBasePaceSec, getDateFromWeek, animateValue, showToast, updateWeatherTabState } from './ui/utils.js';
+export { infoIcon, getImpactColor, getDewColor, getCondColor, getImpactCategory, getBasePaceSec, getDateFromWeek, animateValue, showToast, updateWeatherTabState };
 import { openTab, setPaceMode, toggleForeSort, setBestRunRange, toggleImpactFilter, copyConditions, sortForecastTable, handleCellHover, showForeTooltip, moveForeTooltip, hideForeTooltip } from './ui/events.js';
 export { openTab, setPaceMode, toggleForeSort, setBestRunRange, toggleImpactFilter, copyConditions, sortForecastTable, handleCellHover, showForeTooltip, moveForeTooltip, hideForeTooltip };
 import { initRipple } from './ui/effects.js';
@@ -1164,23 +1164,25 @@ export function initBottomNav() {
 
                 // FIX: Ensure tabs in view-weather don't get stuck in active state
                 if (targetId === 'view-weather') {
-                    const tabs = targetView.querySelectorAll('.tab-btn');
-                    const contents = targetView.querySelectorAll('.tab-content');
+                    // Restore active state from UIState using centralized utility
+                    const activeTabName = UIState.activeWeatherTab || 'calculator';
 
-                    // 1. Find the currently active content
-                    let activeTabName = 'calculator'; // Default
-                    contents.forEach(c => {
-                        if (c.classList.contains('active')) {
-                            activeTabName = c.id.replace('tab-', '');
-                        }
+                    // Force update immediately
+                    updateWeatherTabState(targetView, activeTabName);
+
+                    // Safety: Force again next frame in case of weird transitions ??
+                    requestAnimationFrame(() => {
+                        requestAnimationFrame(() => {
+                            updateWeatherTabState(targetView, activeTabName);
+                        });
                     });
 
-                    // 2. Reset all tabs
-                    tabs.forEach(t => t.classList.remove('active'));
-
-                    // 3. Activate the correct tab
-                    const activeBtn = targetView.querySelector(`.tab-btn[data-tab="${activeTabName}"]`);
-                    if (activeBtn) activeBtn.classList.add('active');
+                    // Special logic for Climate/FAB visibility
+                    const fab = document.getElementById('fab-refresh');
+                    if (fab) {
+                        if (activeTabName === 'current') fab.classList.add('visible');
+                        else fab.classList.remove('visible');
+                    }
                 }
 
                 // 4. Lazy Load Library

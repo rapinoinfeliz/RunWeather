@@ -18,7 +18,8 @@ export const UIState = {
     climateRenderLimit: 50,
     SCROLL_BATCH_SIZE: 50,
     isScrollListenersSetup: false,
-    isBatchLoading: false
+    isBatchLoading: false,
+    activeWeatherTab: 'calculator' // Default to calculator
 };
 
 // Bind to window for legacy support if needed, 

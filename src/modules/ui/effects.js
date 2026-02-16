@@ -23,6 +23,11 @@ export function initRipple() {
             }
 
             btn.appendChild(circle);
+
+            // Clean up after animation
+            setTimeout(() => {
+                circle.remove();
+            }, 600);
         }
     });
 }

@@ -143,6 +143,58 @@ export function getWeatherIcon(code) {
     return `<svg class="weather-icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${rain}</svg>`;
 }
 
+export function updateWeatherTabState(view, activeTabName) {
+    if (!view) {
+        return;
+    }
+
+    // Select all buttons in the tab-nav container specifically
+    const nav = view.querySelector('.tab-nav');
+    if (!nav) {
+        return;
+    }
+
+    const buttons = nav.querySelectorAll('.tab-btn');
+
+    buttons.forEach(b => {
+        // Strict check against data-tab
+        const shouldBeActive = b.dataset.tab === activeTabName;
+
+        // Remove known visual artifacts (Ripples)
+        const ripples = b.getElementsByClassName('ripple');
+        while (ripples.length > 0) {
+            ripples[0].remove();
+        }
+
+        // Reset element style first to ensure clean state
+        b.style.removeProperty('background-color');
+        b.style.removeProperty('color');
+
+        if (shouldBeActive) {
+            b.classList.add('active');
+            // Force visual confirmation
+            b.style.backgroundColor = 'var(--accent-color)';
+            b.style.color = '#fff';
+        } else {
+            b.classList.remove('active');
+
+            // Force reset visual
+            b.style.backgroundColor = '';
+            b.style.color = '';
+        }
+    });
+
+    // Content Handling
+    const contents = view.querySelectorAll('.tab-content');
+    contents.forEach(c => {
+        if (c.id === `tab-${activeTabName}`) {
+            c.classList.add('active');
+        } else {
+            c.classList.remove('active');
+        }
+    });
+}
+
 export function showToast(message) {
     let container = document.getElementById('toast-container');
     if (!container) {

@@ -174,13 +174,15 @@ export function setPaceMode(mode) {
     renderAllForecasts();
 }
 
-export function openTab(tabName, btn) {
-    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-    const tabEl = document.getElementById('tab-' + tabName);
-    if (tabEl) tabEl.classList.add('active');
+import { updateWeatherTabState } from './utils.js';
 
-    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-    if (btn) btn.classList.add('active');
+export function openTab(tabName, btn) {
+    // Save State
+    UIState.activeWeatherTab = tabName;
+
+    // Use centralized update logic
+    const view = document.getElementById('view-weather');
+    updateWeatherTabState(view, tabName);
 
     // FAB Visibility
     const fab = document.getElementById('fab-refresh');
