@@ -42,686 +42,694 @@
 <body>
 
     <!-- Tab Navigation -->
-    <div class="tab-nav">
-        <button class="tab-btn active" data-action="tab" data-tab="calculator">Calculator</button>
-        <button class="tab-btn" data-action="tab" data-tab="current">Conditions</button>
-        <button class="tab-btn" data-action="tab" data-tab="forecast16">Forecast</button>
-        <button class="tab-btn" data-action="tab" data-tab="climate">Climate</button>
-    </div>
-
-    <!-- TAB: CALCULATOR -->
-    <div id="tab-calculator" class="tab-content active container" style="max-width: 650px;">
-        <div class="header">
-            <div class="header-left">
-                <h1>Calculator</h1>
-                <div class="subtitle flex-center">
-                    NSA
-                    <span data-action="info-tooltip" data-title="Norwegian Singles Approach"
-                        data-text="Structured running method emphasizing three weekly sub-threshold sessions plus easy volume to maximize sustainable aerobic load and long-term progression. Developed by &lt;a href=&quot;https://mybook.to/XzwWbK3&quot; target=&quot;_blank&quot;&gt;James Copeland&lt;/a&gt;."
-                        class="fav-star-btn">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <line x1="12" y1="16" x2="12" y2="12"></line>
-                            <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                        </svg>
-                    </span>
-                </div>
-            </div>
-            <button id="btn-settings" class="icon-btn" title="Runner Settings (Weight)"
-                style="margin-left:auto; margin-right:8px; opacity:0.6; padding:6px;">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="3"></circle>
-                    <path
-                        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
-                    </path>
-                </svg>
-            </button>
-            </button>
-
-            <!-- Location Group -->
-            <div class="location-group">
-                <div class="location-search-btn">
-                    <!-- Star Button -->
-                    <button data-action="toggle-favorite" class="icon-btn btn-favorite" title="Toggle Favorite"
-                        class="location-search-icon">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <polygon
-                                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
-                            </polygon>
-                        </svg>
-                    </button>
-
-                    <!-- Location Dropdown Trigger -->
-                    <button class="location-btn" data-action="toggle-dropdown" aria-label="Change Location"
-                        class="location-name-btn">
-                        <div class="loc-text-col text-left">
-                            <span class="current-location-name">Florianópolis</span>
-                            <span class="elevation-display location-subtitle">--m</span>
-                        </div>
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2" class="location-chevron">
-                            <polyline points="6 9 12 15 18 9"></polyline>
-                        </svg>
-                    </button>
-                </div>
-
-                <!-- Dropdown Menu -->
-                <div class="dropdown-menu dropdown-menu-right">
-                    <!-- JS Injected Content -->
-                </div>
-            </div>
-            <button class="copy-btn" id="copy-btn" title="Copy results to clipboard" aria-label="Copy Results">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                </svg>
-            </button>
+    <div id="view-weather" class="main-view active">
+        <div class="tab-nav">
+            <button class="tab-btn active" data-action="tab" data-tab="calculator">Calculator</button>
+            <button class="tab-btn" data-action="tab" data-tab="current">Conditions</button>
+            <button class="tab-btn" data-action="tab" data-tab="forecast16">Forecast</button>
+            <button class="tab-btn" data-action="tab" data-tab="climate">Climate</button>
         </div>
 
-        <div class="input-section" style="background:transparent; border:none; padding:0;">
-            <!-- Time Trial Block -->
-            <div class="modern-input-card card-glow-border">
-                <div class="modern-label">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <polyline points="12 6 12 12 16 14"></polyline>
-                    </svg>
-                    Time Trial
-                </div>
-                <div class="input-row-grid">
-                    <div class="floating-input-group">
-                        <label for="dist-preset">Preset</label>
-                        <select id="dist-preset" class="modern-input">
-                            <option value="custom">Custom</option>
-                            <option value="3000">3000m</option>
-                            <option value="5000">5K</option>
-                            <option value="10000">10K</option>
-                            <option value="21097">Half Mar.</option>
-                            <option value="42195">Marathon</option>
-                        </select>
-                    </div>
-                    <div class="floating-input-group">
-                        <label for="distance">Distance (m)</label>
-                        <input type="number" id="distance" value="2955" placeholder="e.g. 5000" class="modern-input"
-                            inputmode="decimal">
-                    </div>
-                    <div class="floating-input-group">
-                        <label for="time">Time (MM:SS)</label>
-                        <input type="text" id="time" value="11:16" placeholder="MM:SS" class="modern-input"
-                            inputmode="numeric">
-                    </div>
-                    <div class="floating-input-group">
-                        <label for="input-pace">Pace (/km)</label>
-                        <input type="text" id="input-pace" placeholder="MM:SS" class="modern-input" inputmode="numeric">
-                    </div>
-                </div>
-            </div>
-
-            <!-- VDOT Card -->
-            <div class="vdot-box" id="vdot-card" data-action="vdot-details">
-                <div class="vdot-header flex-between">
-                    <div class="vdot-info">
-                        <div class="vdot-label">Estimated VDOT <span class="vdot-hint">(Click to Expand)</span></div>
-                        <div class="vdot-sub">Based on 5k: <span id="pred-5k" class="vdot-highlight">--:--</span></div>
-                        <div class="vdot-sub vdot-sub-gap">Threshold: <span id="vdot-threshold"
-                                class="vdot-highlight vdot-bold">--:--/km</span></div>
-                    </div>
-                    <div class="vdot-right">
-                        <!-- SVG Gauge -->
-                        <div class="vdot-gauge" id="vdot-gauge">
-                            <svg viewBox="0 0 120 70" class="vdot-gauge-svg">
-                                <!-- Background arc (track) -->
-                                <path class="vdot-gauge-track" d="M 10 65 A 50 50 0 0 1 110 65" />
-                                <!-- Foreground arc (progress) -->
-                                <path class="vdot-gauge-arc" id="vdot-gauge-arc" d="M 10 65 A 50 50 0 0 1 110 65" />
+        <!-- TAB: CALCULATOR -->
+        <div id="tab-calculator" class="tab-content active container" style="max-width: 650px;">
+            <div class="header">
+                <div class="header-left">
+                    <h1>Calculator</h1>
+                    <div class="subtitle flex-center">
+                        NSA
+                        <span data-action="info-tooltip" data-title="Norwegian Singles Approach"
+                            data-text="Structured running method emphasizing three weekly sub-threshold sessions plus easy volume to maximize sustainable aerobic load and long-term progression. Developed by &lt;a href=&quot;https://mybook.to/XzwWbK3&quot; target=&quot;_blank&quot;&gt;James Copeland&lt;/a&gt;."
+                            class="fav-star-btn">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="16" x2="12" y2="12"></line>
+                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
                             </svg>
-                            <div class="vdot-gauge-value text-gradient-primary" id="vdot-val">--</div>
-                            <div class="vdot-gauge-label" id="vdot-gauge-label"></div>
-                        </div>
+                        </span>
                     </div>
                 </div>
-                <div id="vdot-details" class="vdot-details-panel">
-                    <!-- Detailed Rows will be injected here -->
-                </div>
-            </div>
-
-            <!-- Weather Block (Moved Down) -->
-            <div class="modern-input-card card-glow-border">
-                <div class="modern-label">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
-                        stroke-linecap="round" stroke-linejoin="round">
+                <button id="btn-settings" class="icon-btn" title="Runner Settings (Weight)"
+                    style="margin-left:auto; margin-right:8px; opacity:0.6; padding:6px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"></circle>
                         <path
-                            d="M17 16.974c4.375-1.074 4.375-7.79 0-8.863C15.875 3.097 9.125 3.097 8 8.11 3.625 9.184 3.625 15.9 8 16.974h9z">
+                            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
                         </path>
                     </svg>
-                    Weather Conditions
-                </div>
-                <div class="input-row-grid cols-3">
-                    <div class="floating-input-group">
-                        <label for="temp">Temperature (°C)</label>
-                        <input type="number" id="temp" placeholder="Temp" title="Temperature in Celsius"
-                            inputmode="decimal" class="modern-input">
-                    </div>
-                    <div class="floating-input-group">
-                        <label for="dew">Dew Point (°C)</label>
-                        <input type="number" id="dew" placeholder="Dew" title="Dew Point in Celsius" inputmode="decimal"
-                            class="modern-input">
-                    </div>
-                    <div class="floating-input-group">
-                        <label for="wind">Wind Speed (km/h)</label>
-                        <input type="number" id="wind" placeholder="Wind" title="Wind Speed in km/h" inputmode="decimal"
-                            class="modern-input">
-                    </div>
-                </div>
+                </button>
+                </button>
 
-                <div class="impact-grid" style="margin-top:12px; display:flex; gap:8px;">
-                    <div id="weather-impact" class="impact-box clickable-card" data-toggle-target="heat" role="button"
-                        tabindex="0" style="color:var(--text-secondary);">
-                        <!-- Content injected via JS -->
+                <!-- Location Group -->
+                <div class="location-group">
+                    <div class="location-search-btn">
+                        <!-- Star Button -->
+                        <button data-action="toggle-favorite" class="icon-btn btn-favorite" title="Toggle Favorite"
+                            class="location-search-icon">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <polygon
+                                    points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
+                                </polygon>
+                            </svg>
+                        </button>
+
+                        <!-- Location Dropdown Trigger -->
+                        <button class="location-btn" data-action="toggle-dropdown" aria-label="Change Location"
+                            class="location-name-btn">
+                            <div class="loc-text-col text-left">
+                                <span class="current-location-name">Florianópolis</span>
+                                <span class="elevation-display location-subtitle">--m</span>
+                            </div>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" class="location-chevron">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </button>
                     </div>
-                    <div id="wind-impact" class="impact-box clickable-card" data-toggle-target="wind" role="button"
-                        tabindex="0" style="color:var(--text-secondary);">
-                        <!-- Content injected via JS -->
-                    </div>
-                    <div id="altitude-impact-card" class="impact-box clickable-card" data-toggle-target="altitude"
-                        role="button" tabindex="0" style="color:var(--text-secondary); display:none;">
-                        <!-- Content injected via JS -->
+
+                    <!-- Dropdown Menu -->
+                    <div class="dropdown-menu dropdown-menu-right">
+                        <!-- JS Injected Content -->
                     </div>
                 </div>
-            </div>
-        </div>
-
-        <!-- View Model Toggles Removed -->
-        <!-- Interaction moved to Impact Cards -->
-
-        <div class="card">
-            <div class="card-title">
-                Subthreshold
-            </div>
-
-            <div class="data-row">
-                <div class="data-label-group">
-                    <div class="split-badge">
-                        <span class="sb-time">1 min</span>
-                        <span class="sb-sep"></span>
-                        <span class="sb-tag tag-10kp-text">10KP</span>
-                    </div>
-                </div>
-                <div class="data-value-group">
-                    <div class="data-value" id="pace-1min">--:--/km</div>
-                    <div class="data-sub" id="dist-1min">-- m</div>
-                </div>
+                <button class="copy-btn" id="copy-btn" title="Copy results to clipboard" aria-label="Copy Results">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                </button>
             </div>
 
-            <div class="data-row">
-                <div class="data-label-group">
-                    <div class="split-badge">
-                        <span class="sb-time">3 min</span>
-                        <span class="sb-sep"></span>
-                        <span class="sb-tag tag-15kp-text">15KP</span>
-                    </div>
-                </div>
-                <div class="data-value-group">
-                    <div class="data-value" id="pace-3min">--:--/km</div>
-                    <div class="data-sub" id="dist-3min">-- m</div>
-                </div>
-            </div>
-
-            <div class="data-row">
-                <div class="data-label-group">
-                    <div class="split-badge">
-                        <span class="sb-time">6 min</span>
-                        <span class="sb-sep"></span>
-                        <span class="sb-tag tag-hmp-text">HMP</span>
-                    </div>
-                </div>
-                <div class="data-value-group">
-                    <div class="data-value" id="pace-6min">--:--/km</div>
-                    <div class="data-sub" id="dist-6min">-- m</div>
-                </div>
-            </div>
-
-            <div class="data-row">
-                <div class="data-label-group">
-                    <div class="split-badge">
-                        <span class="sb-time">10 min</span>
-                        <span class="sb-sep"></span>
-                        <span class="sb-tag tag-30kp-text">30KP</span>
-                    </div>
-                </div>
-                <div class="data-value-group">
-                    <div class="data-value" id="pace-10min">--:--/km</div>
-                    <div class="data-sub" id="dist-10min">-- m</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="card" style="margin-top: 16px;">
-            <div class="card-title">
-                Easy Run
-            </div>
-            <div class="data-row">
-                <div class="data-label-group">
-                    <div class="split-badge">
-                        <span class="sb-time">Easy Run</span>
-                        <span class="sb-sep"></span>
-                        <span class="sb-tag tag-ez-text">EZ</span>
-                    </div>
-                </div>
-                <div class="data-value-group">
-                    <div class="data-value" id="pace-easy">--:--/km</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- TAB: CURRENT -->
-    <div id="tab-current" class="tab-content container" style="max-width: 650px;">
-        <div class="header">
-            <div class="header-left">
-                <h1>Conditions</h1>
-                <div class="subtitle flex-center">
-                    Real-time Weather
-                    <span data-action="info-tooltip" data-title="" data-text="Weather data provided by Open-Meteo."
-                        class="fav-star-btn">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
+            <div class="input-section" style="background:transparent; border:none; padding:0;">
+                <!-- Time Trial Block -->
+                <div class="modern-input-card card-glow-border">
+                    <div class="modern-label">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="12" cy="12" r="10"></circle>
-                            <line x1="12" y1="16" x2="12" y2="12"></line>
-                            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                            <polyline points="12 6 12 12 16 14"></polyline>
                         </svg>
-                    </span>
-                </div>
-            </div>
-            <!-- Location Group -->
-            <div class="location-group" style="margin-left:auto;">
-                <div class="location-search-btn">
-                    <!-- Star Button -->
-                    <button data-action="toggle-favorite" class="icon-btn btn-favorite" title="Toggle Favorite"
-                        class="location-search-icon">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <polygon
-                                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
-                            </polygon>
-                        </svg>
-                    </button>
-
-                    <!-- Location Dropdown Trigger -->
-                    <button class="location-btn" data-action="toggle-dropdown" aria-label="Change Location"
-                        class="location-name-btn">
-                        <div class="loc-text-col text-left">
-                            <span class="current-location-name">Florianópolis</span>
-                            <span class="elevation-display location-subtitle">--m</span>
+                        Time Trial
+                    </div>
+                    <div class="input-row-grid">
+                        <div class="floating-input-group">
+                            <label for="dist-preset">Preset</label>
+                            <select id="dist-preset" class="modern-input">
+                                <option value="custom">Custom</option>
+                                <option value="3000">3000m</option>
+                                <option value="5000">5K</option>
+                                <option value="10000">10K</option>
+                                <option value="21097">Half Mar.</option>
+                                <option value="42195">Marathon</option>
+                            </select>
                         </div>
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2" class="location-chevron">
-                            <polyline points="6 9 12 15 18 9"></polyline>
-                        </svg>
-                    </button>
-                </div>
-
-                <!-- Dropdown Menu -->
-                <div class="dropdown-menu dropdown-menu-right">
-                    <!-- JS Injected Content -->
-                </div>
-            </div>
-
-
-            <button class="copy-btn" id="btn-copy-cond" data-action="copy-conditions"
-                title="Copy conditions to clipboard" aria-label="Copy Conditions">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                </svg>
-            </button>
-        </div>
-        <div id="current-content" class="current-grid">
-            <div style="text-align:center; padding:40px; color:var(--text-secondary);">
-                <svg class="animate-spin" style="width:24px;height:24px;margin:auto;" xmlns="http://www.w3.org/2000/svg"
-                    fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
-                    </circle>
-                    <path class="opacity-75" fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                    </path>
-                </svg>
-                <div style="margin-top:12px; font-size:0.9em;">Loading Weather...</div>
-            </div>
-        </div>
-    </div>
-    <div id="loading-current" class="loading-overlay">
-        <div class="loading-spinner"></div>
-    </div>
-    </div>
-
-
-
-    <!-- TAB: FORECAST 16 DAYS -->
-    <div id="tab-forecast16" class="tab-content container" style="max-width: 650px;">
-        <div class="header">
-            <div class="header-left">
-                <h1>Forecast</h1>
-                <div class="subtitle">14-Day Heat Impact</div>
-            </div>
-            <!-- Location Group -->
-            <div class="location-group">
-                <div class="location-search-btn">
-                    <!-- Star Button -->
-                    <button data-action="toggle-favorite" class="icon-btn btn-favorite" title="Toggle Favorite"
-                        class="location-search-icon">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <polygon
-                                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
-                            </polygon>
-                        </svg>
-                    </button>
-
-                    <!-- Location Dropdown Trigger -->
-                    <button class="location-btn" data-action="toggle-dropdown" aria-label="Change Location"
-                        class="location-name-btn">
-                        <div class="loc-text-col text-left">
-                            <span class="current-location-name">Florianópolis</span>
-                            <span class="elevation-display location-subtitle">--m</span>
+                        <div class="floating-input-group">
+                            <label for="distance">Distance (m)</label>
+                            <input type="number" id="distance" value="2955" placeholder="e.g. 5000" class="modern-input"
+                                inputmode="decimal">
                         </div>
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2" class="location-chevron">
-                            <polyline points="6 9 12 15 18 9"></polyline>
+                        <div class="floating-input-group">
+                            <label for="time">Time (MM:SS)</label>
+                            <input type="text" id="time" value="11:16" placeholder="MM:SS" class="modern-input"
+                                inputmode="numeric">
+                        </div>
+                        <div class="floating-input-group">
+                            <label for="input-pace">Pace (/km)</label>
+                            <input type="text" id="input-pace" placeholder="MM:SS" class="modern-input"
+                                inputmode="numeric">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VDOT Card -->
+                <div class="vdot-box" id="vdot-card" data-action="vdot-details">
+                    <div class="vdot-header flex-between">
+                        <div class="vdot-info">
+                            <div class="vdot-label">Estimated VDOT <span class="vdot-hint">(Click to Expand)</span>
+                            </div>
+                            <div class="vdot-sub">Based on 5k: <span id="pred-5k" class="vdot-highlight">--:--</span>
+                            </div>
+                            <div class="vdot-sub vdot-sub-gap">Threshold: <span id="vdot-threshold"
+                                    class="vdot-highlight vdot-bold">--:--/km</span></div>
+                        </div>
+                        <div class="vdot-right">
+                            <!-- SVG Gauge -->
+                            <div class="vdot-gauge" id="vdot-gauge">
+                                <svg viewBox="0 0 120 70" class="vdot-gauge-svg">
+                                    <!-- Background arc (track) -->
+                                    <path class="vdot-gauge-track" d="M 10 65 A 50 50 0 0 1 110 65" />
+                                    <!-- Foreground arc (progress) -->
+                                    <path class="vdot-gauge-arc" id="vdot-gauge-arc" d="M 10 65 A 50 50 0 0 1 110 65" />
+                                </svg>
+                                <div class="vdot-gauge-value text-gradient-primary" id="vdot-val">--</div>
+                                <div class="vdot-gauge-label" id="vdot-gauge-label"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="vdot-details" class="vdot-details-panel">
+                        <!-- Detailed Rows will be injected here -->
+                    </div>
+                </div>
+
+                <!-- Weather Block (Moved Down) -->
+                <div class="modern-input-card card-glow-border">
+                    <div class="modern-label">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path
+                                d="M17 16.974c4.375-1.074 4.375-7.79 0-8.863C15.875 3.097 9.125 3.097 8 8.11 3.625 9.184 3.625 15.9 8 16.974h9z">
+                            </path>
                         </svg>
-                    </button>
+                        Weather Conditions
+                    </div>
+                    <div class="input-row-grid cols-3">
+                        <div class="floating-input-group">
+                            <label for="temp">Temperature (°C)</label>
+                            <input type="number" id="temp" placeholder="Temp" title="Temperature in Celsius"
+                                inputmode="decimal" class="modern-input">
+                        </div>
+                        <div class="floating-input-group">
+                            <label for="dew">Dew Point (°C)</label>
+                            <input type="number" id="dew" placeholder="Dew" title="Dew Point in Celsius"
+                                inputmode="decimal" class="modern-input">
+                        </div>
+                        <div class="floating-input-group">
+                            <label for="wind">Wind Speed (km/h)</label>
+                            <input type="number" id="wind" placeholder="Wind" title="Wind Speed in km/h"
+                                inputmode="decimal" class="modern-input">
+                        </div>
+                    </div>
+
+                    <div class="impact-grid" style="margin-top:12px; display:flex; gap:8px;">
+                        <div id="weather-impact" class="impact-box clickable-card" data-toggle-target="heat"
+                            role="button" tabindex="0" style="color:var(--text-secondary);">
+                            <!-- Content injected via JS -->
+                        </div>
+                        <div id="wind-impact" class="impact-box clickable-card" data-toggle-target="wind" role="button"
+                            tabindex="0" style="color:var(--text-secondary);">
+                            <!-- Content injected via JS -->
+                        </div>
+                        <div id="altitude-impact-card" class="impact-box clickable-card" data-toggle-target="altitude"
+                            role="button" tabindex="0" style="color:var(--text-secondary); display:none;">
+                            <!-- Content injected via JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- View Model Toggles Removed -->
+            <!-- Interaction moved to Impact Cards -->
+
+            <div class="card">
+                <div class="card-title">
+                    Subthreshold
                 </div>
 
-                <!-- Dropdown Menu -->
-                <div class="dropdown-menu dropdown-menu-right">
-                    <!-- JS Injected Content -->
+                <div class="data-row">
+                    <div class="data-label-group">
+                        <div class="split-badge">
+                            <span class="sb-time">1 min</span>
+                            <span class="sb-sep"></span>
+                            <span class="sb-tag tag-10kp-text">10KP</span>
+                        </div>
+                    </div>
+                    <div class="data-value-group">
+                        <div class="data-value" id="pace-1min">--:--/km</div>
+                        <div class="data-sub" id="dist-1min">-- m</div>
+                    </div>
+                </div>
+
+                <div class="data-row">
+                    <div class="data-label-group">
+                        <div class="split-badge">
+                            <span class="sb-time">3 min</span>
+                            <span class="sb-sep"></span>
+                            <span class="sb-tag tag-15kp-text">15KP</span>
+                        </div>
+                    </div>
+                    <div class="data-value-group">
+                        <div class="data-value" id="pace-3min">--:--/km</div>
+                        <div class="data-sub" id="dist-3min">-- m</div>
+                    </div>
+                </div>
+
+                <div class="data-row">
+                    <div class="data-label-group">
+                        <div class="split-badge">
+                            <span class="sb-time">6 min</span>
+                            <span class="sb-sep"></span>
+                            <span class="sb-tag tag-hmp-text">HMP</span>
+                        </div>
+                    </div>
+                    <div class="data-value-group">
+                        <div class="data-value" id="pace-6min">--:--/km</div>
+                        <div class="data-sub" id="dist-6min">-- m</div>
+                    </div>
+                </div>
+
+                <div class="data-row">
+                    <div class="data-label-group">
+                        <div class="split-badge">
+                            <span class="sb-time">10 min</span>
+                            <span class="sb-sep"></span>
+                            <span class="sb-tag tag-30kp-text">30KP</span>
+                        </div>
+                    </div>
+                    <div class="data-value-group">
+                        <div class="data-value" id="pace-10min">--:--/km</div>
+                        <div class="data-sub" id="dist-10min">-- m</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top: 16px;">
+                <div class="card-title">
+                    Easy Run
+                </div>
+                <div class="data-row">
+                    <div class="data-label-group">
+                        <div class="split-badge">
+                            <span class="sb-time">Easy Run</span>
+                            <span class="sb-sep"></span>
+                            <span class="sb-tag tag-ez-text">EZ</span>
+                        </div>
+                    </div>
+                    <div class="data-value-group">
+                        <div class="data-value" id="pace-easy">--:--/km</div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Best Run Time Banner (Minimal) -->
-        <div id="best-run-banner" class="insight-banner" style="display:none;">
-            <div class="insight-left">
-                <span style="margin-right:8px;">Best Window</span>
-                <div class="insight-selector">
-                    <span class="insight-btn active" data-action="insight-range" data-range="24h">24h</span>
-                    <span class="insight-btn" data-action="insight-range" data-range="7d">7d</span>
-                    <span class="insight-btn" data-action="insight-range" data-range="14d">14d</span>
+        <!-- TAB: CURRENT -->
+        <div id="tab-current" class="tab-content container" style="max-width: 650px;">
+            <div class="header">
+                <div class="header-left">
+                    <h1>Conditions</h1>
+                    <div class="subtitle flex-center">
+                        Real-time Weather
+                        <span data-action="info-tooltip" data-title="" data-text="Weather data provided by Open-Meteo."
+                            class="fav-star-btn">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="16" x2="12" y2="12"></line>
+                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                            </svg>
+                        </span>
+                    </div>
+                </div>
+                <!-- Location Group -->
+                <div class="location-group" style="margin-left:auto;">
+                    <div class="location-search-btn">
+                        <!-- Star Button -->
+                        <button data-action="toggle-favorite" class="icon-btn btn-favorite" title="Toggle Favorite"
+                            class="location-search-icon">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <polygon
+                                    points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
+                                </polygon>
+                            </svg>
+                        </button>
+
+                        <!-- Location Dropdown Trigger -->
+                        <button class="location-btn" data-action="toggle-dropdown" aria-label="Change Location"
+                            class="location-name-btn">
+                            <div class="loc-text-col text-left">
+                                <span class="current-location-name">Florianópolis</span>
+                                <span class="elevation-display location-subtitle">--m</span>
+                            </div>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" class="location-chevron">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- Dropdown Menu -->
+                    <div class="dropdown-menu dropdown-menu-right">
+                        <!-- JS Injected Content -->
+                    </div>
+                </div>
+
+
+                <button class="copy-btn" id="btn-copy-cond" data-action="copy-conditions"
+                    title="Copy conditions to clipboard" aria-label="Copy Conditions">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                </button>
+            </div>
+            <div id="current-content" class="current-grid">
+                <div style="text-align:center; padding:40px; color:var(--text-secondary);">
+                    <svg class="animate-spin" style="width:24px;height:24px;margin:auto;"
+                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                        </circle>
+                        <path class="opacity-75" fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                        </path>
+                    </svg>
+                    <div style="margin-top:12px; font-size:0.9em;">Loading Weather...</div>
                 </div>
             </div>
-            <div style="text-align:right;">
-                <span class="insight-val" id="best-run-val">--:--</span>
-                <span id="best-run-impact" class="insight-impact">--%</span>
-            </div>
+        </div>
+        <div id="loading-current" class="loading-overlay">
+            <div class="loading-spinner"></div>
         </div>
 
-        <!-- Weekly Heatmap -->
-        <div class="forecast-card">
-            <h3 class="h3-title">
-                Forecast Heatmap</h3>
-            <div style="overflow-x:auto;">
-                <div id="forecast-grid-container-16" class="forecast-grid">
+
+
+
+        <!-- TAB: FORECAST 16 DAYS -->
+        <div id="tab-forecast16" class="tab-content container" style="max-width: 650px;">
+            <div class="header">
+                <div class="header-left">
+                    <h1>Forecast</h1>
+                    <div class="subtitle">14-Day Heat Impact</div>
+                </div>
+                <!-- Location Group -->
+                <div class="location-group">
+                    <div class="location-search-btn">
+                        <!-- Star Button -->
+                        <button data-action="toggle-favorite" class="icon-btn btn-favorite" title="Toggle Favorite"
+                            class="location-search-icon">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <polygon
+                                    points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
+                                </polygon>
+                            </svg>
+                        </button>
+
+                        <!-- Location Dropdown Trigger -->
+                        <button class="location-btn" data-action="toggle-dropdown" aria-label="Change Location"
+                            class="location-name-btn">
+                            <div class="loc-text-col text-left">
+                                <span class="current-location-name">Florianópolis</span>
+                                <span class="elevation-display location-subtitle">--m</span>
+                            </div>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" class="location-chevron">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- Dropdown Menu -->
+                    <div class="dropdown-menu dropdown-menu-right">
+                        <!-- JS Injected Content -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Best Run Time Banner (Minimal) -->
+            <div id="best-run-banner" class="insight-banner" style="display:none;">
+                <div class="insight-left">
+                    <span style="margin-right:8px;">Best Window</span>
+                    <div class="insight-selector">
+                        <span class="insight-btn active" data-action="insight-range" data-range="24h">24h</span>
+                        <span class="insight-btn" data-action="insight-range" data-range="7d">7d</span>
+                        <span class="insight-btn" data-action="insight-range" data-range="14d">14d</span>
+                    </div>
+                </div>
+                <div style="text-align:right;">
+                    <span class="insight-val" id="best-run-val">--:--</span>
+                    <span id="best-run-impact" class="insight-impact">--%</span>
+                </div>
+            </div>
+
+            <!-- Weekly Heatmap -->
+            <div class="forecast-card">
+                <h3 class="h3-title">
+                    Forecast Heatmap</h3>
+                <div style="overflow-x:auto;">
+                    <div id="forecast-grid-container-16" class="forecast-grid">
+                        <!-- JS Injected -->
+                    </div>
+                </div>
+                <!-- Legend -->
+                <div class="legend-container heatmap-legend" id="legend-container-16">
                     <!-- JS Injected -->
                 </div>
             </div>
-            <!-- Legend -->
-            <div class="legend-container heatmap-legend" id="legend-container-16">
-                <!-- JS Injected -->
-            </div>
-        </div>
 
-        <!-- Trend Chart -->
-        <div class="forecast-card">
-            <div data-action="toggle-temp-chart" class="chart-toggle-header">
-                <h3 class="h3-title table-heading-no-margin">
-                    Temperature & Dew Point</h3>
-                <span id="temp-toggle-icon" class="chart-toggle-icon">▼</span>
-            </div>
-
-            <div id="temp-chart-wrapper" class="chart-wrapper">
-                <div id="forecast-chart-container-16" class="chart-box">
-                    <!-- JS Injected SVG -->
-                    <div class="chart-placeholder">
-                        Loading
-                        Chart...</div>
+            <!-- Trend Chart -->
+            <div class="forecast-card">
+                <div data-action="toggle-temp-chart" class="chart-toggle-header">
+                    <h3 class="h3-title table-heading-no-margin">
+                        Temperature & Dew Point</h3>
+                    <span id="temp-toggle-icon" class="chart-toggle-icon">▼</span>
                 </div>
-                <div class="chart-legend">
-                    <div style="color:#f87171; display:flex; align-items:center; gap:4px;"><span
-                            style="width:8px; height:8px; border-radius:50%; background:#f87171;"></span> Temp</div>
-                    <div style="color:#60a5fa; display:flex; align-items:center; gap:4px;"><span
-                            style="width:8px; height:8px; border-radius:50%; background:#60a5fa;"></span> Dew Point
+
+                <div id="temp-chart-wrapper" class="chart-wrapper">
+                    <div id="forecast-chart-container-16" class="chart-box">
+                        <!-- JS Injected SVG -->
+                        <div class="chart-placeholder">
+                            Loading
+                            Chart...</div>
+                    </div>
+                    <div class="chart-legend">
+                        <div style="color:#f87171; display:flex; align-items:center; gap:4px;"><span
+                                style="width:8px; height:8px; border-radius:50%; background:#f87171;"></span> Temp</div>
+                        <div style="color:#60a5fa; display:flex; align-items:center; gap:4px;"><span
+                                style="width:8px; height:8px; border-radius:50%; background:#60a5fa;"></span> Dew Point
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Rain Chart -->
-        <div class="forecast-card">
-            <div data-action="toggle-rain-chart" class="chart-toggle-header">
-                <h3 class="h3-title table-heading-no-margin">
-                    Precipitation</h3>
-                <span id="rain-toggle-icon" class="chart-toggle-icon">▼</span>
-            </div>
-
-            <div id="rain-chart-wrapper" class="chart-wrapper">
-                <div id="forecast-rain-chart-container-16" class="chart-box">
-                    <!-- JS Injected SVG -->
-                    <div class="chart-placeholder">
-                        Loading
-                        Chart...</div>
+            <!-- Rain Chart -->
+            <div class="forecast-card">
+                <div data-action="toggle-rain-chart" class="chart-toggle-header">
+                    <h3 class="h3-title table-heading-no-margin">
+                        Precipitation</h3>
+                    <span id="rain-toggle-icon" class="chart-toggle-icon">▼</span>
                 </div>
-                <div class="chart-legend">
-                    <div style="color:#60a5fa; display:flex; align-items:center; gap:4px;"><span
-                            style="width:8px; height:8px; background:#60a5fa;"></span> Rain (mm)</div>
-                    <div style="color:#93c5fd; display:flex; align-items:center; gap:4px;"><span
-                            style="width:8px; height:2px; background:#93c5fd;"></span> Probability (%)</div>
-                </div>
-            </div>
-        </div>
 
-        <!-- Wind Chart -->
-        <div class="forecast-card">
-            <div data-action="toggle-wind-chart" class="chart-toggle-header">
-                <h3 class="h3-title table-heading-no-margin">
-                    Wind Speed</h3>
-                <span id="wind-toggle-icon" class="chart-toggle-icon">▼</span>
-            </div>
-
-            <div id="wind-chart-wrapper" class="chart-wrapper">
-                <div id="forecast-wind-chart-container-16" class="chart-box">
-                    <!-- JS Injected SVG -->
-                    <div class="chart-placeholder">
-                        Loading
-                        Chart...</div>
-                </div>
-                <div class="chart-legend">
-                    <div style="color:#c084fc; display:flex; align-items:center; gap:4px;"><span
-                            style="width:8px; height:2px; background:#c084fc;"></span> Wind (km/h)</div>
+                <div id="rain-chart-wrapper" class="chart-wrapper">
+                    <div id="forecast-rain-chart-container-16" class="chart-box">
+                        <!-- JS Injected SVG -->
+                        <div class="chart-placeholder">
+                            Loading
+                            Chart...</div>
+                    </div>
+                    <div class="chart-legend">
+                        <div style="color:#60a5fa; display:flex; align-items:center; gap:4px;"><span
+                                style="width:8px; height:8px; background:#60a5fa;"></span> Rain (mm)</div>
+                        <div style="color:#93c5fd; display:flex; align-items:center; gap:4px;"><span
+                                style="width:8px; height:2px; background:#93c5fd;"></span> Probability (%)</div>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Pace Selector (Shared State) -->
-        <div style="margin-bottom:15px; display:flex; justify-content:flex-start; align-items:center;">
-            <span style="font-size:0.8rem; color:var(--text-secondary); margin-right:8px;">Adjust Paces For:</span>
-            <div id="pace-tag-container-16" style="display:flex; gap:8px;">
-                <button class="tag-btn tag-10kp" data-action="pace-mode" data-mode="10KP">10KP</button>
-                <button class="tag-btn tag-15kp" data-action="pace-mode" data-mode="15KP">15KP</button>
-                <button class="tag-btn tag-hmp active" data-action="pace-mode" data-mode="HMP">HMP</button>
-                <button class="tag-btn tag-30kp" data-action="pace-mode" data-mode="30KP">30KP</button>
-                <button class="tag-btn tag-ez" data-action="pace-mode" data-mode="EZ">EZ</button>
-            </div>
-        </div>
+            <!-- Wind Chart -->
+            <div class="forecast-card">
+                <div data-action="toggle-wind-chart" class="chart-toggle-header">
+                    <h3 class="h3-title table-heading-no-margin">
+                        Wind Speed</h3>
+                    <span id="wind-toggle-icon" class="chart-toggle-icon">▼</span>
+                </div>
 
-        <div class="table-wrapper">
-            <table class="forecast-table">
-                <thead>
-                    <tr>
-                        <th data-action="sort-forecast" data-col="time" style="cursor:pointer">Time</th>
-                        <th data-action="sort-forecast" data-col="temp" style="text-align:center; cursor:pointer">Temp
-                        </th>
-                        <th data-action="sort-forecast" data-col="dew" style="text-align:center; cursor:pointer">Dew
-                        </th>
-                        <th data-action="sort-forecast" data-col="rain"
-                            style="min-width:60px; text-align:center; cursor:pointer">Rain/Prob</th>
-
-                        <th data-action="sort-forecast" data-col="wind"
-                            style="min-width:70px; text-align:center; cursor:pointer">Wind</th>
-                        <th data-action="sort-forecast" data-col="impact" style="text-align:center; cursor:pointer">
-                            Impact
-                        </th>
-
-                    </tr>
-                </thead>
-                <tbody id="forecast-body-16">
-                    <tr>
-                        <td colspan="5" style="text-align:center; padding:20px;">Loading forecast...</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-    <div id="loading-forecast" class="loading-overlay">
-        <div class="loading-spinner"></div>
-    </div>
-    </div>
-
-    <!-- Climate Tab -->
-    <div id="tab-climate" class="tab-content container" style="max-width: 650px;">
-        <div class="header">
-            <div class="header-left">
-                <h1>Climate Analysis</h1>
-                <div class="subtitle flex-center">
-                    Historical Trends
-                    <span data-action="info-tooltip" data-title=""
-                        data-text="Analysis based on the last 6 years of historical weather data from Open-Meteo."
-                        class="fav-star-btn">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <line x1="12" y1="16" x2="12" y2="12"></line>
-                            <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                        </svg>
-                    </span>
+                <div id="wind-chart-wrapper" class="chart-wrapper">
+                    <div id="forecast-wind-chart-container-16" class="chart-box">
+                        <!-- JS Injected SVG -->
+                        <div class="chart-placeholder">
+                            Loading
+                            Chart...</div>
+                    </div>
+                    <div class="chart-legend">
+                        <div style="color:#c084fc; display:flex; align-items:center; gap:4px;"><span
+                                style="width:8px; height:2px; background:#c084fc;"></span> Wind (km/h)</div>
+                    </div>
                 </div>
             </div>
-            <!-- Location Group -->
-            <div class="location-group">
-                <div class="location-search-btn">
-                    <!-- Star Button -->
-                    <button data-action="toggle-favorite" class="icon-btn btn-favorite" title="Toggle Favorite"
-                        class="location-search-icon">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <polygon
-                                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
-                            </polygon>
-                        </svg>
-                    </button>
 
-                    <!-- Location Dropdown Trigger -->
-                    <button class="location-btn" data-action="toggle-dropdown" aria-label="Change Location"
-                        class="location-name-btn">
-                        <div class="loc-text-col text-left">
-                            <span class="current-location-name">Florianópolis</span>
-                            <span class="elevation-display location-subtitle">--m</span>
-                        </div>
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2" class="location-chevron">
-                            <polyline points="6 9 12 15 18 9"></polyline>
-                        </svg>
-                    </button>
+            <!-- Pace Selector (Shared State) -->
+            <div style="margin-bottom:15px; display:flex; justify-content:flex-start; align-items:center;">
+                <span style="font-size:0.8rem; color:var(--text-secondary); margin-right:8px;">Adjust Paces For:</span>
+                <div id="pace-tag-container-16" style="display:flex; gap:8px;">
+                    <button class="tag-btn tag-10kp" data-action="pace-mode" data-mode="10KP">10KP</button>
+                    <button class="tag-btn tag-15kp" data-action="pace-mode" data-mode="15KP">15KP</button>
+                    <button class="tag-btn tag-hmp active" data-action="pace-mode" data-mode="HMP">HMP</button>
+                    <button class="tag-btn tag-30kp" data-action="pace-mode" data-mode="30KP">30KP</button>
+                    <button class="tag-btn tag-ez" data-action="pace-mode" data-mode="EZ">EZ</button>
                 </div>
+            </div>
 
-                <!-- Dropdown Menu -->
-                <div class="dropdown-menu dropdown-menu-right">
-                    <!-- JS Injected Content -->
-                </div>
+            <div class="table-wrapper">
+                <table class="forecast-table">
+                    <thead>
+                        <tr>
+                            <th data-action="sort-forecast" data-col="time" style="cursor:pointer">Time</th>
+                            <th data-action="sort-forecast" data-col="temp" style="text-align:center; cursor:pointer">
+                                Temp
+                            </th>
+                            <th data-action="sort-forecast" data-col="dew" style="text-align:center; cursor:pointer">Dew
+                            </th>
+                            <th data-action="sort-forecast" data-col="rain"
+                                style="min-width:60px; text-align:center; cursor:pointer">Rain/Prob</th>
+
+                            <th data-action="sort-forecast" data-col="wind"
+                                style="min-width:70px; text-align:center; cursor:pointer">Wind</th>
+                            <th data-action="sort-forecast" data-col="impact" style="text-align:center; cursor:pointer">
+                                Impact
+                            </th>
+
+                        </tr>
+                    </thead>
+                    <tbody id="forecast-body-16">
+                        <tr>
+                            <td colspan="5" style="text-align:center; padding:20px;">Loading forecast...</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
+        <div id="loading-forecast" class="loading-overlay">
+            <div class="loading-spinner"></div>
+        </div>
 
-        <div class="forecast-card" style="overflow-x:auto;">
-            <h3 style="margin-top:0; margin-bottom:15px; font-size:1rem; font-weight:600; color:var(--text-primary);">
-                Seasonal Heat Impact
-            </h3>
 
-            <div>
-                <!-- Static X-Axis Labels removed; now rendered by SVG -->
-                <!-- <div
+        <!-- Climate Tab -->
+        <div id="tab-climate" class="tab-content container" style="max-width: 650px;">
+            <div class="header">
+                <div class="header-left">
+                    <h1>Climate Analysis</h1>
+                    <div class="subtitle flex-center">
+                        Historical Trends
+                        <span data-action="info-tooltip" data-title=""
+                            data-text="Analysis based on the last 6 years of historical weather data from Open-Meteo."
+                            class="fav-star-btn">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="16" x2="12" y2="12"></line>
+                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                            </svg>
+                        </span>
+                    </div>
+                </div>
+                <!-- Location Group -->
+                <div class="location-group">
+                    <div class="location-search-btn">
+                        <!-- Star Button -->
+                        <button data-action="toggle-favorite" class="icon-btn btn-favorite" title="Toggle Favorite"
+                            class="location-search-icon">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <polygon
+                                    points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
+                                </polygon>
+                            </svg>
+                        </button>
+
+                        <!-- Location Dropdown Trigger -->
+                        <button class="location-btn" data-action="toggle-dropdown" aria-label="Change Location"
+                            class="location-name-btn">
+                            <div class="loc-text-col text-left">
+                                <span class="current-location-name">Florianópolis</span>
+                                <span class="elevation-display location-subtitle">--m</span>
+                            </div>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" class="location-chevron">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- Dropdown Menu -->
+                    <div class="dropdown-menu dropdown-menu-right">
+                        <!-- JS Injected Content -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="forecast-card" style="overflow-x:auto;">
+                <h3
+                    style="margin-top:0; margin-bottom:15px; font-size:1rem; font-weight:600; color:var(--text-primary);">
+                    Seasonal Heat Impact
+                </h3>
+
+                <div>
+                    <!-- Static X-Axis Labels removed; now rendered by SVG -->
+                    <!-- <div
                     style="display:flex; justify-content:space-between; padding-left:40px; margin-bottom:5px; color:var(--text-secondary); font-size:0.75rem;">
                     <span>Jan</span><span>Feb</span><span>Mar</span><span>Apr</span><span>May</span><span>Jun</span>
                     <span>Jul</span><span>Aug</span><span>Sep</span><span>Oct</span><span>Nov</span><span>Dec</span>
                 </div> -->
 
-                <div id="climate-heatmap-container"
-                    style="display:grid; gap:1px; grid-template-columns: 40px repeat(53, 1fr);">
-                    <!-- JS Injected -->
-                </div>
+                    <div id="climate-heatmap-container"
+                        style="display:grid; gap:1px; grid-template-columns: 40px repeat(53, 1fr);">
+                        <!-- JS Injected -->
+                    </div>
 
-                <div id="climate-legend-container" class="heatmap-legend">
-                    <!-- JS Injected -->
-                </div>
-            </div>
-        </div>
-
-        <!-- Monthly Averages Card -->
-        <div class="forecast-card">
-            <div data-action="toggle-monthly" class="chart-toggle-header">
-                <h3 style="margin:0; font-size:1rem; font-weight:600; color:var(--text-primary);">
-                    Monthly Averages
-                </h3>
-                <span id="monthly-toggle-icon" class="chart-toggle-icon">▼</span>
-            </div>
-
-            <div id="monthly-averages-wrapper" style="margin-top:15px; transition:all 0.3s ease-out; overflow:hidden;">
-                <div id="monthly-averages-content" class="monthly-list">
-                    <!-- JS Injected Rows -->
-                    <div style="text-align:center; padding:20px; color:var(--text-secondary);">Loading...</div>
+                    <div id="climate-legend-container" class="heatmap-legend">
+                        <!-- JS Injected -->
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Data Table -->
-        <div style="margin-bottom:15px; display:flex; justify-content:flex-start; align-items:center;">
-            <span style="font-size:0.9rem; font-weight:600; color:var(--text-primary); margin-right:12px;">Historical
-                Data</span>
-            <div class="start-center gap-2">
-                <span id="climate-filter-label"
-                    style="display:none; font-size:0.65rem; background:var(--accent-color); color:white; padding:1px 4px; border-radius:2px;"></span>
-                <button id="climate-clear-filter" data-action="filter-climate"
-                    style="display:none; background:none; border:none; color:var(--text-secondary); cursor:pointer; font-size:0.75rem; text-decoration:underline;">Clear</button>
+            <!-- Monthly Averages Card -->
+            <div class="forecast-card">
+                <div data-action="toggle-monthly" class="chart-toggle-header">
+                    <h3 style="margin:0; font-size:1rem; font-weight:600; color:var(--text-primary);">
+                        Monthly Averages
+                    </h3>
+                    <span id="monthly-toggle-icon" class="chart-toggle-icon">▼</span>
+                </div>
+
+                <div id="monthly-averages-wrapper"
+                    style="margin-top:15px; transition:all 0.3s ease-out; overflow:hidden;">
+                    <div id="monthly-averages-content" class="monthly-list">
+                        <!-- JS Injected Rows -->
+                        <div style="text-align:center; padding:20px; color:var(--text-secondary);">Loading...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Data Table -->
+            <div style="margin-bottom:15px; display:flex; justify-content:flex-start; align-items:center;">
+                <span
+                    style="font-size:0.9rem; font-weight:600; color:var(--text-primary); margin-right:12px;">Historical
+                    Data</span>
+                <div class="start-center gap-2">
+                    <span id="climate-filter-label"
+                        style="display:none; font-size:0.65rem; background:var(--accent-color); color:white; padding:1px 4px; border-radius:2px;"></span>
+                    <button id="climate-clear-filter" data-action="filter-climate"
+                        style="display:none; background:none; border:none; color:var(--text-secondary); cursor:pointer; font-size:0.75rem; text-decoration:underline;">Clear</button>
+                </div>
+            </div>
+
+            <div class="table-wrapper">
+                <table class="forecast-table">
+                    <thead style="position:sticky; top:0; background:var(--card-bg); z-index:10;">
+                        <tr>
+                            <th style="cursor:pointer; width:35%;" data-action="sort-climate" data-col="date">Time <span
+                                    id="sort-icon-climate-date"></span></th>
+                            <th style="cursor:pointer; text-align:center;" data-action="sort-climate" data-col="temp">
+                                Temp <span id="sort-icon-climate-temp"></span></th>
+                            <th style="cursor:pointer; text-align:center;" data-action="sort-climate" data-col="dew">Dew
+                                <span id="sort-icon-climate-dew"></span>
+                            </th>
+                            <th style="cursor:pointer; text-align:center;" data-action="sort-climate" data-col="precip">
+                                Rain <span id="sort-icon-climate-precip"></span></th>
+                            <th style="cursor:pointer; text-align:center;" data-action="sort-climate" data-col="wind">
+                                Wind <span id="sort-icon-climate-wind"></span></th>
+                            <th style="cursor:pointer; text-align:center;" data-action="sort-climate" data-col="impact">
+                                Impact <span id="sort-icon-climate-impact">▼</span></th>
+                        </tr>
+                    </thead>
+                    <tbody id="climateTableBody"></tbody>
+                </table>
             </div>
         </div>
-
-        <div class="table-wrapper">
-            <table class="forecast-table">
-                <thead style="position:sticky; top:0; background:var(--card-bg); z-index:10;">
-                    <tr>
-                        <th style="cursor:pointer; width:35%;" data-action="sort-climate" data-col="date">Time <span
-                                id="sort-icon-climate-date"></span></th>
-                        <th style="cursor:pointer; text-align:center;" data-action="sort-climate" data-col="temp">
-                            Temp <span id="sort-icon-climate-temp"></span></th>
-                        <th style="cursor:pointer; text-align:center;" data-action="sort-climate" data-col="dew">Dew
-                            <span id="sort-icon-climate-dew"></span>
-                        </th>
-                        <th style="cursor:pointer; text-align:center;" data-action="sort-climate" data-col="precip">
-                            Rain <span id="sort-icon-climate-precip"></span></th>
-                        <th style="cursor:pointer; text-align:center;" data-action="sort-climate" data-col="wind">
-                            Wind <span id="sort-icon-climate-wind"></span></th>
-                        <th style="cursor:pointer; text-align:center;" data-action="sort-climate" data-col="impact">
-                            Impact <span id="sort-icon-climate-impact">▼</span></th>
-                    </tr>
-                </thead>
-                <tbody id="climateTableBody"></tbody>
-            </table>
+        <div id="loading-climate" class="loading-overlay">
+            <div class="loading-spinner"></div>
         </div>
-    </div>
-    <div id="loading-climate" class="loading-overlay">
-        <div class="loading-spinner"></div>
-    </div>
     </div>
 
     <div class="github-footer">
@@ -950,6 +958,56 @@
             <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
         </svg>
     </button>
+    </div> <!-- End view-weather -->
+
+    <!-- VIEW: FUELING -->
+    <div id="view-fueling" class="main-view hidden" style="display:none;">
+        <div class="container" style="max-width:650px; padding-top:20px;">
+            <h1>Fueling</h1>
+            <p style="color:var(--text-secondary); text-align:center; margin-top:40px;">Fueling calculator coming soon.
+            </p>
+        </div>
+    </div>
+
+    <!-- VIEW: LIBRARY -->
+    <div id="view-library" class="main-view hidden" style="display:none;">
+        <iframe id="library-frame" src="" style="width:100%; height:100%; border:none;"></iframe>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <button class="nav-btn active" data-target="view-weather">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path
+                    d="M17 16.974c4.375-1.074 4.375-7.79 0-8.863C15.875 3.097 9.125 3.097 8 8.11 3.625 9.184 3.625 15.9 8 16.974h9z">
+                </path>
+            </svg>
+            <span>Weather</span>
+        </button>
+        <button class="nav-btn" data-target="view-fueling">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z">
+                </path>
+                <path
+                    d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z">
+                </path>
+                <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"></path>
+                <path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"></path>
+            </svg>
+            <span>Fueling</span>
+        </button>
+        <button class="nav-btn" data-target="view-library">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path
+                    d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2c1.24 0 2.26 1.05 2.5 2.25a2.5 2.5 0 0 1 5 0 2.5 2.5 0 0 1 5 0A2.5 2.5 0 0 1 21.5 4.5v15a2.5 2.5 0 0 1-2.5-2.5 2.5 2.5 0 0 0-5 0 2.5 2.5 0 0 0-5 0 2.5 2.5 0 0 0-2.5 2.5z">
+                </path>
+            </svg>
+            <span>Library</span>
+        </button>
+    </nav>
 
     <!-- PWA Service Worker -->
     <script>

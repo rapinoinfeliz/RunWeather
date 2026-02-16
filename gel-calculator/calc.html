@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gel Calculator | DIY Endurance Fuel</title>
+    <meta name="description"
+        content="Calculate precise carbohydrate and electrolyte recipes for DIY endurance gels and drink mixes.">
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="public/favicon.png" type="image/png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div id="toast" class="toast" aria-live="polite"></div>
+
+    <div class="container">
+        <header class="header">
+            <div class="header-left">
+                <h1>Gel Calculator</h1>
+                <p class="header-sub">Endurance fuel designer</p>
+            </div>
+            <button class="btn-icon" id="reset-btn" title="Reset to defaults">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                    <path d="M3 3v5h5" />
+                </svg>
+            </button>
+        </header>
+
+        <!-- Activity -->
+        <section class="card" id="activity-card">
+            <div class="card-content">
+                <div class="basic-inputs-row">
+                    <div class="basic-input-item">
+                        <label for="hours">Duration</label>
+                        <div class="input-with-unit">
+                            <input type="number" id="hours" value="1" min="0.1" step="0.1">
+                            <span class="unit-label">hours</span>
+                        </div>
+                    </div>
+                    <div class="basic-input-item">
+                        <label for="carbs-per-hour">Carbs target</label>
+                        <div class="input-with-unit">
+                            <input type="number" id="carbs-per-hour" value="90" min="0">
+                            <span class="unit-label">g/h</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="stats-row">
+                    <div class="stat-item">
+                        <span class="stat-value" id="total-carbs-needed">90</span>
+                        <span class="stat-label">g total</span>
+                    </div>
+                    <span class="stat-sep">·</span>
+                    <div class="stat-item">
+                        <span class="stat-value" id="total-calories">360</span>
+                        <span class="stat-label">kcal</span>
+                    </div>
+                    <span class="stat-sep">·</span>
+                    <div class="stat-item">
+                        <span class="stat-value" id="total-weight">—</span>
+                        <span class="stat-label">g weight</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Ratio -->
+        <section class="card" id="ratio-card">
+            <div class="card-content">
+                <div class="ratio-control-row">
+                    <div class="ratio-side">
+                        <label>Glucose <span class="label-dim">(SGLT1)</span></label>
+                        <div class="ratio-slider-group">
+                            <input type="range" id="glucose-ratio-slider" min="0" max="120" step="1" value="100"
+                                class="slider glucose-slider">
+                            <span class="ratio-num" id="glucose-ratio-val">100</span>
+                        </div>
+                    </div>
+                    <div class="ratio-divider">:</div>
+                    <div class="ratio-side">
+                        <label>Fructose <span class="label-dim">(GLUT-5)</span></label>
+                        <div class="ratio-slider-group">
+                            <input type="range" id="fructose-ratio-slider" min="0" max="100" step="1" value="80"
+                                class="slider fructose-slider">
+                            <span class="ratio-num" id="fructose-ratio-val">80</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="ratio-visual">
+                    <div class="ratio-bar">
+                        <div class="ratio-fill glucose-fill" id="ratio-fill-glucose"></div>
+                        <div class="ratio-fill fructose-fill" id="ratio-fill-fructose"></div>
+                    </div>
+                    <div class="ratio-labels">
+                        <span><span id="glucose-pct-display">56</span>% · <span
+                                id="target-glucose-carbs">50.0</span>g</span>
+                        <span><span id="fructose-pct-display">44</span>% · <span
+                                id="target-fructose-carbs">40.0</span>g</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Glucose Sources -->
+        <section class="card" id="glucose-card">
+            <div class="card-header">
+                <div class="card-title-row">
+                    <h3>Glucose sources</h3>
+                    <span class="parts-label" id="glucose-parts-label">100 part(s)</span>
+                </div>
+            </div>
+            <div class="card-content">
+                <div class="error-line" id="glucose-error" style="display:none;"></div>
+                <div class="error-line" id="glucose-pct-error" style="display:none;">Source percentages must sum to
+                    100%.</div>
+                <div class="table-scroll">
+                    <table class="source-table">
+                        <thead>
+                            <tr>
+                                <th>Source</th>
+                                <th>Carbs/g</th>
+                                <th>Glucose</th>
+                                <th>Fructose</th>
+                                <th>%</th>
+                                <th>Total</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="glucose-sources-tbody"></tbody>
+                    </table>
+                </div>
+                <button class="btn-add" id="add-glucose-btn">+ Add source</button>
+            </div>
+        </section>
+
+        <!-- Fructose Sources -->
+        <section class="card" id="fructose-card">
+            <div class="card-header">
+                <div class="card-title-row">
+                    <h3>Fructose sources</h3>
+                    <span class="parts-label" id="fructose-parts-label">80 part(s)</span>
+                </div>
+            </div>
+            <div class="card-content">
+                <div class="error-line" id="fructose-error" style="display:none;"></div>
+                <div class="error-line" id="fructose-pct-error" style="display:none;">Source percentages must sum to
+                    100%.</div>
+                <div class="detailed-message" id="carb-detailed-msg" style="display:none;"></div>
+                <div class="table-scroll">
+                    <table class="source-table">
+                        <thead>
+                            <tr>
+                                <th>Source</th>
+                                <th>Carbs/g</th>
+                                <th>Glucose</th>
+                                <th>Fructose</th>
+                                <th>%</th>
+                                <th>Total</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="fructose-sources-tbody"></tbody>
+                    </table>
+                </div>
+                <button class="btn-add" id="add-fructose-btn">+ Add source</button>
+            </div>
+        </section>
+
+        <!-- Electrolytes -->
+        <section class="card" id="electrolyte-card">
+            <div class="card-header">
+                <div class="card-title-row" style="flex-direction: column; gap: 12px;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;width:100%;">
+                        <h3>Electrolytes <span class="label-dim">(<span id="elec-hours-display">1</span>h)</span></h3>
+                    </div>
+                    <div class="tabs-bar" id="sweat-mode-tabs">
+                        <button class="tab-btn active" data-value="sweat-rate">Sweat profile</button>
+                        <button class="tab-btn" data-value="manual">Manual (mg/h)</button>
+                    </div>
+                </div>
+            </div>
+            <div class="card-content">
+                <div id="elec-auto-inputs" class="grid-2" style="margin-bottom: 16px;">
+                    <div class="input-group">
+                        <label>
+                            Sweat rate
+                            <span class="info-icon" data-tooltip-type="sweat-rate" aria-label="More info">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                                </svg>
+                            </span>
+                        </label>
+                        <select id="sweat-rate-select" class="select-input"></select>
+                    </div>
+                    <div class="input-group">
+                        <label>
+                            Saltiness
+                            <span class="info-icon" data-tooltip-type="saltiness" aria-label="More info">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                                </svg>
+                            </span>
+                        </label>
+                        <select id="saltiness-select" class="select-input"></select>
+                    </div>
+                </div>
+
+                <div id="elec-manual-inputs" style="display: none; margin-bottom: 16px;">
+                    <div class="manual-targets-grid" id="manual-targets-grid"></div>
+                </div>
+
+                <div class="electrolyte-grid" id="electrolyte-grid"></div>
+
+                <div class="elec-sources-header">
+                    <h4>Sources <span class="label-dim">(total for <span id="elec-sources-hours">1</span>h)</span></h4>
+                    <button class="btn btn-auto" id="auto-calc-elec-btn">Auto-calculate</button>
+                </div>
+                <div class="table-scroll">
+                    <table class="source-table">
+                        <thead>
+                            <tr>
+                                <th>Source</th>
+                                <th>Amount (mg)</th>
+                                <th>Provides</th>
+                                <th>Absorption</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="electrolyte-sources-tbody"></tbody>
+                    </table>
+                </div>
+                <button class="btn-add" id="add-elec-btn">+ Add source</button>
+
+                <div class="analysis-panel" id="elec-analysis-panel">
+                    <h4>Balance <span class="label-dim">(total for <span id="analysis-hours">1</span>h)</span></h4>
+                    <div id="elec-analysis-list"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Recipe -->
+        <section class="card" id="recipe-card">
+            <div class="card-header">
+                <div class="card-title-row" style="flex-direction: column; gap: 12px;">
+                    <div class="recipe-header-row">
+                        <div>
+                            <h3>Recipe</h3>
+                            <span class="recipe-subtitle" id="recipe-subtitle">Total ingredients for 1 hour</span>
+                        </div>
+                        <div class="recipe-actions">
+                            <button class="btn btn-ghost" id="copy-recipe-btn">Copy</button>
+                            <button class="btn btn-filled" id="view-instructions-btn">Instructions</button>
+                        </div>
+                    </div>
+                    <div class="recipe-controls">
+                        <div class="tabs-bar tabs-bar-sm" id="batch-mode-tabs">
+                            <button class="tab-btn" data-value="gel">Per gel</button>
+                            <button class="tab-btn active" data-value="batch">Full batch</button>
+                        </div>
+                        <div id="gels-per-hour-group" class="gels-group" style="display: none;">
+                            <input type="number" id="gels-per-hour" value="3" min="1" class="input-sm">
+                            <span class="text-muted" id="total-gels-label">gels/h (3 total)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-content">
+                <div id="recipe-content"></div>
+            </div>
+        </section>
+
+        <!-- Modal -->
+        <div class="modal-overlay" id="recipe-modal-overlay" style="display:none;">
+            <div class="modal">
+                <div class="modal-header">
+                    <div>
+                        <h2>Mixing instructions</h2>
+                        <p class="modal-meta" id="modal-meta"></p>
+                    </div>
+                    <div class="modal-header-actions">
+                        <button class="btn btn-ghost btn-sm" id="copy-instructions-btn">Copy</button>
+                        <button class="btn-close-modal" id="close-modal-btn">&times;</button>
+                    </div>
+                </div>
+                <div class="modal-body" id="modal-body"></div>
+            </div>
+        </div>
+
+        <footer class="footer">
+        </footer>
+    </div>
+
+    <div id="global-tooltip" class="tooltip-box"></div>
+    <script type="module" src="src/main.js"></script>
+</body>
+
+</html>

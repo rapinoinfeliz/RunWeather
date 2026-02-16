@@ -90,6 +90,7 @@ async function init() {
 
     // Attach global click helpers (deselection, resize)
     UI.setupWindowHelpers();
+    UI.initBottomNav();
 
     // Auto-format time inputs on blur
     formatTimeInput(els.time);

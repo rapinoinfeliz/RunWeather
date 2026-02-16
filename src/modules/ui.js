@@ -1118,3 +1118,79 @@ export function setupTableScrollListeners() {
     initRipple();
 }
 
+
+// --- Bottom Navigation ---
+export function initBottomNav() {
+    const navBtns = document.querySelectorAll('.nav-btn');
+    const views = document.querySelectorAll('.main-view');
+    const navBar = document.querySelector('.bottom-nav');
+
+    // Pure Hover-to-Show (Desktop Dock Style)
+    // Initially hidden
+    navBar.classList.add('nav-hidden');
+
+    window.addEventListener('mousemove', (e) => {
+        const threshold = 100; // px from bottom
+        const isNearBottom = (window.innerHeight - e.clientY) < threshold;
+
+        if (isNearBottom) {
+            navBar.classList.remove('nav-hidden');
+        } else {
+            navBar.classList.add('nav-hidden');
+        }
+    });
+
+    navBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            // 1. Toggle Active Button
+            navBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            // 2. Get Target View
+            const targetId = btn.dataset.target;
+            const targetView = document.getElementById(targetId);
+
+            // 3. Switch Views
+            views.forEach(v => {
+                v.classList.add('hidden');
+                // Ensure we override the inline style="display:none" if present
+                v.style.display = 'none';
+            });
+
+            if (targetView) {
+                targetView.classList.remove('hidden');
+                // Reset inline display to allow CSS to take over (flex/block)
+                targetView.style.display = '';
+
+                // FIX: Ensure tabs in view-weather don't get stuck in active state
+                if (targetId === 'view-weather') {
+                    const tabs = targetView.querySelectorAll('.tab-btn');
+                    const contents = targetView.querySelectorAll('.tab-content');
+
+                    // 1. Find the currently active content
+                    let activeTabName = 'calculator'; // Default
+                    contents.forEach(c => {
+                        if (c.classList.contains('active')) {
+                            activeTabName = c.id.replace('tab-', '');
+                        }
+                    });
+
+                    // 2. Reset all tabs
+                    tabs.forEach(t => t.classList.remove('active'));
+
+                    // 3. Activate the correct tab
+                    const activeBtn = targetView.querySelector(`.tab-btn[data-tab="${activeTabName}"]`);
+                    if (activeBtn) activeBtn.classList.add('active');
+                }
+
+                // 4. Lazy Load Library
+                if (targetId === 'view-library') {
+                    const iframe = document.getElementById('library-frame');
+                    if (iframe && !iframe.src) {
+                        iframe.src = 'http://localhost:5173';
+                    }
+                }
+            }
+        });
+    });
+}
