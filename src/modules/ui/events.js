@@ -3,6 +3,37 @@ import { renderAllForecasts, renderClimateHeatmap, renderClimateTable, renderCli
 import { formatTime } from '../core.js';
 import { getCondColor, showToast } from './utils.js';
 
+function shouldUseTooltipSheet(preferSheet = false) {
+    if (preferSheet) return true;
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false;
+    return window.matchMedia('(hover: none), (pointer: coarse)').matches;
+}
+
+function ensureTooltipBackdrop() {
+    let backdrop = document.getElementById('forecast-tooltip-backdrop');
+    if (!backdrop) {
+        backdrop = document.createElement('div');
+        backdrop.id = 'forecast-tooltip-backdrop';
+        backdrop.className = 'forecast-tooltip-backdrop';
+        document.body.appendChild(backdrop);
+    }
+    if (document.body.dataset.tooltipEscBound !== '1') {
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') hideForeTooltip();
+        });
+        document.body.dataset.tooltipEscBound = '1';
+    }
+    if (backdrop.dataset.bound !== '1') {
+        backdrop.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            hideForeTooltip();
+        });
+        backdrop.dataset.bound = '1';
+    }
+    return backdrop;
+}
+
 export function copyConditions() {
     if (!UIState.currentWeatherData) return;
     const w = UIState.currentWeatherData;
@@ -33,13 +64,22 @@ export function hideForeTooltip() {
     const el = document.getElementById('forecast-tooltip');
     if (el) {
         el.style.opacity = '0';
+        el.style.display = 'none';
         el.style.pointerEvents = 'none'; // Prevent blocking clicks
+        el.classList.remove('forecast-tooltip--sheet');
+        el.dataset.mode = '';
+        el.dataset.currentKey = '';
+    }
+    const backdrop = document.getElementById('forecast-tooltip-backdrop');
+    if (backdrop) {
+        backdrop.classList.remove('active');
+        backdrop.style.display = 'none';
     }
 }
 
 export function moveForeTooltip(e) {
     const el = document.getElementById('forecast-tooltip');
-    if (el) {
+    if (el && el.dataset.mode !== 'sheet') {
         const w = el.offsetWidth;
         let x = e.clientX + 15;
         if (x + w > window.innerWidth - 10) {
@@ -51,7 +91,7 @@ export function moveForeTooltip(e) {
     }
 }
 
-export function showForeTooltip(e, htmlContent) {
+export function showForeTooltip(e, htmlContent, options = {}) {
     let el = document.getElementById('forecast-tooltip');
     // Create if missing
     if (!el) {
@@ -67,6 +107,29 @@ export function showForeTooltip(e, htmlContent) {
     el.style.display = 'block'; // Make sure it's visible if it was hidden
     el.style.opacity = '1';
     el.style.pointerEvents = 'auto'; // Re-enable clicks inside tooltip
+
+    const useSheet = shouldUseTooltipSheet(Boolean(options.preferSheet));
+    const backdrop = ensureTooltipBackdrop();
+    if (useSheet) {
+        el.dataset.mode = 'sheet';
+        el.classList.add('forecast-tooltip--sheet');
+        el.style.left = '12px';
+        el.style.right = '12px';
+        el.style.top = 'auto';
+        el.style.bottom = 'max(12px, calc(env(safe-area-inset-bottom) + 8px))';
+        el.style.width = 'auto';
+        el.style.maxWidth = 'none';
+        backdrop.style.display = 'block';
+        backdrop.classList.add('active');
+        return;
+    }
+
+    el.dataset.mode = 'float';
+    el.classList.remove('forecast-tooltip--sheet');
+    el.style.right = '';
+    el.style.bottom = '';
+    backdrop.classList.remove('active');
+    backdrop.style.display = 'none';
 
     // Initial Position
     const w = el.offsetWidth;

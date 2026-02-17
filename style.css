@@ -127,7 +127,7 @@ body.bottom-nav-disabled .bottom-nav {
 /* Keep climate header actions (including tooltip) usable while climate data loads. */
 #tab-climate .header {
     position: relative;
-    z-index: 2101;
+    z-index: 10;
 }
 
 h1 {
@@ -3549,4 +3549,610 @@ h1 {
     .forecast-table th {
         letter-spacing: 0.02em;
     }
+}
+
+/* ===== Phase: Essential Aesthetic Overhaul ===== */
+
+:root {
+    --font-body: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    --font-display: 'Sora', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    --font-mono-ui: 'JetBrains Mono', 'Var', 'Courier New', monospace;
+    --space-1: 6px;
+    --space-2: 10px;
+    --space-3: 14px;
+    --space-4: 18px;
+    --space-5: 24px;
+    --motion-fast: 120ms;
+    --motion-mid: 220ms;
+    --motion-slow: 360ms;
+    --motion-ease: cubic-bezier(0.22, 0.8, 0.24, 1);
+    --motion-spring: cubic-bezier(0.16, 1, 0.3, 1);
+
+    --risk-ideal: #4ade80;
+    --risk-good: #facc15;
+    --risk-fair: #fb923c;
+    --risk-warning: #f87171;
+    --risk-severe: #c084fc;
+    --risk-ideal-surface: rgba(74, 222, 128, 0.17);
+    --risk-good-surface: rgba(250, 204, 21, 0.17);
+    --risk-fair-surface: rgba(251, 146, 60, 0.17);
+    --risk-warning-surface: rgba(248, 113, 113, 0.17);
+    --risk-severe-surface: rgba(192, 132, 252, 0.2);
+}
+
+body {
+    font-family: var(--font-body);
+}
+
+h1,
+h2,
+h3,
+.card-title,
+.h3-title,
+.modal-title {
+    font-family: var(--font-display);
+}
+
+h1 {
+    font-weight: 780;
+    letter-spacing: -0.03em;
+    text-wrap: balance;
+}
+
+.subtitle {
+    font-size: 0.88rem;
+    letter-spacing: 0.01em;
+}
+
+.table-wrapper .forecast-table th,
+.forecast-table th,
+.vdot-label,
+.modern-label,
+.settings-section-label {
+    letter-spacing: 0.055em;
+}
+
+.data-value,
+.vdot-val,
+.vdot-gauge-value,
+.forecast-pace-line,
+.impact-badge,
+.impact-badge--compact {
+    font-family: var(--font-mono-ui);
+}
+
+/* Data cockpit panels */
+.card,
+.modern-input-card,
+.forecast-card,
+.table-wrapper,
+.insight-banner,
+.modal-content {
+    background:
+        radial-gradient(120% 120% at 0% 0%, rgba(88, 166, 255, 0.12), transparent 48%),
+        linear-gradient(165deg, rgba(21, 28, 38, 0.95), rgba(14, 20, 29, 0.95));
+    border: 1px solid rgba(255, 255, 255, 0.085);
+    box-shadow:
+        0 14px 38px rgba(0, 0, 0, 0.28),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(6px);
+    position: relative;
+    overflow: hidden;
+}
+
+.card::before,
+.modern-input-card::before,
+.forecast-card::before,
+.table-wrapper::before,
+.insight-banner::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+        linear-gradient(140deg, rgba(255, 255, 255, 0.06), transparent 22%),
+        repeating-linear-gradient(90deg, transparent 0 18px, rgba(255, 255, 255, 0.012) 18px 19px);
+    opacity: 0.7;
+}
+
+.card>*,
+.modern-input-card>*,
+.forecast-card>*,
+.table-wrapper>*,
+.insight-banner>* {
+    position: relative;
+    z-index: 1;
+}
+
+.card-title,
+.h3-title,
+#tab-climate .forecast-card>h3 {
+    margin-bottom: 14px;
+}
+
+.card-title::before,
+.h3-title::before,
+#tab-climate .forecast-card>h3::before {
+    background: linear-gradient(180deg, #7dd3fc, #3b82f6);
+}
+
+.insight-banner {
+    border-left: 3px solid var(--accent-color);
+}
+
+/* Semantic risk palette across widgets */
+.impact-badge--ideal,
+.legend-state-ideal {
+    color: var(--risk-ideal);
+}
+
+.impact-badge--good,
+.legend-state-good {
+    color: var(--risk-good);
+}
+
+.impact-badge--fair,
+.legend-state-fair {
+    color: var(--risk-fair);
+}
+
+.impact-badge--warning,
+.legend-state-warning {
+    color: var(--risk-warning);
+}
+
+.impact-badge--severe,
+.legend-state-severe {
+    color: var(--risk-severe);
+}
+
+.impact-badge--ideal {
+    background: var(--risk-ideal-surface);
+    border-color: rgba(74, 222, 128, 0.48);
+}
+
+.impact-badge--good {
+    background: var(--risk-good-surface);
+    border-color: rgba(250, 204, 21, 0.48);
+}
+
+.impact-badge--fair {
+    background: var(--risk-fair-surface);
+    border-color: rgba(251, 146, 60, 0.5);
+}
+
+.impact-badge--warning {
+    background: var(--risk-warning-surface);
+    border-color: rgba(248, 113, 113, 0.5);
+}
+
+.impact-badge--severe {
+    background: var(--risk-severe-surface);
+    border-color: rgba(192, 132, 252, 0.54);
+}
+
+.legend-color--dynamic {
+    border-radius: 999px;
+    width: 12px;
+    height: 12px;
+}
+
+.legend-item {
+    padding: 4px 8px;
+    border-radius: 8px;
+}
+
+/* Premium mobile-first layout */
+@media (max-width: 860px) {
+    .container {
+        max-width: 100%;
+        padding: 14px 10px;
+    }
+
+    .tab-nav {
+        position: sticky;
+        top: 6px;
+        z-index: 60;
+        gap: 6px;
+        padding: 6px;
+        border-radius: 14px;
+        background: rgba(15, 22, 32, 0.86);
+        backdrop-filter: blur(12px);
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.3);
+    }
+
+    .tab-btn {
+        border-radius: 10px;
+        min-height: 38px;
+    }
+
+    #tab-current .header,
+    #tab-forecast16 .header,
+    #tab-climate .header {
+        flex-wrap: wrap;
+        row-gap: 8px;
+        align-items: flex-start;
+    }
+
+    #tab-current .location-group,
+    #tab-forecast16 .location-group,
+    #tab-climate .location-group {
+        margin-left: 0;
+    }
+
+    .forecast-card,
+    .modern-input-card,
+    .card,
+    .table-wrapper {
+        margin-bottom: 14px;
+    }
+}
+
+@media (max-width: 600px) {
+    .forecast-table {
+        font-size: 0.7rem;
+    }
+
+    .forecast-table th,
+    .forecast-table td {
+        padding: 6px 3px;
+    }
+
+    .impact-badge--compact {
+        font-size: 0.62em;
+    }
+}
+
+/* Motion system */
+@keyframes panelRiseIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px) scale(0.996);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes subtlePulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(88, 166, 255, 0.18);
+    }
+
+    70% {
+        box-shadow: 0 0 0 7px rgba(88, 166, 255, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(88, 166, 255, 0);
+    }
+}
+
+.card,
+.modern-input-card,
+.forecast-card,
+.insight-banner {
+    animation: panelRiseIn var(--motion-slow) var(--motion-spring) both;
+}
+
+.tab-btn,
+.tag-btn,
+.modern-button,
+.icon-btn,
+.legend-item--interactive,
+.location-btn,
+.dropdown-item,
+.clickable-card {
+    transition:
+        transform var(--motion-fast) var(--motion-ease),
+        box-shadow var(--motion-mid) var(--motion-ease),
+        background-color var(--motion-mid) var(--motion-ease),
+        color var(--motion-mid) var(--motion-ease),
+        border-color var(--motion-mid) var(--motion-ease);
+}
+
+.tab-btn.active,
+.modern-button:hover {
+    animation: subtlePulse 1.6s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    .card,
+    .modern-input-card,
+    .forecast-card,
+    .insight-banner,
+    .tab-btn.active,
+    .modern-button:hover {
+        animation: none !important;
+    }
+}
+
+/* ===== Glassmorphism Refinement + Table Scroll Fix ===== */
+:root {
+    --glass-panel-bg:
+        linear-gradient(138deg, rgba(28, 40, 56, 0.58), rgba(16, 24, 36, 0.5));
+    --glass-panel-bg-strong:
+        linear-gradient(145deg, rgba(24, 35, 50, 0.8), rgba(13, 20, 31, 0.72));
+    --glass-border: rgba(255, 255, 255, 0.18);
+    --glass-border-soft: rgba(255, 255, 255, 0.11);
+    --glass-shadow:
+        0 16px 38px rgba(5, 10, 20, 0.42),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    --glass-blur: 16px;
+}
+
+.tab-nav,
+.card,
+.modern-input-card,
+.forecast-card,
+.table-wrapper,
+.location-search-btn,
+.modal-content {
+    background: var(--glass-panel-bg);
+    border: 1px solid var(--glass-border-soft);
+    box-shadow: var(--glass-shadow);
+    backdrop-filter: saturate(145%) blur(var(--glass-blur));
+    -webkit-backdrop-filter: saturate(145%) blur(var(--glass-blur));
+}
+
+.tab-nav,
+.location-search-btn,
+.modal-content {
+    background: var(--glass-panel-bg-strong);
+    border-color: var(--glass-border);
+}
+
+.card::before,
+.modern-input-card::before,
+.forecast-card::before,
+.table-wrapper::before,
+.insight-banner::before {
+    background:
+        linear-gradient(150deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.02) 28%, transparent 56%),
+        repeating-linear-gradient(95deg, transparent 0 20px, rgba(255, 255, 255, 0.012) 20px 21px);
+    opacity: 0.72;
+}
+
+.forecast-table thead th {
+    background: rgba(13, 20, 31, 0.74);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+.table-wrapper {
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.42);
+}
+
+.table-wrapper::-webkit-scrollbar-thumb:hover {
+    background: rgba(148, 163, 184, 0.62);
+}
+
+/* ===== Minimalist Theme Pass ===== */
+:root {
+    --minimal-bg: #0f141b;
+    --minimal-surface: #151c25;
+    --minimal-surface-strong: #1a2230;
+    --minimal-border: rgba(255, 255, 255, 0.09);
+    --minimal-shadow: 0 6px 16px rgba(0, 0, 0, 0.22);
+}
+
+body {
+    background-color: var(--minimal-bg);
+    background-image: none;
+}
+
+h1,
+h2,
+h3,
+.card-title,
+.h3-title,
+.modal-title,
+.modern-label,
+.settings-section-label {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    text-shadow: none;
+}
+
+h1 {
+    font-weight: 700;
+    letter-spacing: -0.015em;
+}
+
+.subtitle {
+    color: rgba(201, 209, 217, 0.76);
+}
+
+.tab-nav,
+.card,
+.modern-input-card,
+.forecast-card,
+.table-wrapper,
+.location-search-btn,
+.modal-content,
+.vdot-box,
+.vdot-box>.vdot-header {
+    background: var(--minimal-surface);
+    border: 1px solid var(--minimal-border);
+    border-radius: 10px;
+    box-shadow: var(--minimal-shadow);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+.tab-nav,
+.location-search-btn,
+.modal-content,
+.vdot-box>.vdot-header {
+    background: var(--minimal-surface-strong);
+}
+
+.card::before,
+.card::after,
+.modern-input-card::before,
+.modern-input-card::after,
+.forecast-card::before,
+.forecast-card::after,
+.table-wrapper::before,
+.table-wrapper::after,
+.insight-banner::before,
+.insight-banner::after {
+    content: none;
+}
+
+.card-title,
+.h3-title,
+#tab-climate .forecast-card>h3 {
+    padding-left: 0;
+}
+
+.card-title::before,
+.h3-title::before,
+#tab-climate .forecast-card>h3::before {
+    display: none;
+}
+
+.forecast-table thead th {
+    background: #18202a;
+    border-bottom: 1px solid var(--minimal-border);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+.forecast-table tbody tr:hover td {
+    background-color: rgba(255, 255, 255, 0.025);
+}
+
+.table-wrapper {
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.3);
+}
+
+.table-wrapper::-webkit-scrollbar-thumb:hover {
+    background: rgba(148, 163, 184, 0.45);
+}
+
+.tab-btn,
+.tag-btn,
+.modern-button,
+.icon-btn,
+.legend-item--interactive,
+.location-btn,
+.dropdown-item,
+.clickable-card {
+    transition: background-color 140ms ease, color 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+    transform: none !important;
+}
+
+.tab-btn.active,
+.modern-button:hover,
+.card,
+.modern-input-card,
+.forecast-card,
+.insight-banner {
+    animation: none !important;
+}
+
+.tab-btn.active {
+    box-shadow: none;
+    background: rgba(88, 166, 255, 0.15);
+    border: 1px solid rgba(88, 166, 255, 0.25);
+}
+
+/* Mobile tooltip fallback: bottom sheet */
+.forecast-tooltip-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.42);
+    z-index: 9998;
+    opacity: 0;
+    display: none;
+    transition: opacity 140ms ease;
+}
+
+.forecast-tooltip-backdrop.active {
+    opacity: 1;
+}
+
+.forecast-tooltip--sheet {
+    position: fixed !important;
+    left: 12px !important;
+    right: 12px !important;
+    top: auto !important;
+    bottom: max(12px, calc(env(safe-area-inset-bottom) + 8px)) !important;
+    width: auto !important;
+    max-width: none !important;
+    max-height: min(60vh, 520px);
+    overflow-y: auto;
+    border-radius: 12px;
+    padding: 12px 14px 14px;
+    pointer-events: auto !important;
+    z-index: 10000;
+}
+
+.tooltip-sheet-close {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 28px;
+    height: 28px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-primary);
+    font-size: 1rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.tooltip-sheet-close:active {
+    transform: scale(0.96);
+}
+
+.tooltip-content-body {
+    font-size: 0.86em;
+    opacity: 0.94;
+    line-height: 1.5;
+    padding-right: 28px;
+}
+
+@media (max-width: 860px) {
+    .tab-nav {
+        z-index: 2500;
+    }
+
+    #tab-climate .header {
+        z-index: 1;
+    }
+}
+
+/* Compact collapsed forecast charts */
+.chart-toggle-header .h3-title,
+.chart-toggle-header .table-heading-no-margin {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+}
+
+.chart-wrapper {
+    margin-top: 12px;
+}
+
+.forecast-card.chart-card-collapsed {
+    padding-top: 12px;
+    padding-bottom: 12px;
 }

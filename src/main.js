@@ -267,7 +267,11 @@ async function init() {
         // If mousedown is inside the tooltip, don't hide (allow link clicks).
         if (tooltip.contains(e.target)) return;
         // If mousedown is on an info icon, showInfoTooltip will handle toggle.
-        if (e.target.closest('[onclick*="showInfoTooltip"]')) return;
+        if (e.target.closest('[data-action="info-tooltip"]')) return;
+        // Keep tooltip when interacting with heatmap/chart points.
+        if (e.target.closest('[data-action="climate-cell"]')) return;
+        if (e.target.closest('[data-action="select-forecast"]')) return;
+        if (e.target.closest('[data-action="chart-interact"]')) return;
         // Otherwise, hide.
         UI.hideForeTooltip();
     });
@@ -406,6 +410,10 @@ async function loadClimateModule() {
 // --- Global Event Delegation ---
 function setupGlobalEvents() {
     console.log("Setting up global events...");
+    const isTouchViewport = () =>
+        typeof window !== 'undefined'
+        && typeof window.matchMedia === 'function'
+        && window.matchMedia('(hover: none), (pointer: coarse)').matches;
 
     document.addEventListener('click', (e) => {
         const target = e.target.closest('[data-action]');
@@ -442,6 +450,10 @@ function setupGlobalEvents() {
                 UI.setBestRunRange(target.dataset.range, e);
                 break;
             case 'select-forecast':
+                if (isTouchViewport()) {
+                    e.__keepTooltipOpen = true;
+                    UI.handleCellHover(e, target);
+                }
                 UI.toggleForeSelection(target.dataset.time || null, e);
                 break;
             case 'filter-climate':
@@ -463,6 +475,15 @@ function setupGlobalEvents() {
                 break;
             case 'chart-interact':
                 // Click on Chart
+                if (isTouchViewport()) {
+                    e.__keepTooltipOpen = true;
+                    UI.handleChartHover(e,
+                        parseFloat(target.dataset.totalW),
+                        parseFloat(target.dataset.chartW),
+                        parseFloat(target.dataset.padLeft),
+                        parseInt(target.dataset.len)
+                    );
+                }
                 UI.handleChartClick(e,
                     parseFloat(target.dataset.totalW),
                     parseFloat(target.dataset.chartW),
@@ -487,6 +508,7 @@ function setupGlobalEvents() {
             case 'info-tooltip':
                 e.preventDefault();
                 e.stopPropagation();
+                e.__keepTooltipOpen = true;
                 UI.showInfoTooltip(e, target.dataset.title || '', target.dataset.text || '');
                 break;
             case 'toggle-temp-chart':
@@ -505,6 +527,17 @@ function setupGlobalEvents() {
                 UI.copyConditions();
                 break;
             case 'climate-cell':
+                if (isTouchViewport()) {
+                    e.__keepTooltipOpen = true;
+                    UI.showClimateTooltip(e,
+                        parseInt(target.dataset.week),
+                        parseInt(target.dataset.hour),
+                        parseFloat(target.dataset.impact),
+                        parseFloat(target.dataset.temp),
+                        parseFloat(target.dataset.dew),
+                        parseInt(target.dataset.count)
+                    );
+                }
                 UI.toggleClimateFilter(
                     parseInt(target.dataset.week),
                     parseInt(target.dataset.hour),
@@ -546,6 +579,7 @@ function setupGlobalEvents() {
     let mouseMoveRaf = 0;
     let lastMouseEvent = null;
     document.addEventListener('mousemove', (e) => {
+        if (isTouchViewport()) return;
         lastMouseEvent = e;
         if (mouseMoveRaf) return;
         mouseMoveRaf = requestAnimationFrame(() => {
@@ -555,6 +589,7 @@ function setupGlobalEvents() {
     });
 
     document.addEventListener('mouseover', (e) => {
+        if (isTouchViewport()) return;
         const target = e.target.closest('[data-action="select-forecast"]');
         if (target) {
             UI.handleCellHover(e, target);
@@ -575,6 +610,7 @@ function setupGlobalEvents() {
     });
 
     document.addEventListener('mouseout', (e) => {
+        if (isTouchViewport()) return;
         const target = e.target.closest('[data-action="select-forecast"]');
         if (target) {
             UI.hideForeTooltip();

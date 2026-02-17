@@ -34,6 +34,12 @@ function appendLocationLabel(container, name, subText, subClass) {
 let locationSearchDebounceTimer = null;
 let locationSearchSeq = 0;
 
+function setChartCardCollapsedState(wrapper, collapsed) {
+    const card = wrapper?.closest('.forecast-card');
+    if (!card) return;
+    card.classList.toggle('chart-card-collapsed', collapsed);
+}
+
 
 // --- Chart Toggle Functions ---
 export function toggleTempChart() {
@@ -44,11 +50,13 @@ export function toggleTempChart() {
     if (wrapper.style.display === 'none') {
         wrapper.style.display = 'block';
         icon.style.transform = 'rotate(0deg)';
+        setChartCardCollapsedState(wrapper, false);
         saveToStorage('temp_chart_collapsed', false);
         renderForecastChart('forecast-chart-container-16', 14);
     } else {
         wrapper.style.display = 'none';
         icon.style.transform = 'rotate(-90deg)';
+        setChartCardCollapsedState(wrapper, true);
         saveToStorage('temp_chart_collapsed', true);
     }
 }
@@ -59,6 +67,7 @@ if (savedTempState === true) {
     const wrapper = document.getElementById('temp-chart-wrapper');
     const icon = document.getElementById('temp-toggle-icon');
     if (wrapper) wrapper.style.display = 'none';
+    if (wrapper) setChartCardCollapsedState(wrapper, true);
     if (icon) icon.style.transform = 'rotate(-90deg)';
 }
 
@@ -70,11 +79,13 @@ export function toggleWindChart() {
     if (wrapper.style.display === 'none') {
         wrapper.style.display = 'block';
         icon.style.transform = 'rotate(0deg)';
+        setChartCardCollapsedState(wrapper, false);
         saveToStorage('wind_chart_collapsed', false);
         renderWindChart('forecast-wind-chart-container-16', 14);
     } else {
         wrapper.style.display = 'none';
         icon.style.transform = 'rotate(-90deg)';
+        setChartCardCollapsedState(wrapper, true);
         saveToStorage('wind_chart_collapsed', true);
     }
 }
@@ -85,6 +96,7 @@ if (savedWindState === true) {
     const wrapper = document.getElementById('wind-chart-wrapper');
     const icon = document.getElementById('wind-toggle-icon');
     if (wrapper) wrapper.style.display = 'none';
+    if (wrapper) setChartCardCollapsedState(wrapper, true);
     if (icon) icon.style.transform = 'rotate(-90deg)';
 }
 
@@ -96,11 +108,13 @@ export function toggleRainChart() {
     if (wrapper.style.display === 'none') {
         wrapper.style.display = 'block';
         icon.style.transform = 'rotate(0deg)';
+        setChartCardCollapsedState(wrapper, false);
         saveToStorage('rain_chart_collapsed', false);
         renderRainChart('forecast-rain-chart-container-16', 14);
     } else {
         wrapper.style.display = 'none';
         icon.style.transform = 'rotate(-90deg)';
+        setChartCardCollapsedState(wrapper, true);
         saveToStorage('rain_chart_collapsed', true);
     }
 }
@@ -111,6 +125,7 @@ if (savedRainState === true) {
     const wrapper = document.getElementById('rain-chart-wrapper');
     const icon = document.getElementById('rain-toggle-icon');
     if (wrapper) wrapper.style.display = 'none';
+    if (wrapper) setChartCardCollapsedState(wrapper, true);
     if (icon) icon.style.transform = 'rotate(-90deg)';
 }
 
@@ -324,39 +339,52 @@ export function updateVDOTGauge(vdot, ageGradeScore) {
 
 export function showInfoTooltip(e, title, text) {
     if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
-    let el = document.getElementById('forecast-tooltip');
-    if (!el) {
-        el = document.createElement('div');
-        el.id = 'forecast-tooltip';
-        el.className = 'forecast-tooltip';
-        document.body.appendChild(el);
-    }
+    const preferSheet = typeof window !== 'undefined'
+        && typeof window.matchMedia === 'function'
+        && window.matchMedia('(hover: none), (pointer: coarse)').matches;
 
     const contentKey = `${title || ''}__${text || ''}`;
+    const el = document.getElementById('forecast-tooltip');
     // Toggle: if already showing this tooltip, hide it
-    if (el.style.opacity === '1' && el.dataset.currentKey === contentKey) {
-        el.style.opacity = '0';
-        el.style.display = 'none';
-        el.dataset.currentKey = '';
+    if (el && el.style.opacity === '1' && el.dataset.currentKey === contentKey) {
+        hideForeTooltip();
         return;
     }
-    const titleHtml = title ? `<div style="font-weight:500; margin-bottom:4px; border-bottom:1px solid rgba(255,255,255,0.2); padding-bottom:4px;">${title}</div>` : '';
+
+    const titleHtml = title ? `<div class="tooltip-header">${title}</div>` : '';
+    const closeButton = preferSheet
+        ? `<button type="button" class="tooltip-sheet-close" data-tooltip-close aria-label="Close tooltip">×</button>`
+        : '';
     const html = `
+                        ${closeButton}
                         ${titleHtml}
-                        <div style="font-size:0.85em; opacity:0.9; line-height:1.45;">${text}</div>
+                        <div class="tooltip-content-body">${text}</div>
                     `;
 
-    el.innerHTML = html;
-    el.style.display = 'block';
-    el.style.opacity = '1';
-    el.style.pointerEvents = 'auto'; // Fix: Re-enable clicks
-    const maxWidth = Math.min(360, window.innerWidth - 16);
-    el.style.maxWidth = `${maxWidth}px`;
-    el.dataset.currentKey = contentKey;
+    showForeTooltip(e, html, { preferSheet });
+    const activeTooltip = document.getElementById('forecast-tooltip');
+    if (!activeTooltip) return;
+    if (!preferSheet) {
+        const maxWidth = Math.min(360, window.innerWidth - 16);
+        activeTooltip.style.maxWidth = `${maxWidth}px`;
+    }
+    activeTooltip.dataset.currentKey = contentKey;
+
+    const closeBtn = activeTooltip.querySelector('[data-tooltip-close]');
+    if (closeBtn && closeBtn.dataset.bound !== '1') {
+        closeBtn.addEventListener('click', (evt) => {
+            evt.preventDefault();
+            evt.stopPropagation();
+            hideForeTooltip();
+        });
+        closeBtn.dataset.bound = '1';
+    }
+
+    if (preferSheet) return;
 
     const pointerX = Number.isFinite(e?.clientX) ? e.clientX : (window.innerWidth / 2);
     const pointerY = Number.isFinite(e?.clientY) ? e.clientY : (window.innerHeight / 2);
-    const rect = el.getBoundingClientRect();
+    const rect = activeTooltip.getBoundingClientRect();
 
     // Position
     let left = pointerX + 10;
@@ -371,8 +399,8 @@ export function showInfoTooltip(e, title, text) {
     }
     if (top < 8) top = 8;
 
-    el.style.left = left + 'px';
-    el.style.top = top + 'px';
+    activeTooltip.style.left = left + 'px';
+    activeTooltip.style.top = top + 'px';
 }
 
 export function toggleForeSelection(isoTime, e) {
@@ -535,17 +563,6 @@ export function handleChartClick(e, totalW, chartW, padLeft, dataLen) {
 }
 
 export function showClimateTooltip(e, w, h, impact, temp, dew, count) {
-    // Reuse the same tooltip element as Forecast for consistency
-    let el = document.getElementById('forecast-tooltip');
-    if (!el) {
-        el = document.createElement('div');
-        el.id = 'forecast-tooltip';
-        el.className = 'forecast-tooltip';
-        el.style.position = 'fixed';
-        el.style.zIndex = '10000';
-        document.body.appendChild(el);
-    }
-
     // Match impact color logic
     let impactColor = "#4ade80";
     if (impact >= 6.0) impactColor = "#c084fc";
@@ -566,30 +583,16 @@ export function showClimateTooltip(e, w, h, impact, temp, dew, count) {
                         <span class="tooltip-label">Impact:</span> <span class="tooltip-val" style="color:${impactColor}">${(impact || 0).toFixed(2)}%</span>
                     </div>
                 `;
-    el.innerHTML = html;
-    el.style.display = 'block';
-    el.style.opacity = '1';
-
-    // Initial Position (Reusing logic from showForeTooltip/moveForeTooltip is best, but inline here works)
-    moveClimateTooltip(e);
+    showForeTooltip(e, html);
+    const tooltip = document.getElementById('forecast-tooltip');
+    if (tooltip) tooltip.dataset.currentKey = '';
 }
 
 export function moveClimateTooltip(e) {
-    const el = document.getElementById('forecast-tooltip');
-    if (!el) return;
-
-    const w = el.offsetWidth;
-    let x = e.clientX + 15;
-    if (x + w > window.innerWidth - 10) {
-        x = e.clientX - w - 15;
-    }
-    const y = e.clientY - el.offsetHeight - 10;
-    el.style.left = x + 'px';
-    el.style.top = y + 'px';
+    moveForeTooltip(e);
 }
 export function hideClimateTooltip() {
-    const el = document.getElementById('forecast-tooltip');
-    if (el) el.style.opacity = '0';
+    hideForeTooltip();
 }
 export function filterClimateByImpact(idx, el) {
     if (UIState.climateImpactFilter === idx) {
@@ -815,14 +818,42 @@ export function setupWindowHelpers() {
                 toggleClimateFilter(null, null);
             }
         }
+
+        // Forecast Impact Filter Deselection (click outside legend/filter)
+        if (UIState.selectedImpactFilter) {
+            const fLegend = document.getElementById('legend-container-16');
+            const clickedForecastFilter = e.target.closest('[data-action="filter-impact"]');
+            const clickedInsideForecastLegend = fLegend && fLegend.contains(e.target);
+            if (!clickedForecastFilter && !clickedInsideForecastLegend) {
+                UIState.selectedImpactFilter = null;
+                renderAllForecasts({ filter: true });
+            }
+        }
+
+        // Climate Impact Filter Deselection (click outside legend/filter)
+        if (UIState.climateImpactFilter !== null) {
+            const cLegend = document.getElementById('climate-legend-container');
+            const clickedClimateFilter = e.target.closest('[data-action="filter-climate-impact"]');
+            const clickedInsideClimateLegend = cLegend && cLegend.contains(e.target);
+            if (!clickedClimateFilter && !clickedInsideClimateLegend) {
+                UIState.climateImpactFilter = null;
+                renderClimateHeatmap();
+                renderClimateTable();
+                renderClimateLegend();
+            }
+        }
+
         // Info Tooltip Dismiss (click outside)
         const tooltip = document.getElementById('forecast-tooltip');
         if (tooltip && tooltip.style.opacity === '1') {
+            if (e.__keepTooltipOpen) return;
             // Check if click is on an info icon (has showInfoTooltip onclick)
             const isInfoIcon = e.target.closest('[data-action="info-tooltip"]');
-            if (!isInfoIcon && !tooltip.contains(e.target)) {
-                tooltip.style.opacity = '0';
-                tooltip.style.display = 'none';
+            const isClimateCell = e.target.closest('[data-action="climate-cell"]');
+            const isForecastHeatCell = e.target.closest('[data-action="select-forecast"]');
+            const isForecastChartLayer = e.target.closest('[data-action="chart-interact"]');
+            if (!isInfoIcon && !isClimateCell && !isForecastHeatCell && !isForecastChartLayer && !tooltip.contains(e.target)) {
+                hideForeTooltip();
             }
         }
     });
