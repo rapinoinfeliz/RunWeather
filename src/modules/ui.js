@@ -340,10 +340,10 @@ export function showInfoTooltip(e, title, text) {
         el.dataset.currentKey = '';
         return;
     }
-    const titleHtml = title ? `<div style="font-weight:600; margin-bottom:4px; border-bottom:1px solid rgba(255,255,255,0.2); padding-bottom:4px;">${title}</div>` : '';
+    const titleHtml = title ? `<div style="font-weight:500; margin-bottom:4px; border-bottom:1px solid rgba(255,255,255,0.2); padding-bottom:4px;">${title}</div>` : '';
     const html = `
                         ${titleHtml}
-                        <div style="font-size:0.85em; opacity:0.9; line-height:1.4;">${text}</div>
+                        <div style="font-size:0.85em; opacity:0.9; line-height:1.45;">${text}</div>
                     `;
 
     el.innerHTML = html;
@@ -1149,29 +1149,82 @@ export function useGPS() {
     }, options);
 }
 
-// Redefine at end to ensure dependencies
+// Block-level loading skeletons (non-blocking for whole app)
 const loadTimers = {};
 
-export function setLoading(type, visible) {
-    const id = `loading-${type}`;
-    const el = document.getElementById(id);
-    if (!el) return;
+const blockLoadingTargets = {
+    current: [
+        {
+            resolve: () => document.getElementById('current-content'),
+            classes: ['block-skeleton', 'block-skeleton-grid']
+        }
+    ],
+    forecast: [
+        {
+            resolve: () => document.getElementById('forecast-grid-container-16'),
+            classes: ['block-skeleton', 'block-skeleton-heatmap']
+        },
+        {
+            resolve: () => document.getElementById('forecast-chart-container-16'),
+            classes: ['block-skeleton', 'block-skeleton-chart']
+        },
+        {
+            resolve: () => document.getElementById('forecast-rain-chart-container-16'),
+            classes: ['block-skeleton', 'block-skeleton-chart']
+        },
+        {
+            resolve: () => document.getElementById('forecast-wind-chart-container-16'),
+            classes: ['block-skeleton', 'block-skeleton-chart']
+        },
+        {
+            resolve: () => document.getElementById('forecast-body-16')?.closest('.table-wrapper'),
+            classes: ['block-skeleton', 'block-skeleton-table']
+        }
+    ],
+    climate: [
+        {
+            resolve: () => document.getElementById('climate-heatmap-container'),
+            classes: ['block-skeleton', 'block-skeleton-heatmap']
+        },
+        {
+            resolve: () => document.getElementById('monthly-averages-content'),
+            classes: ['block-skeleton', 'block-skeleton-list']
+        },
+        {
+            resolve: () => document.getElementById('climateTableBody')?.closest('.table-wrapper'),
+            classes: ['block-skeleton', 'block-skeleton-table']
+        }
+    ]
+};
 
+function applyBlockLoading(type, visible) {
+    const targets = blockLoadingTargets[type] || [];
+    targets.forEach((target) => {
+        const el = target.resolve();
+        if (!el) return;
+        target.classes.forEach((cls) => {
+            if (visible) el.classList.add(cls);
+            else el.classList.remove(cls);
+        });
+    });
+}
+
+export function setLoading(type, visible) {
     if (visible) {
-        // Debounce: Only show if loading takes > 300ms
+        // Debounce to avoid flicker on fast responses.
         if (loadTimers[type]) clearTimeout(loadTimers[type]);
         loadTimers[type] = setTimeout(() => {
-            el.classList.add('visible');
-        }, 300);
-    } else {
-        // Cancel pending show
-        if (loadTimers[type]) {
-            clearTimeout(loadTimers[type]);
-            loadTimers[type] = null;
-        }
-        // Hide immediately
-        el.classList.remove('visible');
+            applyBlockLoading(type, true);
+        }, 220);
+        return;
     }
+
+    // Cancel pending show and clear immediately.
+    if (loadTimers[type]) {
+        clearTimeout(loadTimers[type]);
+        loadTimers[type] = null;
+    }
+    applyBlockLoading(type, false);
 }
 
 // --- Infinite Scroll State ---

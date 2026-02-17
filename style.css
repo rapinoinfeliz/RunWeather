@@ -1694,39 +1694,75 @@ select.modern-input {
 
 /* Legacy aliases above already cover loc-results/loc-item/loc-sub */
 
-/* Loading Overlay - Fixed Fullscreen */
-.loading-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(13, 17, 23, 0.7);
-    backdrop-filter: blur(4px);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 2000;
-    /* High z-index to cover everything */
-    opacity: 0;
+/* Block-level loading skeletons (replaces fullscreen overlays) */
+.block-skeleton {
+    position: relative;
+    overflow: hidden;
+    border-radius: 12px;
+    min-height: var(--skeleton-min-height, 120px);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.015));
+}
+
+.block-skeleton>* {
+    opacity: 0 !important;
+    transition: opacity 0.15s ease;
+}
+
+.block-skeleton::before,
+.block-skeleton::after {
+    content: "";
+    position: absolute;
     pointer-events: none;
-    transition: opacity 0.3s;
 }
 
-.loading-overlay.visible {
-    opacity: 1;
-    pointer-events: all;
+.block-skeleton::before {
+    inset: 0;
+    background:
+        linear-gradient(100deg,
+            transparent 0%,
+            rgba(255, 255, 255, 0.08) 42%,
+            rgba(255, 255, 255, 0.16) 50%,
+            rgba(255, 255, 255, 0.08) 58%,
+            transparent 100%);
+    transform: translateX(-100%);
+    animation: blockSkeletonSweep 1.2s linear infinite;
+    z-index: 2;
 }
 
-.loading-spinner {
-    width: 24px;
-    height: 24px;
-    border: 3px solid rgba(255, 255, 255, 0.1);
-    border-top-color: var(--accent-color);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
+.block-skeleton::after {
+    inset: 12px;
+    border-radius: 10px;
+    background:
+        repeating-linear-gradient(180deg,
+            rgba(255, 255, 255, 0.08) 0 10px,
+            transparent 10px 24px);
+    opacity: 0.7;
+    z-index: 1;
 }
 
-@keyframes spin {
+.block-skeleton-grid {
+    --skeleton-min-height: 360px;
+}
+
+.block-skeleton-chart {
+    --skeleton-min-height: 180px;
+}
+
+.block-skeleton-heatmap {
+    --skeleton-min-height: 150px;
+}
+
+.block-skeleton-list {
+    --skeleton-min-height: 180px;
+}
+
+.block-skeleton-table {
+    --skeleton-min-height: 300px;
+}
+
+@keyframes blockSkeletonSweep {
     to {
-        transform: rotate(360deg);
+        transform: translateX(100%);
     }
 }
 
@@ -3400,5 +3436,117 @@ h1 {
         animation: none !important;
         transition: none !important;
         scroll-behavior: auto !important;
+    }
+}
+
+/* ===== Micro Polish Pass ===== */
+
+:root {
+    --radius-md: 12px;
+    --radius-lg: 12px;
+}
+
+.card,
+.modern-input-card,
+.forecast-card,
+.table-wrapper,
+.vdot-box,
+.vdot-box>.vdot-header {
+    border-radius: var(--radius-lg);
+}
+
+.card,
+.modern-input-card,
+.forecast-card,
+.table-wrapper,
+.modal-content,
+.location-search-btn {
+    border-color: rgba(255, 255, 255, 0.07);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.24);
+}
+
+.card:hover,
+.modern-input-card:hover,
+.forecast-card:hover,
+.table-wrapper:hover {
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.3);
+}
+
+.card,
+.modern-input-card,
+.forecast-card,
+.table-wrapper,
+.vdot-box {
+    margin-bottom: 16px;
+}
+
+.card-title,
+.h3-title,
+#tab-climate .forecast-card>h3 {
+    padding-left: 10px;
+}
+
+.card-title::before,
+.h3-title::before,
+#tab-climate .forecast-card>h3::before {
+    width: 2px;
+    top: 0.24em;
+    bottom: 0.24em;
+    opacity: 0.92;
+}
+
+.table-wrapper .forecast-table th,
+.forecast-table th {
+    letter-spacing: 0.03em;
+}
+
+.impact-badge--compact {
+    padding: 1px 6px;
+    border-radius: 999px;
+}
+
+.forecast-tooltip {
+    line-height: 1.45;
+}
+
+.tooltip-header {
+    font-weight: 600;
+}
+
+.tab-btn {
+    transition:
+        background-color 110ms cubic-bezier(0.28, 0.72, 0.4, 1),
+        color 110ms cubic-bezier(0.28, 0.72, 0.4, 1),
+        box-shadow 110ms cubic-bezier(0.28, 0.72, 0.4, 1),
+        transform 110ms cubic-bezier(0.28, 0.72, 0.4, 1);
+}
+
+.tab-btn.active {
+    box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.24);
+}
+
+@media (max-width: 760px) {
+
+    .subtitle,
+    .data-sub,
+    .legend-sub,
+    .location-subtitle,
+    .forecast-dayline,
+    .climate-date-line,
+    .text-sec-xs {
+        color: rgba(201, 209, 217, 0.72);
+        opacity: 1;
+    }
+
+    .impact-badge--compact {
+        padding: 1px 6px;
+    }
+}
+
+@media (max-width: 520px) {
+
+    .table-wrapper .forecast-table th,
+    .forecast-table th {
+        letter-spacing: 0.02em;
     }
 }
