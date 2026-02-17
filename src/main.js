@@ -414,6 +414,18 @@ function setupGlobalEvents() {
         typeof window !== 'undefined'
         && typeof window.matchMedia === 'function'
         && window.matchMedia('(hover: none), (pointer: coarse)').matches;
+    let lastInfoTooltipTouchTs = 0;
+
+    // Touch-first fallback for info tooltips (some mobile browsers are inconsistent with click on dynamic inline icons).
+    document.addEventListener('touchend', (e) => {
+        const target = e.target.closest('[data-action="info-tooltip"]');
+        if (!target || !isTouchViewport()) return;
+        e.preventDefault();
+        e.stopPropagation();
+        e.__keepTooltipOpen = true;
+        lastInfoTooltipTouchTs = Date.now();
+        UI.showInfoTooltip(e, target.dataset.title || '', target.dataset.text || '');
+    }, { passive: false });
 
     document.addEventListener('click', (e) => {
         const target = e.target.closest('[data-action]');
@@ -506,6 +518,10 @@ function setupGlobalEvents() {
                 UI.toggleLocationDropdown(target);
                 break;
             case 'info-tooltip':
+                // Ignore delayed synthetic click right after touchend to avoid immediate toggle-close.
+                if (isTouchViewport() && (Date.now() - lastInfoTooltipTouchTs) < 500) {
+                    break;
+                }
                 e.preventDefault();
                 e.stopPropagation();
                 e.__keepTooltipOpen = true;

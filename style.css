@@ -4141,6 +4141,22 @@ h1 {
     }
 }
 
+.location-group--dropdown-open {
+    z-index: 3200;
+}
+
+.location-group--dropdown-open .dropdown-menu {
+    z-index: 3201;
+    background: #161b22;
+    opacity: 1;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+.header--dropdown-open {
+    z-index: 3200 !important;
+}
+
 /* Compact collapsed forecast charts */
 .chart-toggle-header .h3-title,
 .chart-toggle-header .table-heading-no-margin {

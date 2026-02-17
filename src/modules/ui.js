@@ -139,12 +139,17 @@ export function toggleLocationFavorite() {
 export function toggleLocationDropdown(arg) {
     let trigger = (arg && arg.nodeType === 1) ? arg : (arg && arg.currentTarget ? arg.currentTarget : null);
     if (arg && arg.stopPropagation) arg.stopPropagation();
+    const triggerWrapper = trigger ? trigger.closest('.location-group') : null;
+    const triggerHeader = triggerWrapper ? triggerWrapper.closest('.header') : null;
+    const setDropdownOpenState = (open) => {
+        if (triggerWrapper) triggerWrapper.classList.toggle('location-group--dropdown-open', open);
+        if (triggerHeader) triggerHeader.classList.toggle('header--dropdown-open', open);
+    };
 
     let dropdown = document.getElementById('location-dropdown');
     if (trigger) {
-        const wrapper = trigger.closest('.location-group');
-        if (wrapper) {
-            const found = wrapper.querySelector('.dropdown-menu');
+        if (triggerWrapper) {
+            const found = triggerWrapper.querySelector('.dropdown-menu');
             if (found) dropdown = found;
         }
     }
@@ -153,8 +158,15 @@ export function toggleLocationDropdown(arg) {
 
     if (dropdown.style.display === 'block') {
         dropdown.style.display = 'none';
+        setDropdownOpenState(false);
         return;
     }
+
+    // Ensure only one dropdown stacking context stays open.
+    document.querySelectorAll('.location-group--dropdown-open')
+        .forEach((el) => el.classList.remove('location-group--dropdown-open'));
+    document.querySelectorAll('.header--dropdown-open')
+        .forEach((el) => el.classList.remove('header--dropdown-open'));
 
     // Render & Show
     dropdown.innerHTML = '';
@@ -173,6 +185,7 @@ export function toggleLocationDropdown(arg) {
             item.onclick = () => {
                 AppState.locManager.setLocation(fav.lat, fav.lon, fav.name, fav.country);
                 dropdown.style.display = 'none';
+                setDropdownOpenState(false);
             };
             dropdown.appendChild(item);
         });
@@ -197,6 +210,7 @@ export function toggleLocationDropdown(arg) {
             item.onclick = () => {
                 AppState.locManager.setLocation(rec.lat, rec.lon, rec.name, rec.country);
                 dropdown.style.display = 'none';
+                setDropdownOpenState(false);
             };
             dropdown.appendChild(item);
         });
@@ -212,16 +226,19 @@ export function toggleLocationDropdown(arg) {
     searchItem.innerHTML = `<span class="dropdown-search-label"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg> Search...</span>`;
     searchItem.onclick = () => {
         dropdown.style.display = 'none';
+        setDropdownOpenState(false);
         openLocationModal();
     };
     dropdown.appendChild(searchItem);
 
     dropdown.style.display = 'block';
+    setDropdownOpenState(true);
 
     // Click outside to close
     const closeMenu = (e) => {
         if (!dropdown.contains(e.target) && (!trigger || !trigger.contains(e.target))) {
             dropdown.style.display = 'none';
+            setDropdownOpenState(false);
             document.removeEventListener('click', closeMenu);
         }
     };
