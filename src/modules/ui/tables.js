@@ -584,6 +584,7 @@ export function renderForecastTable(tableBodyId, dayLimit, isAppend = false) {
             pct = ((adjPace - baseSec) / baseSec) * 100;
             impactColor = getImpactColor(pct);
         }
+        const impactCategoryClass = `impact-badge--${getImpactCategory(pct).toLowerCase()}`;
 
         const rain = h.rain != null ? h.rain : 0;
         const prob = h.prob != null ? h.prob : 0;
@@ -623,10 +624,10 @@ export function renderForecastTable(tableBodyId, dayLimit, isAppend = false) {
                 </div>
             </td>
             <td class="forecast-cell-center">
-                 <div class="forecast-pace-line">
+                <div class="forecast-pace-line">
                     ${formatTime(adjPace)}
                 </div>
-                <span class="impact-badge impact-badge--compact" style="--impact-bg:${impactColor};">
+                <span class="impact-badge impact-badge--compact ${impactCategoryClass}" style="--impact-bg:${impactColor};">
                     ${pct.toFixed(2)}%
                 </span>
             </td>
@@ -726,6 +727,7 @@ export function renderClimateTable(isAppend = false) {
         else if (d.mean_impact >= 3.5) impactColor = "#f87171";
         else if (d.mean_impact >= 2.0) impactColor = "#fb923c";
         else if (d.mean_impact >= 0.5) impactColor = "#facc15";
+        const impactCategoryClass = `impact-badge--${getImpactCategory(d.mean_impact || 0).toLowerCase()}`;
 
         // Rain/Wind logic similar to Forecast
         const rainColor = d.mean_precip > 0 ? '#60a5fa' : 'inherit';
@@ -748,7 +750,7 @@ export function renderClimateTable(isAppend = false) {
                 <td class="forecast-cell-center" style="color:${rainColor}">${d.mean_precip > 0 ? (d.mean_precip || 0).toFixed(2) + 'mm' : '-'}</td>
                 <td class="forecast-cell-center" style="color:${windColor}">${(d.mean_wind || 0).toFixed(1)} <span class="climate-wind-unit">km/h</span></td>
                 <td class="forecast-cell-center">
-                    <span class="impact-badge impact-badge--compact" style="--impact-bg:${impactColor};">
+                    <span class="impact-badge impact-badge--compact ${impactCategoryClass}" style="--impact-bg:${impactColor};">
                         ${(d.mean_impact || 0).toFixed(2)}%
                     </span>
                 </td>

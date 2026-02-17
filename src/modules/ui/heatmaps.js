@@ -189,9 +189,10 @@ export function renderForecastHeatmap(contId, legSelector, dayLimit) {
             const isActive = UIState.selectedImpactFilter === cat.l;
             const border = isActive ? '2px solid #fff' : '1px solid transparent';
             const opacity = (UIState.selectedImpactFilter && !isActive) ? '0.4' : '1';
+            const stateClass = `legend-state-${cat.l.toLowerCase()}`;
 
             lHtml += `
-                <div class="legend-item legend-item--interactive" data-action="filter-impact" data-category="${cat.l}" style="--legend-opacity:${opacity};">
+                <div class="legend-item legend-item--interactive ${stateClass}" data-action="filter-impact" data-category="${cat.l}" style="--legend-opacity:${opacity};">
                     <div class="legend-color legend-color--dynamic" style="--legend-color:${cat.c}; --legend-border:${border}; --legend-shadow:${isActive ? '0 0 8px ' + cat.c : 'none'};"></div>
                     <span>${cat.l} <span class="legend-sub">(${cat.lt})</span></span>
                 </div>
@@ -431,9 +432,10 @@ export function renderClimateLegend() {
         let border = '1px solid transparent';
         let isActive = (UIState.climateImpactFilter === l.label);
         if (isActive) border = '2px solid #fff';
+        const stateClass = `legend-state-${l.label.toLowerCase()}`;
 
         html += `
-                        <div class="legend-item legend-item--interactive" data-action="filter-climate-impact" data-label="${l.label}" style="--legend-opacity:${opacity};">
+                        <div class="legend-item legend-item--interactive ${stateClass}" data-action="filter-climate-impact" data-label="${l.label}" style="--legend-opacity:${opacity};">
                             <div class="legend-color legend-color--dynamic" style="--legend-color:${l.color}; --legend-border:${border}; --legend-shadow:${isActive ? '0 0 8px ' + l.color : 'none'};"></div>
                             <span>${l.label} <span class="legend-sub">(${l.sub})</span></span>
                         </div>

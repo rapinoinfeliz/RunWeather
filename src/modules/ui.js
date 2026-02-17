@@ -323,7 +323,7 @@ export function updateVDOTGauge(vdot, ageGradeScore) {
 
 
 export function showInfoTooltip(e, title, text) {
-    e.stopPropagation();
+    if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
     let el = document.getElementById('forecast-tooltip');
     if (!el) {
         el = document.createElement('div');
@@ -332,11 +332,12 @@ export function showInfoTooltip(e, title, text) {
         document.body.appendChild(el);
     }
 
+    const contentKey = `${title || ''}__${text || ''}`;
     // Toggle: if already showing this tooltip, hide it
-    if (el.style.opacity === '1' && el.dataset.currentTitle === title) {
+    if (el.style.opacity === '1' && el.dataset.currentKey === contentKey) {
         el.style.opacity = '0';
         el.style.display = 'none';
-        el.dataset.currentTitle = '';
+        el.dataset.currentKey = '';
         return;
     }
     const titleHtml = title ? `<div style="font-weight:600; margin-bottom:4px; border-bottom:1px solid rgba(255,255,255,0.2); padding-bottom:4px;">${title}</div>` : '';
@@ -349,15 +350,26 @@ export function showInfoTooltip(e, title, text) {
     el.style.display = 'block';
     el.style.opacity = '1';
     el.style.pointerEvents = 'auto'; // Fix: Re-enable clicks
-    el.style.maxWidth = '400px';
-    el.dataset.currentTitle = title;
+    const maxWidth = Math.min(360, window.innerWidth - 16);
+    el.style.maxWidth = `${maxWidth}px`;
+    el.dataset.currentKey = contentKey;
+
+    const pointerX = Number.isFinite(e?.clientX) ? e.clientX : (window.innerWidth / 2);
+    const pointerY = Number.isFinite(e?.clientY) ? e.clientY : (window.innerHeight / 2);
+    const rect = el.getBoundingClientRect();
+
     // Position
-    const tooltipWidth = 400;
-    let left = e.clientX + 10;
-    if (left + tooltipWidth > window.innerWidth) {
-        left = e.clientX - tooltipWidth - 10;
+    let left = pointerX + 10;
+    if ((left + rect.width) > (window.innerWidth - 8)) {
+        left = window.innerWidth - rect.width - 8;
     }
-    const top = e.clientY + 10;
+    if (left < 8) left = 8;
+
+    let top = pointerY + 12;
+    if ((top + rect.height) > (window.innerHeight - 8)) {
+        top = pointerY - rect.height - 12;
+    }
+    if (top < 8) top = 8;
 
     el.style.left = left + 'px';
     el.style.top = top + 'px';
@@ -379,15 +391,21 @@ export function toggleForeSelection(isoTime, e) {
 
 export function toggleVDOTDetails(e) {
     const el = document.getElementById('vdot-details');
+    const card = document.getElementById('vdot-card');
+    const trigger = document.querySelector('#vdot-card .vdot-header[data-action="vdot-details"]');
     if (!el) return;
     // If click originated from within the details panel, don't toggle
     if (e && e.target && el.contains(e.target)) return;
     const isHidden = getComputedStyle(el).display === 'none';
     if (isHidden) {
         el.style.display = 'block';
+        if (card) card.classList.add('vdot-expanded');
+        if (trigger) trigger.setAttribute('aria-expanded', 'true');
         renderVDOTDetails();
     } else {
         el.style.display = 'none';
+        if (card) card.classList.remove('vdot-expanded');
+        if (trigger) trigger.setAttribute('aria-expanded', 'false');
     }
 }
 
