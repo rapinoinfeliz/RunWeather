@@ -58,6 +58,18 @@ body {
     /* Space for bottom nav */
 }
 
+body.bottom-nav-disabled {
+    padding-bottom: 20px;
+}
+
+body.bottom-nav-disabled .tab-content {
+    padding-bottom: 20px;
+}
+
+body.bottom-nav-disabled .bottom-nav {
+    display: none !important;
+}
+
 /* Removed @keyframes gradientMesh */
 
 .container {
@@ -65,6 +77,44 @@ body {
     max-width: 600px;
     padding: 20px;
     box-sizing: border-box;
+}
+
+.container-narrow {
+    max-width: 650px;
+}
+
+.settings-inline-btn {
+    margin-left: auto;
+    margin-right: 8px;
+    opacity: 0.6;
+    padding: 6px;
+}
+
+.location-group.push-right {
+    margin-left: auto;
+}
+
+.input-section-flat {
+    background: transparent;
+    border: none;
+    padding: 0;
+}
+
+.fueling-view-container {
+    max-width: 650px;
+    padding-top: 20px;
+}
+
+.fueling-placeholder {
+    color: var(--text-secondary);
+    text-align: center;
+    margin-top: 40px;
+}
+
+.library-frame {
+    width: 100%;
+    height: 100%;
+    border: none;
 }
 
 .header {
@@ -480,6 +530,100 @@ h1 {
     min-width: 40px;
 }
 
+.impact-badge--compact {
+    color: #000;
+    font-weight: 600;
+    font-size: 0.75em;
+    background: var(--impact-bg, #4ade80);
+}
+
+.forecast-row-selected,
+.climate-row-selected {
+    background: var(--card-bg);
+    font-weight: 700;
+}
+
+.forecast-time-cell {
+    padding: 6px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+.forecast-dayline {
+    font-size: 0.75em;
+    display: flex;
+    align-items: center;
+    gap: 1px;
+}
+
+.forecast-timeline {
+    font-size: 1em;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.forecast-cell-center {
+    text-align: center;
+}
+
+.forecast-rain-main {
+    font-weight: 500;
+}
+
+.forecast-rain-prob {
+    font-size: 0.75em;
+    color: var(--cell-prob-color, var(--text-secondary));
+}
+
+.forecast-wind-unit {
+    font-size: 0.7em;
+    color: var(--text-secondary);
+}
+
+.forecast-wind-dir-wrap {
+    font-size: 0.7em;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.forecast-wind-arrow {
+    display: inline-block;
+    transform: rotate(var(--wind-dir-deg, 0deg));
+    font-size: 0.8em;
+    margin-left: 2px;
+}
+
+.forecast-pace-line {
+    font-family: 'Courier New', monospace;
+    font-size: 1em;
+    font-weight: 700;
+    color: var(--accent-color);
+    margin-bottom: 2px;
+}
+
+.climate-time-cell {
+    padding: 10px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+.climate-date-line {
+    font-size: 0.75em;
+}
+
+.climate-time-line {
+    font-size: 1em;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.climate-wind-unit {
+    font-size: 0.7em;
+    color: var(--text-secondary);
+}
+
 /* Custom Scrollbar for x-overflow */
 ::-webkit-scrollbar {
     height: 6px;
@@ -562,6 +706,40 @@ h1 {
     width: 10px;
     height: 10px;
     border-radius: 2px;
+}
+
+.legend-item--interactive {
+    cursor: pointer;
+    transition: all 0.2s;
+    opacity: var(--legend-opacity, 1);
+}
+
+.legend-color--dynamic {
+    background-color: var(--legend-color, transparent);
+    border: var(--legend-border, 1px solid transparent);
+    box-shadow: var(--legend-shadow, none);
+}
+
+.legend-sub {
+    font-size: 0.75em;
+    opacity: 0.7;
+}
+
+.heatmap-svg {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.heatmap-cell {
+    cursor: pointer;
+    transition: fill-opacity 0.2s;
+}
+
+.heatmap-empty {
+    padding: 20px;
+    text-align: center;
+    color: var(--text-secondary);
 }
 
 /* Insight Banner */
@@ -1392,45 +1570,71 @@ select.modern-input {
     box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.15);
 }
 
-#loc-results {
-    max-height: 250px;
+.location-list,
+#loc-results,
+.loc-results {
+    max-height: 300px;
     overflow-y: auto;
+    overflow-x: hidden;
     margin-top: 8px;
     display: flex;
     flex-direction: column;
     gap: 4px;
+    width: 100%;
 }
 
+.location-item,
 .loc-item {
-    padding: 12px 14px;
-    cursor: pointer;
+    padding: 10px 12px;
     border-radius: 8px;
-    transition: all 0.2s;
-    font-size: 0.95rem;
-    color: var(--text-primary);
-    border: 1px solid transparent;
+    cursor: pointer;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    width: 100%;
+    word-break: break-word;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    transition: background 0.15s, border-color 0.15s, transform 0.15s, color 0.15s;
+    border: 1px solid transparent;
     background: rgba(255, 255, 255, 0.02);
 }
 
+.location-item:hover,
 .loc-item:hover {
-    background: rgba(88, 166, 255, 0.15);
-    border-color: rgba(88, 166, 255, 0.3);
+    background: rgba(88, 166, 255, 0.12);
+    border-color: rgba(88, 166, 255, 0.25);
     color: #fff;
-    transform: translateX(4px);
+    transform: translateX(2px);
 }
 
+.location-item.active,
+.loc-item.active {
+    background: rgba(88, 166, 255, 0.15);
+    border-left: 3px solid #58a6ff;
+    padding-left: 9px;
+}
+
+.location-sub,
 .loc-sub {
+    color: var(--text-secondary);
+    font-size: 0.8em;
+    margin-left: 6px;
+    font-weight: 500;
+}
+
+.loc-section-header {
     font-size: 0.75rem;
     color: var(--text-secondary);
+    margin: 10px 0 5px 0;
     text-transform: uppercase;
-    margin-left: 8px;
-    background: rgba(0, 0, 0, 0.3);
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.dropdown-search-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
 .modern-button {
@@ -1482,47 +1686,7 @@ select.modern-input {
     pointer-events: none;
 }
 
-.loc-results {
-    max-height: 300px;
-    overflow-y: auto;
-    overflow-x: hidden;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    margin-top: 8px;
-    width: 100%;
-}
-
-.loc-item {
-    padding: 10px;
-    border-radius: 6px;
-    cursor: pointer;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    color: #e6edf3;
-    transition: background 0.1s;
-    font-size: 0.9rem;
-    width: 100%;
-    word-break: break-word;
-}
-
-.loc-item:hover {
-    background: rgba(88, 166, 255, 0.1);
-}
-
-.loc-item.active {
-    background: rgba(88, 166, 255, 0.15);
-    border-left: 3px solid #58a6ff;
-    padding-left: 7px;
-}
-
-.loc-sub {
-    color: var(--text-secondary);
-    font-size: 0.85em;
-    margin-left: 6px;
-    font-weight: 400;
-}
+/* Legacy aliases above already cover loc-results/loc-item/loc-sub */
 
 /* Loading Overlay - Fixed Fullscreen */
 .loading-overlay {
@@ -2481,6 +2645,11 @@ select.settings-input {
 .dropdown-item .sub {
     font-size: 0.75em;
     color: var(--text-secondary);
+}
+
+.dropdown-item-search {
+    color: var(--accent-color);
+    font-weight: 500;
 }
 
 .dropdown-divider {

@@ -103,7 +103,7 @@ export function calculateCarbData({
             const data = getSourceData(source.source);
             if (!data || data.carbsPerGram === 0 || data.glucoseContent === 0) {
                 finalGrams[source.source] = 0; return;
-            };
+            }
             const shareOfNeed = source.percentage / totalPureGlucosePercent;
             const targetCarbsForThisSource = neededPureGlucoseCarbs * shareOfNeed;
             const grams_pgi = (data.glucoseContent * data.carbsPerGram > 0)
@@ -125,7 +125,7 @@ export function calculateCarbData({
             const data = getSourceData(source.source);
             if (!data || data.carbsPerGram === 0 || data.fructoseContent === 0) {
                 finalGrams[source.source] = 0; return;
-            };
+            }
             const shareOfNeed = source.percentage / totalPureFructosePercent;
             const targetCarbsForThisSource = neededPureFructoseCarbs * shareOfNeed;
             const grams_pfj = (data.fructoseContent * data.carbsPerGram > 0)

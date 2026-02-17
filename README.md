@@ -53,6 +53,44 @@ A comprehensive, weather-aware running pace calculator that helps runners optimi
 ### VDOT Calculation
 The calculator uses Jack Daniels' VDOT formula, which estimates aerobic capacity based on race performances. VDOT is a more practical metric than VO2max for training purposes.
 
+## Development & Quality
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Run local app:
+
+```bash
+npm start
+```
+
+Run lint:
+
+```bash
+npm run lint
+```
+
+Run unit tests:
+
+```bash
+npm run test:unit
+```
+
+Run smoke + visual E2E tests:
+
+```bash
+npm run test:e2e
+```
+
+Run full CI-equivalent checks locally:
+
+```bash
+npm run test:ci
+```
+
 
 
 ##  License

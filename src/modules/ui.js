@@ -5,6 +5,7 @@ import { calculatePacingState, calculateWBGT, calculateAgeGrade } from './engine
 import { fetchWeatherData, searchCity, fetchIpLocation, reverseGeocode } from './api.js';
 import { saveToStorage, loadFromStorage } from './storage.js';
 import { AppState } from './appState.js';
+import { AppStore, StoreActions, RequestKeys, beginRequest, endRequest, isRequestCurrent, cancelRequest } from './store.js';
 import { renderCurrentTab, renderForecastChart, renderRainChart, renderWindChart, renderClimateTable, renderClimateLegend, renderClimateHeatmap, renderForecastHeatmap, renderForecastTable, renderVDOTDetails, renderAllForecasts, renderOverview, calculateBestRunTime, renderMonthlyAverages, toggleMonthlyAverages } from './ui/renderers.js';
 export { renderCurrentTab, renderForecastChart, renderRainChart, renderWindChart, renderClimateTable, renderClimateLegend, renderClimateHeatmap, renderForecastHeatmap, renderForecastTable, renderVDOTDetails, renderAllForecasts, renderOverview, calculateBestRunTime, renderMonthlyAverages, toggleMonthlyAverages };
 import { UIState } from './ui/state.js';
@@ -14,6 +15,24 @@ export { infoIcon, getImpactColor, getDewColor, getCondColor, getImpactCategory,
 import { openTab, setPaceMode, toggleForeSort, setBestRunRange, toggleImpactFilter, copyConditions, sortForecastTable, handleCellHover, showForeTooltip, moveForeTooltip, hideForeTooltip } from './ui/events.js';
 export { openTab, setPaceMode, toggleForeSort, setBestRunRange, toggleImpactFilter, copyConditions, sortForecastTable, handleCellHover, showForeTooltip, moveForeTooltip, hideForeTooltip };
 import { initRipple } from './ui/effects.js';
+
+function appendLocationLabel(container, name, subText, subClass) {
+    const label = document.createElement('div');
+    label.appendChild(document.createTextNode(name || 'Unknown'));
+
+    if (subText) {
+        label.appendChild(document.createTextNode(' '));
+        const sub = document.createElement('span');
+        sub.className = subClass;
+        sub.textContent = subText;
+        label.appendChild(sub);
+    }
+
+    container.appendChild(label);
+}
+
+let locationSearchDebounceTimer = null;
+let locationSearchSeq = 0;
 
 
 // --- Chart Toggle Functions ---
@@ -135,7 +154,7 @@ export function toggleLocationDropdown(arg) {
         AppState.locManager.favorites.forEach(fav => {
             const item = document.createElement('div');
             item.className = 'dropdown-item';
-            item.innerHTML = `<span>${fav.name}</span> <span class="sub">${fav.country}</span>`;
+            appendLocationLabel(item, fav.name, fav.country, 'sub');
             item.onclick = () => {
                 AppState.locManager.setLocation(fav.lat, fav.lon, fav.name, fav.country);
                 dropdown.style.display = 'none';
@@ -159,7 +178,7 @@ export function toggleLocationDropdown(arg) {
         recentsToUse.forEach(rec => {
             const item = document.createElement('div');
             item.className = 'dropdown-item';
-            item.innerHTML = `<span>${rec.name}</span> <span class="sub">${rec.country}</span>`;
+            appendLocationLabel(item, rec.name, rec.country, 'sub');
             item.onclick = () => {
                 AppState.locManager.setLocation(rec.lat, rec.lon, rec.name, rec.country);
                 dropdown.style.display = 'none';
@@ -174,10 +193,8 @@ export function toggleLocationDropdown(arg) {
 
     // Search Option
     const searchItem = document.createElement('div');
-    searchItem.className = 'dropdown-item';
-    searchItem.style.color = 'var(--accent-color)';
-    searchItem.style.fontWeight = '500';
-    searchItem.innerHTML = `<span style="display:flex; align-items:center; gap:6px;"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg> Search...</span>`;
+    searchItem.className = 'dropdown-item dropdown-item-search';
+    searchItem.innerHTML = `<span class="dropdown-search-label"><svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg> Search...</span>`;
     searchItem.onclick = () => {
         dropdown.style.display = 'none';
         openLocationModal();
@@ -228,7 +245,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 export function toggleDarkMode() {
-    UIState.isDark = !UIState.isDark;
+    AppStore.dispatch(StoreActions.patchUI({ isDark: !UIState.isDark }));
     if (UIState.isDark) {
         document.documentElement.classList.add('dark');
     } else {
@@ -237,9 +254,11 @@ export function toggleDarkMode() {
     renderClimateHeatmap();
 }
 
-export function setForecastData(d) { UIState.forecastData = d; }
+export function setForecastData(d) {
+    AppStore.dispatch(StoreActions.setForecastData(d));
+}
 export function setClimateData(d) {
-    UIState.climateData = d;
+    AppStore.dispatch(StoreActions.setClimateData(d));
 }
 
 
@@ -355,7 +374,7 @@ export function toggleForeSelection(isoTime, e) {
             UIState.selectedForeHour = isoTime;
         }
     }
-    renderAllForecasts();
+    renderAllForecasts({ selection: true });
 }
 
 export function toggleVDOTDetails(e) {
@@ -606,17 +625,21 @@ export async function fetchIPLocation(originalError) {
     if (btn) btn.innerHTML = 'Trying IP Location...';
     console.log("Attempting IP Fallback...");
 
+    const request = beginRequest(RequestKeys.IP_LOCATION, { abortPrevious: true });
     try {
-        const res = await fetch('https://ipwho.is/');
-        const data = await res.json();
-        if (data.success) {
-            console.log("IP Location Success:", data);
-            AppState.locManager.setLocation(data.latitude, data.longitude, data.city, data.country);
-            if (btn) btn.innerHTML = originalText;
-        } else {
-            throw new Error(data.message || "IP Location failed");
-        }
+        const data = await fetchIpLocation({ signal: request.signal });
+        if (!isRequestCurrent(RequestKeys.IP_LOCATION, request.seq)) return;
+        if (!data) throw new Error("IP Location failed");
+        console.log("IP Location Success:", data);
+        AppState.locManager.setLocation(data.lat, data.lon, data.name, data.country);
+        endRequest(RequestKeys.IP_LOCATION, request.seq, 'success');
+        if (btn) btn.innerHTML = originalText;
     } catch (e) {
+        if (e && e.name === 'AbortError') {
+            endRequest(RequestKeys.IP_LOCATION, request.seq, 'aborted');
+            return;
+        }
+        endRequest(RequestKeys.IP_LOCATION, request.seq, 'error', e && e.message ? e.message : 'IP location failed');
         console.error("IP Fallback failed", e);
         alert(`GPS Failed (${originalError.message}) and IP Location failed. Please search manually.`);
         if (btn) btn.innerHTML = originalText;
@@ -627,27 +650,54 @@ export function openLocationModal() {
     var m = document.getElementById('loc-modal');
     if (m) {
         m.classList.add('open');
+        if (locationSearchDebounceTimer) {
+            clearTimeout(locationSearchDebounceTimer);
+            locationSearchDebounceTimer = null;
+        }
+        cancelRequest(RequestKeys.LOCATION_SEARCH, 'modal reopened');
+        locationSearchSeq++;
         // Render Recents if available and search is empty
         var list = document.getElementById('loc-results');
         var searchIn = document.getElementById('loc-search');
-        if (list && searchIn) {
-            searchIn.value = ''; // Clear search
-            list.innerHTML = ''; // Clear list
-
+        const renderRecents = () => {
+            if (!list) return;
+            list.innerHTML = '';
             if (AppState.locManager && AppState.locManager.recents && AppState.locManager.recents.length > 0) {
                 var header = document.createElement('div');
-                header.style.cssText = "font-size:0.75rem; color:var(--text-secondary); margin:10px 0 5px 0; text-transform:uppercase; letter-spacing:0.5px;";
+                header.className = 'loc-section-header';
                 header.textContent = "Recent Locations";
                 list.appendChild(header);
                 AppState.locManager.recents.forEach(function (item) {
                     var div = document.createElement('div');
                     div.className = 'loc-item';
                     var country = item.country || '';
-                    div.innerHTML = `<div>${item.name} <span class="loc-sub">${country}</span></div>`;
+                    appendLocationLabel(div, item.name, country, 'loc-sub');
                     div.onclick = function () { AppState.locManager.setLocation(item.lat, item.lon, item.name, country); };
                     list.appendChild(div);
                 });
             }
+        };
+
+        const renderSearchResults = (results) => {
+            if (!list) return;
+            list.innerHTML = '';
+            if (results && results.length > 0) {
+                results.forEach(item => {
+                    var div = document.createElement('div');
+                    div.className = 'loc-item';
+                    var state = item.admin1 || '';
+                    var country = item.country || '';
+                    var subText = [state, country].filter(Boolean).join(', ');
+                    appendLocationLabel(div, item.name, subText, 'loc-sub');
+                    div.onclick = function () { AppState.locManager.setLocation(item.latitude, item.longitude, item.name, country); };
+                    list.appendChild(div);
+                });
+            }
+        };
+
+        if (list && searchIn) {
+            searchIn.value = ''; // Clear search
+            renderRecents();
         }
         setTimeout(function () {
             var i = document.getElementById('loc-search');
@@ -655,23 +705,42 @@ export function openLocationModal() {
                 i.focus();
                 // Attach Search Listener if not already attached (or just overwrite oninput)
                 i.oninput = async (e) => {
-                    const q = e.target.value;
-                    if (q.length < 3) return;
+                    const q = (e.target.value || '').trim();
+                    const requestId = ++locationSearchSeq;
+                    if (locationSearchDebounceTimer) clearTimeout(locationSearchDebounceTimer);
 
-                    const res = await AppState.locManager.searchCity(q);
-                    list.innerHTML = '';
-                    if (res && res.length > 0) {
-                        res.forEach(item => {
-                            var div = document.createElement('div');
-                            div.className = 'loc-item';
-                            var state = item.admin1 || '';
-                            var country = item.country || '';
-                            var subText = [state, country].filter(Boolean).join(', ');
-                            div.innerHTML = `<div>${item.name} <span class="loc-sub">${subText}</span></div>`;
-                            div.onclick = function () { AppState.locManager.setLocation(item.latitude, item.longitude, item.name, country); };
-                            list.appendChild(div);
-                        });
+                    if (q.length < 3) {
+                        cancelRequest(RequestKeys.LOCATION_SEARCH, 'query too short');
+                        renderRecents();
+                        return;
                     }
+
+                    locationSearchDebounceTimer = setTimeout(async () => {
+                        const req = beginRequest(RequestKeys.LOCATION_SEARCH, {
+                            abortPrevious: true,
+                            meta: { query: q }
+                        });
+                        try {
+                            const res = await AppState.locManager.searchCity(q, { signal: req.signal });
+                            if (requestId !== locationSearchSeq || !isRequestCurrent(RequestKeys.LOCATION_SEARCH, req.seq)) return;
+                            renderSearchResults(res);
+                            endRequest(RequestKeys.LOCATION_SEARCH, req.seq, 'success');
+                        } catch (err) {
+                            if (err && err.name === 'AbortError') {
+                                endRequest(RequestKeys.LOCATION_SEARCH, req.seq, 'aborted');
+                                return;
+                            }
+                            if (requestId !== locationSearchSeq) return;
+                            endRequest(
+                                RequestKeys.LOCATION_SEARCH,
+                                req.seq,
+                                'error',
+                                err && err.message ? err.message : 'Location search failed'
+                            );
+                            console.error("Location search failed", err);
+                            if (list) list.innerHTML = '';
+                        }
+                    }, 220);
                 };
             }
         }, 100);
@@ -745,14 +814,7 @@ export function setupWindowHelpers() {
     window.addEventListener('resize', () => {
         clearTimeout(resizeTimeout);
         resizeTimeout = setTimeout(() => {
-            // Re-render charts that need responsive sizing
-            if (UIState.forecastData && UIState.forecastData.length > 0) {
-                renderForecastChart('forecast-chart-container-16', 14);
-                renderRainChart('forecast-rain-chart-container-16', 14);
-                renderWindChart('forecast-wind-chart-container-16', 14);
-            }
-            // Re-render heatmaps if needed
-            renderForecastHeatmap('forecast-grid-container-16', '#legend-container-16', 14);
+            renderAllForecasts({ layout: true });
             renderClimateHeatmap();
         }, 150); // Debounce
     });
@@ -1036,12 +1098,28 @@ export function useGPS() {
     navigator.geolocation.getCurrentPosition(async (pos) => {
         const lat = pos.coords.latitude;
         const lon = pos.coords.longitude;
+        const request = beginRequest(RequestKeys.REVERSE_GEOCODE, {
+            abortPrevious: true,
+            meta: { lat, lon }
+        });
         try {
-            const city = await reverseGeocode(lat, lon);
+            const city = await reverseGeocode(lat, lon, { signal: request.signal });
+            if (!isRequestCurrent(RequestKeys.REVERSE_GEOCODE, request.seq)) return;
             const name = city ? city.name : "My Location";
             const country = city ? city.country : "";
             if (AppState.locManager) AppState.locManager.setLocation(lat, lon, name, country);
+            endRequest(RequestKeys.REVERSE_GEOCODE, request.seq, 'success');
         } catch (e) {
+            if (e && e.name === 'AbortError') {
+                endRequest(RequestKeys.REVERSE_GEOCODE, request.seq, 'aborted');
+                return;
+            }
+            endRequest(
+                RequestKeys.REVERSE_GEOCODE,
+                request.seq,
+                'error',
+                e && e.message ? e.message : 'Reverse geocode failed'
+            );
             console.error("GPS Reverse Geocode Error", e);
             if (AppState.locManager) AppState.locManager.setLocation(lat, lon, "My Location", "");
         }
@@ -1121,9 +1199,19 @@ export function setupTableScrollListeners() {
 
 // --- Bottom Navigation ---
 export function initBottomNav() {
+    const navBar = document.querySelector('.bottom-nav');
+    if (!navBar) return;
+
+    const isBottomNavDisabled = document.body.classList.contains('bottom-nav-disabled')
+        || navBar.dataset.enabled === 'false';
+    if (isBottomNavDisabled) {
+        navBar.classList.add('nav-hidden');
+        navBar.setAttribute('aria-hidden', 'true');
+        return;
+    }
+
     const navBtns = document.querySelectorAll('.nav-btn');
     const views = document.querySelectorAll('.main-view');
-    const navBar = document.querySelector('.bottom-nav');
 
     // Pure Hover-to-Show (Desktop Dock Style)
     // Initially hidden

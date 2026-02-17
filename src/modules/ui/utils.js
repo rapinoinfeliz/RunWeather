@@ -14,6 +14,103 @@ export function getImpactColor(pct) {
     return "#c084fc"; // Purple
 }
 
+const IMPACT_BANDS = [
+    { min: -Infinity, max: 0.5, color: '#4ade80' },
+    { min: 0.5, max: 2.0, color: '#facc15' },
+    { min: 2.0, max: 3.5, color: '#fb923c' },
+    { min: 3.5, max: 6.0, color: '#f87171' },
+    { min: 6.0, max: Infinity, color: '#c084fc', cap: 10.0 }
+];
+
+function clamp(n, min, max) {
+    return Math.min(Math.max(n, min), max);
+}
+
+function hexToRgb(hex) {
+    const clean = hex.replace('#', '');
+    const num = parseInt(clean, 16);
+    return {
+        r: (num >> 16) & 255,
+        g: (num >> 8) & 255,
+        b: num & 255
+    };
+}
+
+function rgbToHex({ r, g, b }) {
+    const toHex = (n) => clamp(Math.round(n), 0, 255).toString(16).padStart(2, '0');
+    return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+}
+
+function rgbToHsl({ r, g, b }) {
+    const rn = r / 255;
+    const gn = g / 255;
+    const bn = b / 255;
+    const max = Math.max(rn, gn, bn);
+    const min = Math.min(rn, gn, bn);
+    const l = (max + min) / 2;
+
+    if (max === min) return { h: 0, s: 0, l };
+
+    const d = max - min;
+    const s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    let h = 0;
+
+    if (max === rn) h = (gn - bn) / d + (gn < bn ? 6 : 0);
+    else if (max === gn) h = (bn - rn) / d + 2;
+    else h = (rn - gn) / d + 4;
+
+    return { h: h / 6, s, l };
+}
+
+function hslToRgb({ h, s, l }) {
+    if (s === 0) {
+        const v = l * 255;
+        return { r: v, g: v, b: v };
+    }
+
+    const hue2rgb = (p, q, t) => {
+        let tn = t;
+        if (tn < 0) tn += 1;
+        if (tn > 1) tn -= 1;
+        if (tn < 1 / 6) return p + (q - p) * 6 * tn;
+        if (tn < 1 / 2) return q;
+        if (tn < 2 / 3) return p + (q - p) * (2 / 3 - tn) * 6;
+        return p;
+    };
+
+    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+    const p = 2 * l - q;
+
+    return {
+        r: hue2rgb(p, q, h + 1 / 3) * 255,
+        g: hue2rgb(p, q, h) * 255,
+        b: hue2rgb(p, q, h - 1 / 3) * 255
+    };
+}
+
+function getImpactBand(pct) {
+    for (const band of IMPACT_BANDS) {
+        if (pct < band.max) return band;
+    }
+    return IMPACT_BANDS[IMPACT_BANDS.length - 1];
+}
+
+export function getImpactHeatmapColor(pct) {
+    const band = getImpactBand(pct);
+    const min = Number.isFinite(band.min) ? band.min : 0;
+    const max = Number.isFinite(band.max) ? band.max : (band.cap ?? (min + 4));
+    const safeMax = Math.max(max, min + 0.001);
+    const safePct = clamp(Number.isFinite(pct) ? pct : min, min, safeMax);
+    const t = (safePct - min) / (safeMax - min);
+    const baseHsl = rgbToHsl(hexToRgb(band.color));
+    const s = clamp(baseHsl.s + 0.06, 0, 1);
+    const lightStart = clamp(baseHsl.l + 0.03, 0, 1);
+    const lightEnd = clamp(baseHsl.l - 0.12, 0, 1);
+    const l = lightStart + ((lightEnd - lightStart) * t);
+
+    return rgbToHex(hslToRgb({ h: baseHsl.h, s, l }));
+}
+
 export function getDewColor(d) {
     if (d < 15) return "#4ade80"; // Green (Comfortable) - User Requirement
     if (d < 20) return "#facc15"; // Yellow (Sticky)

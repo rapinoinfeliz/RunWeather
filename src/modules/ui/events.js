@@ -106,13 +106,13 @@ export function sortForecastTable(col) {
         UIState.forecastSortCol = col;
         UIState.forecastSortDir = 'asc';
     }
-    renderAllForecasts();
+    renderAllForecasts({ sort: true });
 }
 
 export function toggleImpactFilter(cat) {
     if (UIState.selectedImpactFilter === cat) UIState.selectedImpactFilter = null;
     else UIState.selectedImpactFilter = cat;
-    renderAllForecasts();
+    renderAllForecasts({ filter: true });
 }
 
 export function setBestRunRange(range, event) {
@@ -131,8 +131,10 @@ export function setBestRunRange(range, event) {
     const bestTime = calculateBestRunTime(UIState.forecastData);
     if (bestTime) {
         UIState.selectedForeHour = bestTime;
-        renderAllForecasts(); // Re-render heatmaps to show selection
+        renderAllForecasts({ range: true, selection: true });
+        return;
     }
+    renderAllForecasts({ range: true });
 }
 
 export function toggleForeSort(col) {
@@ -152,7 +154,7 @@ export function toggleForeSort(col) {
         UIState.forecastSortDir = 'asc';
         if (['impact', 'temp', 'dew', 'wind', 'rain', 'prob'].includes(col)) UIState.forecastSortDir = 'desc';
     }
-    renderAllForecasts();
+    renderAllForecasts({ sort: true });
 }
 
 export function setPaceMode(mode) {
@@ -171,7 +173,7 @@ export function setPaceMode(mode) {
             });
         }
     });
-    renderAllForecasts();
+    renderAllForecasts({ paceMode: true });
 }
 
 import { updateWeatherTabState } from './utils.js';
@@ -207,7 +209,7 @@ export function openTab(tabName, btn) {
         setTimeout(renderClimateHeatmap, 50);
     }
     if (tabName === 'forecast' || tabName === 'forecast16') {
-        setTimeout(renderAllForecasts, 100);
+        setTimeout(() => renderAllForecasts({ layout: true }), 100);
     }
 }
 
@@ -217,5 +219,5 @@ export function toggleForeSelection(time, event) {
     } else {
         UIState.selectedForeHour = time;
     }
-    renderAllForecasts();
+    renderAllForecasts({ selection: true });
 }

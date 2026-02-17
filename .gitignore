@@ -1,6 +1,5 @@
 # Dependencies
 node_modules/
-package-lock.json
 
 # System
 .DS_Store
@@ -25,3 +24,5 @@ app.js
 
 # Build artifacts (if any, though we are static)
 dist/
+playwright-report/
+test-results/

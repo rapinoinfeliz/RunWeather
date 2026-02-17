@@ -19,9 +19,6 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <!-- External Libraries -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
     <!-- Cache Busting: increment v=ID on deploy -->
     <script type="module" src="src/main.js?v=1.0.15"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -39,7 +36,7 @@
     <link rel="stylesheet" href="style.css">
 </head>
 
-<body>
+<body class="bottom-nav-disabled">
 
     <!-- Tab Navigation -->
     <div id="view-weather" class="main-view active">
@@ -51,7 +48,7 @@
         </div>
 
         <!-- TAB: CALCULATOR -->
-        <div id="tab-calculator" class="tab-content active container" style="max-width: 650px;">
+        <div id="tab-calculator" class="tab-content active container container-narrow">
             <div class="header">
                 <div class="header-left">
                     <h1>Calculator</h1>
@@ -69,8 +66,7 @@
                         </span>
                     </div>
                 </div>
-                <button id="btn-settings" class="icon-btn" title="Runner Settings (Weight)"
-                    style="margin-left:auto; margin-right:8px; opacity:0.6; padding:6px;">
+                <button id="btn-settings" class="icon-btn settings-inline-btn" title="Runner Settings (Weight)">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="12" r="3"></circle>
                         <path
@@ -78,14 +74,13 @@
                         </path>
                     </svg>
                 </button>
-                </button>
 
                 <!-- Location Group -->
                 <div class="location-group">
                     <div class="location-search-btn">
                         <!-- Star Button -->
-                        <button data-action="toggle-favorite" class="icon-btn btn-favorite" title="Toggle Favorite"
-                            class="location-search-icon">
+                        <button data-action="toggle-favorite" class="icon-btn btn-favorite location-search-icon"
+                            title="Toggle Favorite">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                 stroke-width="2">
                                 <polygon
@@ -95,8 +90,8 @@
                         </button>
 
                         <!-- Location Dropdown Trigger -->
-                        <button class="location-btn" data-action="toggle-dropdown" aria-label="Change Location"
-                            class="location-name-btn">
+                        <button class="location-btn location-name-btn" data-action="toggle-dropdown"
+                            aria-label="Change Location">
                             <div class="loc-text-col text-left">
                                 <span class="current-location-name">Florianópolis</span>
                                 <span class="elevation-display location-subtitle">--m</span>
@@ -121,7 +116,7 @@
                 </button>
             </div>
 
-            <div class="input-section" style="background:transparent; border:none; padding:0;">
+            <div class="input-section input-section-flat">
                 <!-- Time Trial Block -->
                 <div class="modern-input-card card-glow-border">
                     <div class="modern-label">
@@ -323,7 +318,7 @@
         </div>
 
         <!-- TAB: CURRENT -->
-        <div id="tab-current" class="tab-content container" style="max-width: 650px;">
+        <div id="tab-current" class="tab-content container container-narrow">
             <div class="header">
                 <div class="header-left">
                     <h1>Conditions</h1>
@@ -341,11 +336,11 @@
                     </div>
                 </div>
                 <!-- Location Group -->
-                <div class="location-group" style="margin-left:auto;">
+                <div class="location-group push-right">
                     <div class="location-search-btn">
                         <!-- Star Button -->
-                        <button data-action="toggle-favorite" class="icon-btn btn-favorite" title="Toggle Favorite"
-                            class="location-search-icon">
+                        <button data-action="toggle-favorite" class="icon-btn btn-favorite location-search-icon"
+                            title="Toggle Favorite">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                 stroke-width="2">
                                 <polygon
@@ -355,8 +350,8 @@
                         </button>
 
                         <!-- Location Dropdown Trigger -->
-                        <button class="location-btn" data-action="toggle-dropdown" aria-label="Change Location"
-                            class="location-name-btn">
+                        <button class="location-btn location-name-btn" data-action="toggle-dropdown"
+                            aria-label="Change Location">
                             <div class="loc-text-col text-left">
                                 <span class="current-location-name">Florianópolis</span>
                                 <span class="elevation-display location-subtitle">--m</span>
@@ -405,7 +400,7 @@
 
 
         <!-- TAB: FORECAST 16 DAYS -->
-        <div id="tab-forecast16" class="tab-content container" style="max-width: 650px;">
+        <div id="tab-forecast16" class="tab-content container container-narrow">
             <div class="header">
                 <div class="header-left">
                     <h1>Forecast</h1>
@@ -415,8 +410,8 @@
                 <div class="location-group">
                     <div class="location-search-btn">
                         <!-- Star Button -->
-                        <button data-action="toggle-favorite" class="icon-btn btn-favorite" title="Toggle Favorite"
-                            class="location-search-icon">
+                        <button data-action="toggle-favorite" class="icon-btn btn-favorite location-search-icon"
+                            title="Toggle Favorite">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                 stroke-width="2">
                                 <polygon
@@ -426,8 +421,8 @@
                         </button>
 
                         <!-- Location Dropdown Trigger -->
-                        <button class="location-btn" data-action="toggle-dropdown" aria-label="Change Location"
-                            class="location-name-btn">
+                        <button class="location-btn location-name-btn" data-action="toggle-dropdown"
+                            aria-label="Change Location">
                             <div class="loc-text-col text-left">
                                 <span class="current-location-name">Florianópolis</span>
                                 <span class="elevation-display location-subtitle">--m</span>
@@ -595,7 +590,7 @@
 
 
         <!-- Climate Tab -->
-        <div id="tab-climate" class="tab-content container" style="max-width: 650px;">
+        <div id="tab-climate" class="tab-content container container-narrow">
             <div class="header">
                 <div class="header-left">
                     <h1>Climate Analysis</h1>
@@ -617,8 +612,8 @@
                 <div class="location-group">
                     <div class="location-search-btn">
                         <!-- Star Button -->
-                        <button data-action="toggle-favorite" class="icon-btn btn-favorite" title="Toggle Favorite"
-                            class="location-search-icon">
+                        <button data-action="toggle-favorite" class="icon-btn btn-favorite location-search-icon"
+                            title="Toggle Favorite">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                 stroke-width="2">
                                 <polygon
@@ -628,8 +623,8 @@
                         </button>
 
                         <!-- Location Dropdown Trigger -->
-                        <button class="location-btn" data-action="toggle-dropdown" aria-label="Change Location"
-                            class="location-name-btn">
+                        <button class="location-btn location-name-btn" data-action="toggle-dropdown"
+                            aria-label="Change Location">
                             <div class="loc-text-col text-left">
                                 <span class="current-location-name">Florianópolis</span>
                                 <span class="elevation-display location-subtitle">--m</span>
@@ -961,21 +956,21 @@
     </div> <!-- End view-weather -->
 
     <!-- VIEW: FUELING -->
-    <div id="view-fueling" class="main-view hidden" style="display:none;">
-        <div class="container" style="max-width:650px; padding-top:20px;">
+    <div id="view-fueling" class="main-view hidden">
+        <div class="container fueling-view-container">
             <h1>Fueling</h1>
-            <p style="color:var(--text-secondary); text-align:center; margin-top:40px;">Fueling calculator coming soon.
+            <p class="fueling-placeholder">Fueling calculator coming soon.
             </p>
         </div>
     </div>
 
     <!-- VIEW: LIBRARY -->
-    <div id="view-library" class="main-view hidden" style="display:none;">
-        <iframe id="library-frame" src="" style="width:100%; height:100%; border:none;"></iframe>
+    <div id="view-library" class="main-view hidden">
+        <iframe id="library-frame" src="" class="library-frame"></iframe>
     </div>
 
     <!-- Bottom Navigation -->
-    <nav class="bottom-nav">
+    <nav class="bottom-nav" data-enabled="false" aria-hidden="true">
         <button class="nav-btn active" data-target="view-weather">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                 stroke-linecap="round" stroke-linejoin="round">

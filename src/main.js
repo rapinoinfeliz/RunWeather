@@ -4,6 +4,7 @@ import { LocationManager } from './modules/managers.js';
 import { fetchWeatherData } from './modules/api.js';
 import { HAP_GRID } from '../data/hap_grid.js';
 import { AppState } from './modules/appState.js';
+import { AppStore, StoreActions, RequestKeys, beginRequest, endRequest, isRequestCurrent } from './modules/store.js';
 
 import * as UI from './modules/ui.js';
 import { loadFromStorage, saveToStorage } from './modules/storage.js';
@@ -18,13 +19,13 @@ async function init() {
 
     // 1. Core Logic
     if (HAP_GRID) {
-        AppState.hapCalc = new HAPCalculator(HAP_GRID);
+        AppStore.dispatch(StoreActions.setHapCalc(new HAPCalculator(HAP_GRID)));
     } else {
         console.error("HAP_GRID failed to load");
     }
 
     // 2. Managers
-    AppState.locManager = new LocationManager(async (loc) => {
+    const locManager = new LocationManager(async (loc) => {
         // On Location Change
         document.querySelectorAll('.current-location-name').forEach(el => {
             el.textContent = loc.name;
@@ -52,6 +53,7 @@ async function init() {
 
         UI.updateFavoriteStar();
     });
+    AppStore.dispatch(StoreActions.setLocManager(locManager));
 
     // Set initial location button text from saved state
     document.querySelectorAll('.current-location-name').forEach(el => {
@@ -86,7 +88,7 @@ async function init() {
         weatherImpact: document.getElementById('weather-impact'),
         windImpact: document.getElementById('wind-impact') // New
     };
-    AppState.els = els;
+    AppStore.dispatch(StoreActions.setEls(els));
 
     // Attach global click helpers (deselection, resize)
     UI.setupWindowHelpers();
@@ -126,13 +128,19 @@ async function init() {
             const target = e.currentTarget.dataset.toggleTarget;
 
             if (target === 'heat') {
-                AppState.paceView.heat = !AppState.paceView.heat;
+                AppStore.dispatch(StoreActions.patchPaceView({
+                    heat: !AppState.paceView.heat
+                }));
             } else if (target === 'wind') {
                 const newState = !AppState.paceView.headwind;
-                AppState.paceView.headwind = newState;
-                AppState.paceView.tailwind = newState;
+                AppStore.dispatch(StoreActions.patchPaceView({
+                    headwind: newState,
+                    tailwind: newState
+                }));
             } else if (target === 'altitude') {
-                AppState.paceView.altitude = !AppState.paceView.altitude;
+                AppStore.dispatch(StoreActions.patchPaceView({
+                    altitude: !AppState.paceView.altitude
+                }));
             }
 
             updateImpactCards();
@@ -147,6 +155,24 @@ async function init() {
             }
         });
     });
+
+    const syncPaceFromTime = () => {
+        const tSec = parseTime(els.time ? els.time.value : '');
+        const d = parseFloat(els.distance ? els.distance.value : '');
+        if (tSec > 0 && d > 0 && els.inputPace) {
+            const pacePerKm = tSec / (d / 1000);
+            els.inputPace.value = formatTime(pacePerKm);
+        }
+    };
+
+    const syncTimeFromPace = () => {
+        const p = parseTime(els.inputPace ? els.inputPace.value : '');
+        const d = parseFloat(els.distance ? els.distance.value : '');
+        if (p > 0 && d > 0 && els.time) {
+            const tSec = (d / 1000) * p;
+            els.time.value = formatTime(tSec);
+        }
+    };
 
     // Inputs (Distance, Temp, Dew, Wind)
     const inputs = [els.distance, els.temp, els.dew, els.wind];
@@ -167,6 +193,7 @@ async function init() {
                     // If we type 5001, we should select Custom.
                     els.preset.value = 'custom';
                 }
+                syncPaceFromTime();
             }
             UI.update(els, AppState.hapCalc);
             saveCalcState(els);
@@ -184,38 +211,15 @@ async function init() {
     // Load saved settings (weight, age, gender, altitude, units)
     loadSavedSettings();
 
-    // Time Input: Calculate Pace from Time + Distance
+    // Time & Pace Inputs (single handlers to avoid duplicate work)
     if (els.time) {
-        els.time.addEventListener('input', () => {
+        els.time.addEventListener('input', (e) => {
+            handleTimeInput(e);
+            syncPaceFromTime();
             UI.update(els, AppState.hapCalc);
             saveCalcState(els);
-            // Also update Pace field if distance is set
-            const tSec = parseTime(els.time.value);
-            const d = parseFloat(els.distance.value);
-            if (tSec > 0 && d > 0 && els.inputPace) {
-                const pacePerKm = tSec / (d / 1000);
-                els.inputPace.value = formatTime(pacePerKm);
-            }
-        });
-    }
-
-    // Time Input Formatting (numeric keypad support) — imported from inputs.js
-
-    if (els.inputPace) {
-        els.inputPace.oninput = (e) => {
-            handleTimeInput(e);
-            UI.setPaceMode(null);
-            UI.update(els, AppState.hapCalc);
-        }
-    }
-
-    // Also apply to Time Trial Input
-    if (els.time) {
-        els.time.oninput = (e) => {
-            handleTimeInput(e);
-            UI.update(els, AppState.hapCalc);
             saveToStorage('last_time', e.target.value);
-        }
+        });
     }
 
     // Preset Logic
@@ -241,18 +245,13 @@ async function init() {
         });
     }
 
-    // Pace Input: Calculate Time from Pace + Distance
     if (els.inputPace) {
-        els.inputPace.addEventListener('input', () => {
-            const p = parseTime(els.inputPace.value);
-            const dStr = els.distance.value;
-            if (p > 0 && dStr) {
-                const d = parseFloat(dStr);
-                const tSec = (d / 1000.0) * p;
-                els.time.value = formatTime(tSec);
-                UI.update(els, AppState.hapCalc);
-                saveCalcState(els);
-            }
+        els.inputPace.addEventListener('input', (e) => {
+            handleTimeInput(e);
+            UI.setPaceMode(null);
+            syncTimeFromPace();
+            UI.update(els, AppState.hapCalc);
+            saveCalcState(els);
         });
     }
 
@@ -303,17 +302,29 @@ async function init() {
     // Climate Load Removed (Lazy)
 }
 
+let climateModulePromise = null;
+
 async function refreshWeather(force = false) {
-    AppState.refreshWeather = refreshWeather;
+    AppStore.dispatch(StoreActions.setRefreshWeather(refreshWeather));
     const loc = AppState.locManager.current;
     if (!loc) return;
+    const request = beginRequest(RequestKeys.WEATHER, {
+        abortPrevious: true,
+        meta: { lat: loc.lat, lon: loc.lon }
+    });
 
     try {
-        const { weather, air } = await fetchWeatherData(loc.lat, loc.lon);
+        const { weather, air } = await fetchWeatherData(loc.lat, loc.lon, {
+            signal: request.signal,
+            force
+        });
+
+        // Ignore stale responses from superseded requests.
+        if (!isRequestCurrent(RequestKeys.WEATHER, request.seq)) return;
 
         UI.setForecastData(processForecast(weather.hourly));
-        AppState.weatherData = weather;
-        AppState.airData = air;
+        AppStore.dispatch(StoreActions.setWeatherData(weather));
+        AppStore.dispatch(StoreActions.setAirData(air));
 
         UI.renderCurrentTab(weather.current, air.current,
             weather.hourly.precipitation_probability[0],
@@ -322,7 +333,7 @@ async function refreshWeather(force = false) {
             weather.elevation
         );
 
-        UI.renderAllForecasts();
+        UI.renderAllForecasts({ data: true, range: true, selection: true });
 
         const els = AppState.els;
         if ((!els.temp.value && !els.dew.value) || force) {
@@ -332,10 +343,18 @@ async function refreshWeather(force = false) {
             UI.update(els, AppState.hapCalc);
         }
 
-        AppState.altitude.current = weather.elevation || 0;
+        AppStore.dispatch(StoreActions.patchAltitude({
+            current: weather.elevation || 0
+        }));
         UI.renderAltitudeCard();
+        endRequest(RequestKeys.WEATHER, request.seq, 'success');
 
     } catch (e) {
+        if (e && e.name === 'AbortError') {
+            endRequest(RequestKeys.WEATHER, request.seq, 'aborted');
+            return;
+        }
+        endRequest(RequestKeys.WEATHER, request.seq, 'error', e && e.message ? e.message : 'Weather refresh failed');
         console.error("Weather Refresh Failed", e);
     }
 }
@@ -362,19 +381,22 @@ function processForecast(hourly) {
 
 // --- Lazy Loader ---
 async function loadClimateModule() {
-    if (AppState.climateManager) return;
-
     UI.setLoading('climate', true);
 
     try {
-        const { ClimateManager } = await import('./modules/climate_manager.js');
-        AppState.climateManager = new ClimateManager(AppState.locManager, (data) => {
-            UI.setClimateData(data);
-            UI.renderClimateHeatmap();
-            UI.renderClimateTable();
-        });
+        if (!AppState.climateManager) {
+            climateModulePromise = climateModulePromise || import('./modules/climate_manager.js');
+            const { ClimateManager } = await climateModulePromise;
+            const climateManager = new ClimateManager(AppState.locManager, (data) => {
+                UI.setClimateData(data);
+                UI.renderClimateHeatmap();
+                UI.renderClimateTable();
+            });
+            AppStore.dispatch(StoreActions.setClimateManager(climateManager));
+        }
         await AppState.climateManager.loadDataForCurrentLocation();
     } catch (e) {
+        climateModulePromise = null;
         console.error("Failed to lazy load Climate Manager", e);
     } finally {
         UI.setLoading('climate', false);
@@ -403,12 +425,13 @@ function setupGlobalEvents() {
             case 'location-close':
                 UI.closeLocationModal();
                 break;
-            case 'location-search-clear':
+            case 'location-search-clear': {
                 // Reset search logic if needed
                 const searchInp = document.getElementById('loc-search');
                 if (searchInp) searchInp.value = '';
                 // renderRecents logic is inside ui.js, might need to call it
                 break;
+            }
             case 'gps':
                 UI.useGPS();
                 break;
@@ -435,7 +458,6 @@ function setupGlobalEvents() {
             case 'sort-forecast':
                 UI.toggleForeSort(target.dataset.col);
                 break;
-            case 'sort-climate':
             case 'sort-climate':
                 UI.sortClimate(target.dataset.col);
                 break;
@@ -495,8 +517,8 @@ function setupGlobalEvents() {
         }
     });
 
-    // Hover Events for Heatmap (Delegated)
-    document.addEventListener('mousemove', (e) => {
+    // Hover Events for Heatmap (Delegated + RAF throttle)
+    const handleMouseMove = (e) => {
         let target = e.target.closest('[data-action="select-forecast"]');
         if (target) {
             UI.handleCellHover(e, target);
@@ -519,6 +541,17 @@ function setupGlobalEvents() {
         if (target) {
             UI.moveClimateTooltip(e);
         }
+    };
+
+    let mouseMoveRaf = 0;
+    let lastMouseEvent = null;
+    document.addEventListener('mousemove', (e) => {
+        lastMouseEvent = e;
+        if (mouseMoveRaf) return;
+        mouseMoveRaf = requestAnimationFrame(() => {
+            mouseMoveRaf = 0;
+            if (lastMouseEvent) handleMouseMove(lastMouseEvent);
+        });
     });
 
     document.addEventListener('mouseover', (e) => {

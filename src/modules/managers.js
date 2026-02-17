@@ -118,8 +118,8 @@ export class LocationManager {
         }
     }
 
-    async searchCity(query) {
-        return await searchCity(query);
+    async searchCity(query, opts = {}) {
+        return await searchCity(query, opts);
     }
 
     _isSameLocation(loc1, loc2) {
@@ -149,4 +149,3 @@ export class LocationManager {
             .trim();
     }
 }
-

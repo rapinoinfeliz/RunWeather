@@ -1,5 +1,5 @@
 import { UIState } from './state.js';
-import { getImpactColor, getImpactCategory, getBasePaceSec } from './utils.js';
+import { getImpactHeatmapColor, getImpactCategory, getBasePaceSec } from './utils.js';
 import { getISOWeek } from '../core.js';
 import { renderClimateTable } from './tables.js';
 import { renderMonthlyAverages } from './climate.js';
@@ -41,15 +41,24 @@ export function renderForecastHeatmap(contId, legSelector, dayLimit) {
     }
 
     // Local ISO for "current hour" check
-    const getLocalIso = () => {
+    const getLocalIso = (timeZone) => {
         const now = new Date();
-        const options = { timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', hour12: false };
+        const options = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', hour12: false };
+        if (timeZone) options.timeZone = timeZone;
         const parts = new Intl.DateTimeFormat('en-CA', options).formatToParts(now);
         const p = {};
         parts.forEach(({ type, value }) => p[type] = value);
         return `${p.year}-${p.month}-${p.day}T${p.hour}`;
     };
-    const currentIsoPrefix = getLocalIso();
+    const forecastTimeZone = AppState.weatherData && AppState.weatherData.timezone
+        ? AppState.weatherData.timezone
+        : Intl.DateTimeFormat().resolvedOptions().timeZone;
+    let currentIsoPrefix = '';
+    try {
+        currentIsoPrefix = getLocalIso(forecastTimeZone);
+    } catch (e) {
+        currentIsoPrefix = getLocalIso();
+    }
 
     // Render Days
     const dayKeys = Object.keys(days).slice(0, dayLimit || 7);
@@ -81,7 +90,7 @@ export function renderForecastHeatmap(contId, legSelector, dayLimit) {
                 if (d.temp != null && d.dew != null && AppState.hapCalc) {
                     const adjPace = AppState.hapCalc.calculatePaceInHeat(baseSec, d.temp, d.dew);
                     pct = ((adjPace - baseSec) / baseSec) * 100;
-                    color = getImpactColor(pct);
+                    color = getImpactHeatmapColor(pct);
                     category = getImpactCategory(pct);
                 } else {
                     pct = 0;
@@ -140,7 +149,7 @@ export function renderForecastHeatmap(contId, legSelector, dayLimit) {
 
                 svgInner += `<rect x="${x}" y="${yBase}" width="${cellW}" height="${cellH}" rx="2" 
                     fill="${color}" fill-opacity="${opacity}" ${stroke}
-                    style="cursor:pointer; transition: fill-opacity 0.2s;"
+                    class="heatmap-cell"
                     data-action="select-forecast"
                     data-time="${d.time}"
                     data-day="${dayName} ${dateStr}"
@@ -163,7 +172,7 @@ export function renderForecastHeatmap(contId, legSelector, dayLimit) {
         }
     });
 
-    cont.innerHTML = `<svg viewBox="0 0 ${totalW} ${totalH}" style="width:100%; height:auto; display:block;">${svgInner}</svg>`;
+    cont.innerHTML = `<svg viewBox="0 0 ${totalW} ${totalH}" class="heatmap-svg">${svgInner}</svg>`;
 
     // Render Interactive Legend
     if (legCont) {
@@ -182,9 +191,9 @@ export function renderForecastHeatmap(contId, legSelector, dayLimit) {
             const opacity = (UIState.selectedImpactFilter && !isActive) ? '0.4' : '1';
 
             lHtml += `
-                <div class="legend-item" data-action="filter-impact" data-category="${cat.l}" style="cursor:pointer; opacity:${opacity}; transition:all 0.2s;">
-                    <div class="legend-color" style="background-color:${cat.c}; border:${border}; box-shadow: ${isActive ? '0 0 8px ' + cat.c : 'none'};"></div>
-                    <span>${cat.l} <span style="font-size:0.75em; opacity:0.7">(${cat.lt})</span></span>
+                <div class="legend-item legend-item--interactive" data-action="filter-impact" data-category="${cat.l}" style="--legend-opacity:${opacity};">
+                    <div class="legend-color legend-color--dynamic" style="--legend-color:${cat.c}; --legend-border:${border}; --legend-shadow:${isActive ? '0 0 8px ' + cat.c : 'none'};"></div>
+                    <span>${cat.l} <span class="legend-sub">(${cat.lt})</span></span>
                 </div>
             `;
         });
@@ -202,7 +211,7 @@ export function renderClimateHeatmap(data) {
     if (!rawData || !Array.isArray(rawData) || rawData.length === 0) {
         // Only warn if we actually expected data (e.g. not just initial load)
         // But for now, let's just show loading text
-        container.innerHTML = '<div style="padding:20px; text-align:center; color:var(--text-secondary);">No climate data available yet.</div>';
+        container.innerHTML = '<div class="heatmap-empty">No climate data available yet.</div>';
         return;
     }
 
@@ -301,13 +310,7 @@ export function renderClimateHeatmap(data) {
                     opacity = '0.1';
                 }
 
-                if (val < 0.5) color = "#4ade80"; // Green
-                else if (val < 2.0) color = "#facc15"; // Yellow
-                else if (val < 3.5) color = "#fb923c"; // Orange
-                else if (val < 6.0) color = "#f87171"; // Red
-                else color = "#c084fc"; // Purple
-
-                if (UIState.isDark && val < 0.5) color = "#22c55e"; // Dark adjustment (green)
+                color = getImpactHeatmapColor(val);
 
                 // Highlight Current Time
                 if (w === curW && h === curH) {
@@ -319,7 +322,7 @@ export function renderClimateHeatmap(data) {
 
                 svgInner += `<rect x="${x}" y="${y}" width="${cellW}" height="${cellH}" rx="1"
                         fill="${color}" fill-opacity="${opacity}" ${stroke}
-                        style="cursor:pointer; transition: fill-opacity 0.2s;"
+                        class="heatmap-cell"
                         data-action="climate-cell"
                         data-week="${w}" data-hour="${h}"
                         data-impact="${val}" data-temp="${pt.mean_temp}" data-dew="${pt.mean_dew}" data-count="${pt.count}"
@@ -402,7 +405,7 @@ export function renderClimateHeatmap(data) {
 
     } catch (e) { console.warn('Climate curve error', e); }
 
-    container.innerHTML = `<svg viewBox="0 0 ${totalW} ${totalH}" preserveAspectRatio="xMidYMid meet" style="width:100%; height:auto; display:block;">${svgInner}</svg>`;
+    container.innerHTML = `<svg viewBox="0 0 ${totalW} ${totalH}" preserveAspectRatio="xMidYMid meet" class="heatmap-svg">${svgInner}</svg>`;
 }
 
 export function renderClimateLegend() {
@@ -430,9 +433,9 @@ export function renderClimateLegend() {
         if (isActive) border = '2px solid #fff';
 
         html += `
-                        <div class="legend-item" data-action="filter-climate-impact" data-label="${l.label}" style="cursor:pointer; opacity:${opacity}; transition:all 0.2s;">
-                            <div class="legend-color" style="background-color:${l.color}; border:${border}; box-shadow: ${isActive ? '0 0 8px ' + l.color : 'none'};"></div>
-                            <span>${l.label} <span style="font-size:0.75em; opacity:0.7">(${l.sub})</span></span>
+                        <div class="legend-item legend-item--interactive" data-action="filter-climate-impact" data-label="${l.label}" style="--legend-opacity:${opacity};">
+                            <div class="legend-color legend-color--dynamic" style="--legend-color:${l.color}; --legend-border:${border}; --legend-shadow:${isActive ? '0 0 8px ' + l.color : 'none'};"></div>
+                            <span>${l.label} <span class="legend-sub">(${l.sub})</span></span>
                         </div>
                     `;
     });

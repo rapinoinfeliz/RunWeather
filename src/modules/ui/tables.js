@@ -6,6 +6,10 @@ import { AppState } from '../appState.js';
 
 let _vdotWeightActive = false;
 let _vdotWeightTimer = null;
+const FORECAST_VIEW_MEMO = {
+    key: '',
+    data: []
+};
 
 export function renderVDOTDetails() {
     const els = AppState.els;
@@ -415,6 +419,103 @@ function _updateWeightDelta(input, deltaEl, warningEl, currentWeight, heightCm) 
     }
 }
 
+function getForecastDataSignature(data) {
+    if (!data || data.length === 0) return '0';
+    const len = data.length;
+    const mid = Math.floor(len / 2);
+    const points = [0, 1, mid, len - 2, len - 1].filter((idx) => idx >= 0 && idx < len);
+    let digest = `${len}`;
+    points.forEach((idx) => {
+        const d = data[idx];
+        if (!d) return;
+        digest += `|${idx}:${d.time || ''}:${d.temp ?? ''}:${d.dew ?? ''}:${d.rain ?? ''}:${d.prob ?? ''}:${d.wind ?? ''}:${d.weathercode ?? ''}`;
+    });
+    return digest;
+}
+
+function getForecastViewKey(dayLimit, baseSec) {
+    return [
+        getForecastDataSignature(UIState.forecastData),
+        dayLimit || 0,
+        UIState.selectedForeHour || '',
+        UIState.selectedImpactFilter || '',
+        UIState.forecastSortCol || 'time',
+        UIState.forecastSortDir || 'asc',
+        UIState.currentPaceMode || 'HMP',
+        Number(baseSec).toFixed(4)
+    ].join('#');
+}
+
+function buildForecastViewData(dayLimit, baseSec) {
+    let viewData = [];
+    let displayLimitDate = null;
+    if (dayLimit) {
+        const start = new Date(UIState.forecastData[0].time);
+        displayLimitDate = new Date(start);
+        displayLimitDate.setDate(start.getDate() + dayLimit);
+    }
+
+    if (UIState.selectedForeHour) {
+        viewData = UIState.forecastData.filter(d => d.time === UIState.selectedForeHour);
+    } else {
+        const now = new Date();
+        viewData = UIState.forecastData.filter(item => {
+            const t = new Date(item.time);
+            return t > now && (!displayLimitDate || t < displayLimitDate);
+        });
+    }
+
+    if (UIState.selectedImpactFilter) {
+        viewData = viewData.filter(d => {
+            const adj = AppState.hapCalc.calculatePaceInHeat(baseSec, d.temp, d.dew);
+            const p = ((adj - baseSec) / baseSec) * 100;
+            return getImpactCategory(p) === UIState.selectedImpactFilter;
+        });
+    }
+
+    viewData.sort((a, b) => {
+        let valA;
+        let valB;
+        if (UIState.forecastSortCol === 'time') {
+            return (new Date(a.time) - new Date(b.time)) * (UIState.forecastSortDir === 'asc' ? 1 : -1);
+        }
+        if (UIState.forecastSortCol === 'temp') { valA = a.temp; valB = b.temp; }
+        else if (UIState.forecastSortCol === 'dew') { valA = a.dew; valB = b.dew; }
+        else if (UIState.forecastSortCol === 'rain') { valA = a.rain || 0; valB = b.rain || 0; }
+        else if (UIState.forecastSortCol === 'prob') { valA = a.prob || 0; valB = b.prob || 0; }
+        else if (UIState.forecastSortCol === 'wind') { valA = a.wind || 0; valB = b.wind || 0; }
+        else {
+            const adjA = AppState.hapCalc.calculatePaceInHeat(baseSec, a.temp, a.dew);
+            const pctA = ((adjA - baseSec) / baseSec);
+            const adjB = AppState.hapCalc.calculatePaceInHeat(baseSec, b.temp, b.dew);
+            const pctB = ((adjB - baseSec) / baseSec);
+            valA = pctA; valB = pctB;
+        }
+
+        valA = Number(valA);
+        valB = Number(valB);
+        if (isNaN(valA)) valA = -Infinity;
+        if (isNaN(valB)) valB = -Infinity;
+
+        if (valA < valB) return UIState.forecastSortDir === 'asc' ? -1 : 1;
+        if (valA > valB) return UIState.forecastSortDir === 'asc' ? 1 : -1;
+        return new Date(a.time) - new Date(b.time);
+    });
+
+    return viewData;
+}
+
+function getForecastViewDataMemoized(dayLimit, baseSec) {
+    const key = getForecastViewKey(dayLimit, baseSec);
+    if (FORECAST_VIEW_MEMO.key === key) {
+        return FORECAST_VIEW_MEMO.data;
+    }
+    const data = buildForecastViewData(dayLimit, baseSec);
+    FORECAST_VIEW_MEMO.key = key;
+    FORECAST_VIEW_MEMO.data = data;
+    return data;
+}
+
 export function renderForecastTable(tableBodyId, dayLimit, isAppend = false) {
     const tbody = document.getElementById(tableBodyId || 'forecast-body');
     if (!tbody || !UIState.forecastData.length) return;
@@ -458,61 +559,7 @@ export function renderForecastTable(tableBodyId, dayLimit, isAppend = false) {
 
     let baseSec = getBasePaceSec();
 
-    // Filter
-    let viewData = [];
-    let displayLimitDate = null;
-    if (dayLimit) {
-        const start = new Date(UIState.forecastData[0].time);
-        displayLimitDate = new Date(start);
-        displayLimitDate.setDate(start.getDate() + dayLimit);
-    }
-
-    if (UIState.selectedForeHour) {
-        viewData = UIState.forecastData.filter(d => d.time === UIState.selectedForeHour);
-    } else {
-        const now = new Date();
-        viewData = UIState.forecastData.filter(item => {
-            const t = new Date(item.time);
-            return t > now && (!displayLimitDate || t < displayLimitDate);
-        });
-    }
-
-    if (UIState.selectedImpactFilter) {
-        viewData = viewData.filter(d => {
-            const adj = AppState.hapCalc.calculatePaceInHeat(baseSec, d.temp, d.dew);
-            const p = ((adj - baseSec) / baseSec) * 100;
-            return getImpactCategory(p) === UIState.selectedImpactFilter;
-        });
-    }
-
-    // Sort
-    viewData.sort((a, b) => {
-        let valA, valB;
-        if (UIState.forecastSortCol === 'time') {
-            return (new Date(a.time) - new Date(b.time)) * (UIState.forecastSortDir === 'asc' ? 1 : -1);
-        }
-        if (UIState.forecastSortCol === 'temp') { valA = a.temp; valB = b.temp; }
-        else if (UIState.forecastSortCol === 'dew') { valA = a.dew; valB = b.dew; }
-        else if (UIState.forecastSortCol === 'rain') { valA = a.rain || 0; valB = b.rain || 0; }
-        else if (UIState.forecastSortCol === 'prob') { valA = a.prob || 0; valB = b.prob || 0; }
-        else if (UIState.forecastSortCol === 'wind') { valA = a.wind || 0; valB = b.wind || 0; }
-        else {
-            const adjA = AppState.hapCalc.calculatePaceInHeat(baseSec, a.temp, a.dew);
-            const pctA = ((adjA - baseSec) / baseSec);
-            const adjB = AppState.hapCalc.calculatePaceInHeat(baseSec, b.temp, b.dew);
-            const pctB = ((adjB - baseSec) / baseSec);
-            valA = pctA; valB = pctB;
-        }
-
-        valA = Number(valA);
-        valB = Number(valB);
-        if (isNaN(valA)) valA = -Infinity;
-        if (isNaN(valB)) valB = -Infinity;
-
-        if (valA < valB) return UIState.forecastSortDir === 'asc' ? -1 : 1;
-        if (valA > valB) return UIState.forecastSortDir === 'asc' ? 1 : -1;
-        return new Date(a.time) - new Date(b.time);
-    });
+    const viewData = getForecastViewDataMemoized(dayLimit, baseSec);
 
     // Pagination Slice
     const startIdx = isAppend ? UIState.forecastRenderLimit - UIState.SCROLL_BATCH_SIZE : 0;
@@ -542,42 +589,44 @@ export function renderForecastTable(tableBodyId, dayLimit, isAppend = false) {
         const prob = h.prob != null ? h.prob : 0;
         const wind = h.wind != null ? h.wind : 0;
         const dir = h.dir != null ? h.dir : 0;
-        const arrowStyle = `display:inline-block; transform:rotate(${dir}deg); font-size:0.8em; margin-left:2px;`;
 
         const tempColor = getCondColor('air', h.temp);
         const probColor = getCondColor('prob', prob);
         const windColor = getCondColor('wind', wind);
         const rainColor = rain > 0 ? '#60a5fa' : 'inherit';
         const dewColor = getDewColor(h.dew);
+        const selectedRowClass = UIState.selectedForeHour && h.time === UIState.selectedForeHour
+            ? 'forecast-row-selected'
+            : '';
 
         return `
-        <tr style="${UIState.selectedForeHour && h.time === UIState.selectedForeHour ? 'background:var(--card-bg); font-weight:bold;' : ''}">
-            <td style="padding:6px; color:var(--text-secondary); white-space:nowrap;">
-                <div style="font-size:0.75em; display:flex; align-items:center; gap:1px;">
+        <tr class="${selectedRowClass}">
+            <td class="forecast-time-cell">
+                <div class="forecast-dayline">
                     ${getWeatherIcon(h.weathercode)} 
                     ${dayName}
                 </div>
-                <div style="font-size:1em; color:var(--text-primary); font-weight:500;">
+                <div class="forecast-timeline">
                     ${timeStr}
                 </div>
             </td>
-            <td style="text-align:center; color:${tempColor};">${h.temp != null ? h.temp.toFixed(1) : '-'}\u00b0</td>
-            <td style="text-align:center; color:${dewColor};">${h.dew != null ? h.dew.toFixed(1) : '-'}\u00b0</td>
-            <td style="text-align:center; color:${rainColor};">
-                <div style="font-weight:500;">${rain > 0 ? rain.toFixed(1) + 'mm' : '-'}</div>
-                <div style="font-size:0.75em; color:${probColor};">${prob}%</div>
+            <td class="forecast-cell-center" style="color:${tempColor};">${h.temp != null ? h.temp.toFixed(1) : '-'}\u00b0</td>
+            <td class="forecast-cell-center" style="color:${dewColor};">${h.dew != null ? h.dew.toFixed(1) : '-'}\u00b0</td>
+            <td class="forecast-cell-center" style="color:${rainColor};">
+                <div class="forecast-rain-main">${rain > 0 ? rain.toFixed(1) + 'mm' : '-'}</div>
+                <div class="forecast-rain-prob" style="--cell-prob-color:${probColor};">${prob}%</div>
             </td>
-            <td style="text-align:center; color:${windColor};">
-                <div>${wind.toFixed(1)} <span style="font-size:0.7em; color:var(--text-secondary)">km/h</span></div>
-                <div style="font-size:0.7em; color:var(--text-secondary); display:flex; align-items:center; justify-content:center;">
-                   <span style="${arrowStyle}">\u2193</span>
+            <td class="forecast-cell-center" style="color:${windColor};">
+                <div>${wind.toFixed(1)} <span class="forecast-wind-unit">km/h</span></div>
+                <div class="forecast-wind-dir-wrap">
+                   <span class="forecast-wind-arrow" style="--wind-dir-deg:${dir}deg;">\u2193</span>
                 </div>
             </td>
-            <td style="text-align:center;">
-                 <div style="font-family:'Courier New', monospace; font-size:1em; font-weight:700; color:var(--accent-color); margin-bottom:2px;">
+            <td class="forecast-cell-center">
+                 <div class="forecast-pace-line">
                     ${formatTime(adjPace)}
                 </div>
-                <span class="impact-badge" style="background:${impactColor}; color:#000; font-weight:600; font-size:0.75em;">
+                <span class="impact-badge impact-badge--compact" style="--impact-bg:${impactColor};">
                     ${pct.toFixed(2)}%
                 </span>
             </td>
@@ -683,20 +732,23 @@ export function renderClimateTable(isAppend = false) {
         const tempColor = getCondColor('air', d.mean_temp);
         const dewColor = getDewColor(d.mean_dew || 0);
         const windColor = getCondColor('wind', d.mean_wind || 0);
+        const selectedRowClass = UIState.selectedClimateKey === `${d.week}-${d.hour}`
+            ? 'climate-row-selected'
+            : '';
 
         // Match Forecast Table Row structure exactly
         return `
-            <tr style="${UIState.selectedClimateKey === `${d.week}-${d.hour}` ? 'background:var(--card-bg); font-weight:bold;' : ''}">
-                <td style="padding:10px; color:var(--text-secondary); white-space:nowrap;">
-                    <div style="font-size:0.75em;">${dateStr}</div>
-                    <div style="font-size:1em; color:var(--text-primary); font-weight:500;">${timeStr}</div>
+            <tr class="${selectedRowClass}">
+                <td class="climate-time-cell">
+                    <div class="climate-date-line">${dateStr}</div>
+                    <div class="climate-time-line">${timeStr}</div>
                 </td>
-                <td style="text-align:center; color:${tempColor}">${(d.mean_temp != null ? d.mean_temp : 0).toFixed(1)}\u00b0</td>
-                <td style="text-align:center; color:${dewColor}">${(d.mean_dew != null ? d.mean_dew : 0).toFixed(1)}\u00b0</td>
-                <td style="text-align:center; color:${rainColor}">${d.mean_precip > 0 ? (d.mean_precip || 0).toFixed(2) + 'mm' : '-'}</td>
-                <td style="text-align:center; color:${windColor}">${(d.mean_wind || 0).toFixed(1)} <span style="font-size:0.7em;color:var(--text-secondary)">km/h</span></td>
-                <td style="text-align:center;">
-                    <span class="impact-badge" style="background:${impactColor}; color:#000; font-weight:600;">
+                <td class="forecast-cell-center" style="color:${tempColor}">${(d.mean_temp != null ? d.mean_temp : 0).toFixed(1)}\u00b0</td>
+                <td class="forecast-cell-center" style="color:${dewColor}">${(d.mean_dew != null ? d.mean_dew : 0).toFixed(1)}\u00b0</td>
+                <td class="forecast-cell-center" style="color:${rainColor}">${d.mean_precip > 0 ? (d.mean_precip || 0).toFixed(2) + 'mm' : '-'}</td>
+                <td class="forecast-cell-center" style="color:${windColor}">${(d.mean_wind || 0).toFixed(1)} <span class="climate-wind-unit">km/h</span></td>
+                <td class="forecast-cell-center">
+                    <span class="impact-badge impact-badge--compact" style="--impact-bg:${impactColor};">
                         ${(d.mean_impact || 0).toFixed(2)}%
                     </span>
                 </td>
