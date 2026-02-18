@@ -1,8 +1,16 @@
 import { UIState } from './state.js';
 import { renderAllForecasts, renderClimateHeatmap, renderClimateTable, renderClimateLegend, calculateBestRunTime } from './renderers.js';
-import { formatTime } from '../core.js';
-import { getCondColor, showToast } from './utils.js';
+import { showToast } from './utils.js';
 import { AppStore, StoreActions } from '../store.js';
+import {
+    formatDisplayPrecip,
+    formatDisplayTemperature,
+    formatDisplayWind,
+    getUnitSystem,
+    precipitationUnit,
+    temperatureUnit,
+    windUnit
+} from '../units.js';
 
 function patchUI(patch) {
     AppStore.dispatch(StoreActions.patchUI(patch));
@@ -42,6 +50,10 @@ function ensureTooltipBackdrop() {
 export function copyConditions() {
     if (!UIState.currentWeatherData) return;
     const w = UIState.currentWeatherData;
+    const system = getUnitSystem();
+    const tempUnitLabel = temperatureUnit(system);
+    const windUnitLabel = windUnit(system);
+    const precipUnitLabel = precipitationUnit(system);
 
     // Format: "Florianópolis 08:00 | 24°C (Feels 26) | Dew 20°C | Wind 15kph SE | Rain 0mm"
     const temp = w.temperature_2m;
@@ -57,7 +69,7 @@ export function copyConditions() {
 
     const time = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
-    const text = `Run Conditions ${time} | Temp: ${temp.toFixed(1)}°C (Feels ${feels.toFixed(1)}°C) | Dew Point: ${dew.toFixed(1)}°C | Humidity: ${hum}% | Wind: ${wind.toFixed(1)} km/h ${dirStr} | Rain (2h): ${rain.toFixed(1)} mm`;
+    const text = `Run Conditions ${time} | Temp: ${formatDisplayTemperature(temp, 1, system)}${tempUnitLabel} (Feels ${formatDisplayTemperature(feels, 1, system)}${tempUnitLabel}) | Dew Point: ${formatDisplayTemperature(dew, 1, system)}${tempUnitLabel} | Humidity: ${hum}% | Wind: ${formatDisplayWind(wind, 1, system)} ${windUnitLabel} ${dirStr} | Rain (2h): ${formatDisplayPrecip(rain, 1, 2, system)} ${precipUnitLabel}`;
 
     navigator.clipboard.writeText(text).then(() => {
         showToast("Conditions copied!");
@@ -160,15 +172,17 @@ export function showForeTooltip(e, htmlContent, options = {}) {
 export function handleCellHover(e, el) {
     const day = el.getAttribute('data-day');
     const hour = el.getAttribute('data-hour');
-    const temp = el.getAttribute('data-temp');
-    const dew = el.getAttribute('data-dew');
+    const tempRaw = parseFloat(el.getAttribute('data-temp'));
+    const dewRaw = parseFloat(el.getAttribute('data-dew'));
     const pct = el.getAttribute('data-pct');
     const color = el.getAttribute('data-color');
+    const system = getUnitSystem();
+    const tempUnitLabel = temperatureUnit(system);
 
     const html = `
                         <div class="tooltip-header">${day} ${hour}:00</div>
-                        <div class="tooltip-row"><span class="tooltip-label">Temp:</span> <span class="tooltip-val tooltip-val--temp">${temp}°</span></div>
-                        <div class="tooltip-row"><span class="tooltip-label">Dew:</span> <span class="tooltip-val tooltip-val--dew">${dew}°</span></div>
+                        <div class="tooltip-row"><span class="tooltip-label">Temp:</span> <span class="tooltip-val tooltip-val--temp">${formatDisplayTemperature(tempRaw, 1, system)} ${tempUnitLabel}</span></div>
+                        <div class="tooltip-row"><span class="tooltip-label">Dew:</span> <span class="tooltip-val tooltip-val--dew">${formatDisplayTemperature(dewRaw, 1, system)} ${tempUnitLabel}</span></div>
                         <div class="tooltip-row tooltip-row--divider">
                             <span class="tooltip-label">Impact:</span> <span class="tooltip-val tooltip-val--impact" style="--tooltip-impact-color:${color}">${pct}%</span>
                         </div>

@@ -2,15 +2,31 @@ import { UIState } from './state.js';
 import { infoIcon, getCondColor, getDewColor } from './utils.js';
 import { calculateWBGT } from '../engine.js';
 import { AppStore, StoreActions } from '../store.js';
+import {
+    elevationUnit,
+    formatDisplayElevation,
+    formatDisplayPrecip,
+    formatDisplayTemperature,
+    formatDisplayWind,
+    getUnitSystem,
+    precipitationUnit,
+    temperatureUnit,
+    windUnit
+} from '../units.js';
 
 export function renderCurrentTab(w, a, prob2h = 0, precip2h = 0, daily, elevation) {
     const container = document.getElementById('current-content');
     if (!container) return;
+    const system = getUnitSystem();
+    const tempUnitLabel = temperatureUnit(system);
+    const windUnitLabel = windUnit(system);
+    const precipUnitLabel = precipitationUnit(system);
+    const elevationUnitLabel = elevationUnit(system);
 
     // Update Elevation Displays (Global, since buttons are outside this container)
     document.querySelectorAll('.elevation-display').forEach(el => {
         if (elevation !== undefined && elevation !== null) {
-            el.textContent = `${Math.round(elevation)}m`;
+            el.textContent = `${formatDisplayElevation(elevation, system)}${elevationUnitLabel}`;
             el.style.display = 'block';
         } else {
             el.textContent = '';
@@ -115,17 +131,17 @@ export function renderCurrentTab(w, a, prob2h = 0, precip2h = 0, daily, elevatio
                         <div style="${gridStyle}">
                             <div style="${itemStyle}">
                                 <div style="${labelStyle}">Air ${infoIcon('Air Temperature', 'The dry-bulb temperature. Does not account for humidity or wind.<br><br><span style=&quot;color:#60a5fa&quot;><b>< 10°C (Cold):</b></span> Cool for running.<br><span style=&quot;color:#4ade80&quot;><b>10-28°C (Ideal):</b></span> Optimal range.<br><span style=&quot;color:#fb923c&quot;><b>28-32°C (Hot):</b></span> Pace impact.<br><span style=&quot;color:#f87171&quot;><b>32-35°C (Very Hot):</b></span> High risk.<br><span style=&quot;color:#c084fc&quot;><b>> 35°C (Extreme):</b></span> Dangerous.')}</div>
-                                <div style="${valStyle}; color:${getCondColor('air', w.temperature_2m)}">${safeVal(w.temperature_2m)} <span style="font-size:0.8em">°C</span></div>
+                                <div style="${valStyle}; color:${getCondColor('air', w.temperature_2m)}">${formatDisplayTemperature(w.temperature_2m, 1, system)} <span style="font-size:0.8em">${tempUnitLabel}</span></div>
                             </div>
                             <div style="${itemStyle}">
                                 <div style="${labelStyle}">WBGT ${infoIcon('WBGT (Wet Bulb Globe Temp)', 'The Gold Standard for heat safety. Accounts for Temp, Humidity, Wind AND Solar Radiation.<br><br><span style=&quot;color:#4ade80&quot;><b>< 18°C (Low Risk):</b></span> Safe. Hard efforts OK.<br><span style=&quot;color:#facc15&quot;><b>18-21°C (Moderate):</b></span> Caution. Hydrate more.<br><span style=&quot;color:#fb923c&quot;><b>21-25°C (High):</b></span> Slow down. Heat cramps risk.<br><span style=&quot;color:#f87171&quot;><b>25-28°C (Very High):</b></span> Dangerous. Limit intensity.<br><span style=&quot;color:#c084fc&quot;><b>> 28°C (Extreme):</b></span> Cancel hard runs. Survival mode.')}</div>
                                 <div style="${valStyle}; color:${wbgtVal !== null ? getWBGTColor(wbgtVal) : getCondColor('air', feels)}">
-                                    ${wbgtVal !== null ? wbgtVal.toFixed(1) : safeVal(feels)} <span style="font-size:0.8em">°C</span>
+                                    ${wbgtVal !== null ? formatDisplayTemperature(wbgtVal, 1, system) : formatDisplayTemperature(feels, 1, system)} <span style="font-size:0.8em">${tempUnitLabel}</span>
                                 </div>
                             </div>
                             <div style="${itemStyle}">
                                 <div style="${labelStyle}">Dew Point ${infoIcon('Dew Point', 'The absolute measure of moisture in the air. The critical metric for runner comfort.<br><br><span style=&quot;color:#4ade80&quot;><b>< 15°C (Comfortable):</b></span> Crisp.<br><span style=&quot;color:#facc15&quot;><b>15-20°C (Humid):</b></span> Noticeable.<br><span style=&quot;color:#fb923c&quot;><b>20-24°C (Uncomfortable):</b></span> Hard.<br><span style=&quot;color:#f87171&quot;><b>> 24°C (Oppressive):</b></span> Very High Risk.')}</div>
-                                <div style="${valStyle}; color:${getDewColor(w.dew_point_2m)}">${safeVal(w.dew_point_2m)} <span style="font-size:0.8em">°C</span></div>
+                                <div style="${valStyle}; color:${getDewColor(w.dew_point_2m)}">${formatDisplayTemperature(w.dew_point_2m, 1, system)} <span style="font-size:0.8em">${tempUnitLabel}</span></div>
                             </div>
                             <div style="${itemStyle}">
                                 <div style="${labelStyle}">Humidity ${infoIcon('Relative Humidity', 'Relative saturation of the air. High humidity hinders sweat evaporation.<br><br><span style=&quot;color:#4ade80&quot;><b>< 75% (OK):</b></span> Good evaporation.<br><span style=&quot;color:#fb923c&quot;><b>75-90% (Sticky):</b></span> Sweat drips.<br><span style=&quot;color:#f87171&quot;><b>> 90% (Oppressive):</b></span> No evaporation.')}</div>
@@ -141,11 +157,11 @@ export function renderCurrentTab(w, a, prob2h = 0, precip2h = 0, daily, elevatio
                         <div style="${gridStyle}">
                             <div style="${itemStyle}">
                                 <div style="${labelStyle}">Speed ${infoIcon('Wind Speed', 'Sustained wind speed at 10m height.<br><br><span style=&quot;color:#4ade80&quot;><b>< 10 km/h (Calm):</b></span> No impact.<br><span style=&quot;color:#facc15&quot;><b>10-20 km/h (Light):</b></span> Barely noticeable.<br><span style=&quot;color:#fb923c&quot;><b>20-30 km/h (Moderate):</b></span> Effort increases.<br><span style=&quot;color:#f87171&quot;><b>30-40 km/h (Strong):</b></span> Pace unreliable.<br><span style=&quot;color:#c084fc&quot;><b>> 40 km/h (Severe):</b></span> Running compromised.')}</div>
-                                <div style="${valStyle}; color:${getCondColor('wind', wind)}">${safeVal(wind)} <span style="font-size:0.7em">km/h</span></div>
+                                <div style="${valStyle}; color:${getCondColor('wind', wind)}">${formatDisplayWind(wind, 1, system)} <span style="font-size:0.7em">${windUnitLabel}</span></div>
                             </div>
                             <div style="${itemStyle}">
                                 <div style="${labelStyle}">Gusts ${infoIcon('Wind Gusts', 'Maximum instantaneous wind speed at 10 meters.<br><br><span style=&quot;color:#4ade80&quot;><b>< 20 km/h (Minimal):</b></span> Safe.<br><span style=&quot;color:#facc15&quot;><b>20-30 km/h (Noticeable):</b></span> Breezy.<br><span style=&quot;color:#fb923c&quot;><b>30-40 km/h (Strong):</b></span> Drag.<br><span style=&quot;color:#f87171&quot;><b>40-60 km/h (Very Strong):</b></span> Unsafe.<br><span style=&quot;color:#c084fc&quot;><b>> 60 km/h (Severe):</b></span> Dangerous.')}</div>
-                                <div style="${valStyle}; color:${getCondColor('gust', windGust)}">${safeVal(windGust)} <span style="font-size:0.7em">km/h</span></div>
+                                <div style="${valStyle}; color:${getCondColor('gust', windGust)}">${formatDisplayWind(windGust, 1, system)} <span style="font-size:0.7em">${windUnitLabel}</span></div>
                             </div>
                             <div style="${itemStyle}">
                                 <div style="${labelStyle}">Direction</div>
@@ -159,7 +175,7 @@ export function renderCurrentTab(w, a, prob2h = 0, precip2h = 0, daily, elevatio
                         <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:8px; row-gap:16px; align-items: stretch;">
                             <div style="${itemStyle}">
                                 <div style="${labelStyle}">Rain (2h) ${infoIcon('Rain Forecast', 'Estimated total precipitation currently expected for the next 2 hours.')}</div>
-                                <div style="${valStyle}; color:${getCondColor('rain', precip2h)}">${safeVal(precip2h)} <span style="font-size:0.7em">mm</span></div>
+                                <div style="${valStyle}; color:${getCondColor('rain', precip2h)}">${formatDisplayPrecip(precip2h, 1, 2, system)} <span style="font-size:0.7em">${precipUnitLabel}</span></div>
                             </div>
                             <div style="${itemStyle}">
                                 <div style="${labelStyle}">Chance ${infoIcon('Rain Probability', 'Probability of precipitation.<br><br><span style=&quot;color:#4ade80&quot;><b>< 30% (Low):</b></span> Unlikely.<br><span style=&quot;color:#fb923c&quot;><b>30-60% (Medium):</b></span> Possible.<br><span style=&quot;color:#f87171&quot;><b>> 60% (High):</b></span> Look for shelter.')}</div>

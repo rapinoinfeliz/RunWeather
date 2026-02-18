@@ -5,6 +5,15 @@ import { calculateAgeGrade } from '../engine.js';
 import { AppState } from '../appState.js';
 import { AppStore, StoreActions } from '../store.js';
 import { addDaysToIsoMinute, getNowIsoMinute, parseIsoMinuteToUtcDate } from '../time.js';
+import {
+    formatDisplayPrecip,
+    formatDisplayTemperature,
+    formatDisplayWind,
+    formatPace,
+    getUnitSystem,
+    precipitationUnit,
+    windUnit
+} from '../units.js';
 
 let _vdotWeightActive = false;
 let _vdotWeightTimer = null;
@@ -16,6 +25,7 @@ const FORECAST_VIEW_MEMO = {
 export function renderVDOTDetails() {
     const els = AppState.els;
     if (!els) return;
+    const unitSystem = getUnitSystem();
 
     const cont = document.getElementById('vdot-details');
     if (!cont) return;
@@ -227,7 +237,7 @@ export function renderVDOTDetails() {
         const pace = t2 / distKm;
 
         let timeCell = `<span class="time-val">${fmtPretty(t2)}</span>`;
-        let paceCell = `<span class="pace-val">${formatTime(pace)}/km</span>`;
+        let paceCell = `<span class="pace-val">${formatPace(pace, formatTime, unitSystem)}</span>`;
 
         if (isActive) {
             const adjTime = t2 * weightRatio;
@@ -235,7 +245,7 @@ export function renderVDOTDetails() {
             const deltaColor = adjTime < t2 ? '#4ade80' : '#f87171';
 
             timeCell += `<div style="font-size:0.75em; color:${deltaColor}; font-weight:600;">${fmtPretty(adjTime)}</div>`;
-            paceCell += `<div style="font-size:0.75em; color:${deltaColor}; font-weight:600;">${formatTime(adjPace)}/km</div>`;
+            paceCell += `<div style="font-size:0.75em; color:${deltaColor}; font-weight:600;">${formatPace(adjPace, formatTime, unitSystem)}</div>`;
         }
 
         html += `
@@ -289,7 +299,7 @@ export function renderVDOTDetails() {
         if (threshEl) {
             threshEl.style.display = 'inline-block';
             threshEl.style.verticalAlign = 'top';
-            threshEl.innerHTML = `${formatTime(origThreshold)}/km<br><span style="font-size:0.85em; color:${threshColor}; font-weight:600;">→ ${formatTime(adjThreshold)}/km</span>`;
+            threshEl.innerHTML = `${formatPace(origThreshold, formatTime, unitSystem)}<br><span style="font-size:0.85em; color:${threshColor}; font-weight:600;">→ ${formatPace(adjThreshold, formatTime, unitSystem)}</span>`;
         }
 
         // Update gauge arc for adjusted age grade
@@ -346,7 +356,7 @@ export function renderVDOTDetails() {
         if (threshEl) {
             threshEl.style.display = '';
             threshEl.style.verticalAlign = '';
-            threshEl.textContent = `${formatTime(origThreshold)}/km`;
+            threshEl.textContent = formatPace(origThreshold, formatTime, unitSystem);
         }
     }
 
@@ -379,7 +389,7 @@ export function renderVDOTDetails() {
                 const p5k = document.getElementById('pred-5k');
                 if (p5k) { p5k.style.display = ''; p5k.style.verticalAlign = ''; p5k.textContent = formatTime(orig5k); }
                 const tEl = document.getElementById('vdot-threshold');
-                if (tEl) { tEl.style.display = ''; tEl.style.verticalAlign = ''; tEl.textContent = `${formatTime(origThreshold)}/km`; }
+                if (tEl) { tEl.style.display = ''; tEl.style.verticalAlign = ''; tEl.textContent = formatPace(origThreshold, formatTime, unitSystem); }
             }
             renderVDOTDetails();
         });
@@ -525,6 +535,9 @@ function getForecastViewDataMemoized(dayLimit, baseSec) {
 export function renderForecastTable(tableBodyId, dayLimit, isAppend = false) {
     const tbody = document.getElementById(tableBodyId || 'forecast-body');
     if (!tbody || !UIState.forecastData.length) return;
+    const system = getUnitSystem();
+    const windUnitLabel = windUnit(system);
+    const precipUnitLabel = precipitationUnit(system);
 
     // Reset limit if not appending (new filter/sort/initial load)
     if (!isAppend) {
@@ -629,21 +642,21 @@ export function renderForecastTable(tableBodyId, dayLimit, isAppend = false) {
                     ${timeStr}
                 </div>
             </td>
-            <td class="forecast-cell-center forecast-cell-color" style="--cell-fg:${tempColor};">${h.temp != null ? h.temp.toFixed(1) : '-'}\u00b0</td>
-            <td class="forecast-cell-center forecast-cell-color" style="--cell-fg:${dewColor};">${h.dew != null ? h.dew.toFixed(1) : '-'}\u00b0</td>
+            <td class="forecast-cell-center forecast-cell-color" style="--cell-fg:${tempColor};">${h.temp != null ? formatDisplayTemperature(h.temp, 1, system) : '-'}\u00b0</td>
+            <td class="forecast-cell-center forecast-cell-color" style="--cell-fg:${dewColor};">${h.dew != null ? formatDisplayTemperature(h.dew, 1, system) : '-'}\u00b0</td>
             <td class="forecast-cell-center forecast-cell-color" style="--cell-fg:${rainColor};">
-                <div class="forecast-rain-main">${rain > 0 ? rain.toFixed(1) + 'mm' : '-'}</div>
+                <div class="forecast-rain-main">${rain > 0 ? `${formatDisplayPrecip(rain, 1, 2, system)}${precipUnitLabel}` : '-'}</div>
                 <div class="forecast-rain-prob" style="--cell-prob-color:${probColor};">${prob}%</div>
             </td>
             <td class="forecast-cell-center forecast-cell-color" style="--cell-fg:${windColor};">
-                <div>${wind.toFixed(1)} <span class="forecast-wind-unit">km/h</span></div>
+                <div>${formatDisplayWind(wind, 1, system)} <span class="forecast-wind-unit">${windUnitLabel}</span></div>
                 <div class="forecast-wind-dir-wrap">
                    <span class="forecast-wind-arrow" style="--wind-dir-deg:${dir}deg;">\u2193</span>
                 </div>
             </td>
             <td class="forecast-cell-center">
                 <div class="forecast-pace-line">
-                    ${formatTime(adjPace)}
+                    ${formatPace(adjPace, formatTime, system)}
                 </div>
                 <span class="impact-badge impact-badge--compact ${impactCategoryClass}" style="--impact-bg:${impactColor};">
                     ${pct.toFixed(2)}%
@@ -666,6 +679,9 @@ export function renderForecastTable(tableBodyId, dayLimit, isAppend = false) {
 export function renderClimateTable(isAppend = false) {
     const tb = document.getElementById('climateTableBody');
     if (!tb) return;
+    const system = getUnitSystem();
+    const windUnitLabel = windUnit(system);
+    const precipUnitLabel = precipitationUnit(system);
 
     // Reset pagination limit if not appending
     if (!isAppend) {
@@ -767,10 +783,10 @@ export function renderClimateTable(isAppend = false) {
                     <div class="climate-date-line">${dateStr}</div>
                     <div class="climate-time-line">${timeStr}</div>
                 </td>
-                <td class="forecast-cell-center forecast-cell-color" style="--cell-fg:${tempColor}">${(d.mean_temp != null ? d.mean_temp : 0).toFixed(1)}\u00b0</td>
-                <td class="forecast-cell-center forecast-cell-color" style="--cell-fg:${dewColor}">${(d.mean_dew != null ? d.mean_dew : 0).toFixed(1)}\u00b0</td>
-                <td class="forecast-cell-center forecast-cell-color" style="--cell-fg:${rainColor}">${d.mean_precip > 0 ? (d.mean_precip || 0).toFixed(2) + 'mm' : '-'}</td>
-                <td class="forecast-cell-center forecast-cell-color" style="--cell-fg:${windColor}">${(d.mean_wind || 0).toFixed(1)} <span class="climate-wind-unit">km/h</span></td>
+                <td class="forecast-cell-center forecast-cell-color" style="--cell-fg:${tempColor}">${formatDisplayTemperature((d.mean_temp != null ? d.mean_temp : 0), 1, system)}\u00b0</td>
+                <td class="forecast-cell-center forecast-cell-color" style="--cell-fg:${dewColor}">${formatDisplayTemperature((d.mean_dew != null ? d.mean_dew : 0), 1, system)}\u00b0</td>
+                <td class="forecast-cell-center forecast-cell-color" style="--cell-fg:${rainColor}">${d.mean_precip > 0 ? `${formatDisplayPrecip((d.mean_precip || 0), 2, 2, system)}${precipUnitLabel}` : '-'}</td>
+                <td class="forecast-cell-center forecast-cell-color" style="--cell-fg:${windColor}">${formatDisplayWind((d.mean_wind || 0), 1, system)} <span class="climate-wind-unit">${windUnitLabel}</span></td>
                 <td class="forecast-cell-center">
                     <span class="impact-badge impact-badge--compact ${impactCategoryClass}" style="--impact-bg:${impactColor};">
                         ${(d.mean_impact || 0).toFixed(2)}%

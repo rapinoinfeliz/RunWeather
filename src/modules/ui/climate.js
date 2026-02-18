@@ -2,6 +2,7 @@ import { UIState } from './state.js';
 import { getImpactColor, getActiveWeatherTimeZone } from './utils.js';
 import { loadFromStorage, saveToStorage } from '../storage.js';
 import { AppState } from '../appState.js';
+import { formatDisplayPrecip, formatDisplayTemperature, getUnitSystem, precipitationUnit, temperatureUnit } from '../units.js';
 import {
     addDaysToIsoMinute,
     getDateForISOWeek,
@@ -110,6 +111,9 @@ export function calculateBestRunTime(data) {
 export function renderMonthlyAverages(data) {
     const container = document.getElementById('monthly-averages-content');
     if (!container) return;
+    const system = getUnitSystem();
+    const tempUnitLabel = temperatureUnit(system);
+    const precipUnitLabel = precipitationUnit(system);
 
     // Use passed data or global
     const rawData = data || UIState.climateData;
@@ -209,8 +213,8 @@ export function renderMonthlyAverages(data) {
         if (m.weeks.length > 0) {
             tempLeft = ((m.stats.min - tempGlobalMin) / tempRange) * 100;
             tempWidth = ((m.stats.max - m.stats.min) / tempRange) * 100;
-            tempLabelL = Math.round(m.stats.min) + '°';
-            tempLabelR = Math.round(m.stats.max) + '°';
+            tempLabelL = `${formatDisplayTemperature(m.stats.min, 0, system)}${tempUnitLabel}`;
+            tempLabelR = `${formatDisplayTemperature(m.stats.max, 0, system)}${tempUnitLabel}`;
 
             // More granular scale for better visual representation
             const getTempColor = (temp) => {
@@ -234,7 +238,7 @@ export function renderMonthlyAverages(data) {
         let rainWidth = 0, rainLabel = '';
         if (m.weeks.length > 0) {
             rainWidth = (m.stats.rain / rainGlobalMax) * 100;
-            rainLabel = (m.stats.rain / 10).toFixed(1) + 'cm';
+            rainLabel = `${formatDisplayPrecip(m.stats.rain, 0, 1, system)}${precipUnitLabel}`;
         }
 
         html += `

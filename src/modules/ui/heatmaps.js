@@ -429,6 +429,29 @@ export function renderClimateLegend() {
     const container = document.getElementById('climate-legend-container');
     if (!container) return;
 
+    const counts = {
+        Ideal: 0,
+        Good: 0,
+        Fair: 0,
+        Warning: 0,
+        Severe: 0
+    };
+    let total = 0;
+    (UIState.climateData || []).forEach((row) => {
+        if (!row || row.mean_impact == null || Number.isNaN(row.mean_impact)) return;
+        const category = getImpactCategory(row.mean_impact);
+        if (!Object.prototype.hasOwnProperty.call(counts, category)) return;
+        counts[category] += 1;
+        total += 1;
+    });
+
+    const formatShare = (category) => {
+        if (total <= 0) return '0%';
+        const pct = (counts[category] / total) * 100;
+        if (pct > 0 && pct < 1) return '<1%';
+        return `${Math.round(pct)}%`;
+    };
+
     const levels = [
         { label: 'Ideal', sub: '<0.5%', color: '#4ade80' },
         { label: 'Good', sub: '<2.0%', color: '#facc15' },
@@ -449,11 +472,16 @@ export function renderClimateLegend() {
         let isActive = (UIState.climateImpactFilter === l.label);
         if (isActive) border = '2px solid #fff';
         const stateClass = `legend-state-${l.label.toLowerCase()}`;
+        const share = formatShare(l.label);
+        const shareOpacity = isActive ? '0.85' : '0.55';
 
         html += `
-                        <div class="legend-item legend-item--interactive ${stateClass}" data-action="filter-climate-impact" data-label="${l.label}" style="--legend-opacity:${opacity};">
+                        <div class="legend-item legend-item--interactive legend-item--climate ${stateClass}" data-action="filter-climate-impact" data-label="${l.label}" style="--legend-opacity:${opacity};">
                             <div class="legend-color legend-color--dynamic" style="--legend-color:${l.color}; --legend-border:${border}; --legend-shadow:${isActive ? '0 0 8px ' + l.color : 'none'};"></div>
-                            <span>${l.label} <span class="legend-sub">(${l.sub})</span></span>
+                            <span class="legend-climate-text">
+                                <span>${l.label} <span class="legend-sub">(${l.sub})</span></span>
+                                <span class="legend-share" style="--legend-share-opacity:${shareOpacity};">${share}</span>
+                            </span>
                         </div>
                     `;
     });

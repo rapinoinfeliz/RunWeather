@@ -1,4 +1,4 @@
-const CACHE_NAME = 'runweather-v58-mobile-tooltips';
+const CACHE_NAME = 'runweather-v59-cache-sync-fix';
 const ASSETS = [
     './',
     './index.html',
@@ -14,6 +14,9 @@ const ASSETS = [
     './src/modules/api.js',
     './src/modules/storage.js',
     './src/modules/engine.js',
+    './src/modules/settings.js',
+    './src/modules/units.js',
+    './src/modules/time.js',
     './src/modules/climate_manager.js',
     './src/modules/ui/effects.js',
     './data/hap_grid.js'

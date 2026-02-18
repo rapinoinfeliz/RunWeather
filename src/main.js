@@ -11,8 +11,9 @@ import * as UI from './modules/ui.js';
 import { loadFromStorage, saveToStorage } from './modules/storage.js';
 import { formatTimeInput, handleTimeInput, setupFineTuning, saveCalcState } from './modules/inputs.js';
 import { initSettings, loadSavedSettings } from './modules/settings.js';
+import { formatEditableValue, toDisplayTemperature, toDisplayWind, updateUnitLabels } from './modules/units.js';
 
-const APP_VERSION = '1.0.18';
+const APP_VERSION = '1.0.19';
 console.log(`Main JS Starting... v${APP_VERSION}`);
 
 function isNativeInteractiveElement(el) {
@@ -261,6 +262,33 @@ async function init() {
 
     // Load saved settings (weight, age, gender, altitude, units)
     loadSavedSettings();
+    updateUnitLabels(AppState.unitSystem);
+
+    document.addEventListener('runweather:unit-system-changed', () => {
+        updateUnitLabels(AppState.unitSystem);
+        UI.update(els, AppState.hapCalc);
+
+        const weather = AppState.weatherData || {};
+        const hourly = weather.hourly || {};
+        const current = weather.current || null;
+        const daily = weather.daily || null;
+        const airCurrent = (AppState.airData && AppState.airData.current) ? AppState.airData.current : {};
+        const firstProb = Array.isArray(hourly.precipitation_probability) ? (hourly.precipitation_probability[0] ?? 0) : 0;
+        const firstPrecip = Array.isArray(hourly.precipitation) ? (hourly.precipitation[0] ?? 0) : 0;
+
+        if (current) {
+            UI.renderCurrentTab(current, airCurrent, firstProb, firstPrecip, daily, weather.elevation);
+        }
+
+        UI.renderAllForecasts({ force: true, layout: true, data: true });
+
+        if ((AppStore.getState().ui.climateData || []).length > 0) {
+            UI.renderClimateHeatmap();
+            UI.renderClimateTable();
+            UI.renderClimateLegend();
+            UI.renderMonthlyAverages();
+        }
+    });
 
     // Time & Pace Inputs (single handlers to avoid duplicate work)
     if (els.time) {
@@ -414,9 +442,9 @@ async function refreshWeather(force = false) {
 
         const els = AppState.els;
         if ((!els.temp.value && !els.dew.value) || force) {
-            els.temp.value = (current.temperature_2m ?? 0);
-            els.dew.value = (current.dew_point_2m ?? 0);
-            if (els.wind) els.wind.value = (current.wind_speed_10m ?? 0);
+            els.temp.value = formatEditableValue(toDisplayTemperature(current.temperature_2m ?? 0), 1);
+            els.dew.value = formatEditableValue(toDisplayTemperature(current.dew_point_2m ?? 0), 1);
+            if (els.wind) els.wind.value = formatEditableValue(toDisplayWind(current.wind_speed_10m ?? 0), 1);
             UI.update(els, AppState.hapCalc);
         }
 

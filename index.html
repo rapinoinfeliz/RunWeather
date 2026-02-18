@@ -20,7 +20,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <!-- Cache Busting: increment v=ID on deploy -->
-    <script type="module" src="src/main.js?v=1.0.15"></script>
+    <script type="module" src="src/main.js?v=1.0.19"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
@@ -157,7 +157,7 @@
                                 inputmode="numeric">
                         </div>
                         <div class="floating-input-group">
-                            <label for="input-pace">Pace (/km)</label>
+                            <label for="input-pace" id="label-input-pace">Pace (/km)</label>
                             <input type="text" id="input-pace" placeholder="MM:SS" class="modern-input"
                                 inputmode="numeric">
                         </div>
@@ -208,17 +208,17 @@
                     </div>
                     <div class="input-row-grid cols-3">
                         <div class="floating-input-group">
-                            <label for="temp">Temperature (°C)</label>
+                            <label for="temp" id="label-temp">Temperature (°C)</label>
                             <input type="number" id="temp" placeholder="Temp" title="Temperature in Celsius"
                                 inputmode="decimal" class="modern-input">
                         </div>
                         <div class="floating-input-group">
-                            <label for="dew">Dew Point (°C)</label>
+                            <label for="dew" id="label-dew">Dew Point (°C)</label>
                             <input type="number" id="dew" placeholder="Dew" title="Dew Point in Celsius"
                                 inputmode="decimal" class="modern-input">
                         </div>
                         <div class="floating-input-group">
-                            <label for="wind">Wind Speed (km/h)</label>
+                            <label for="wind" id="label-wind">Wind Speed (km/h)</label>
                             <input type="number" id="wind" placeholder="Wind" title="Wind Speed in km/h"
                                 inputmode="decimal" class="modern-input">
                         </div>
@@ -516,7 +516,7 @@
                     </div>
                     <div class="chart-legend">
                         <div class="chart-legend-item chart-legend-item--rain"><span
-                                class="chart-legend-dot chart-legend-dot--rain"></span> Rain (mm)</div>
+                                class="chart-legend-dot chart-legend-dot--rain"></span> <span id="legend-rain-label">Rain (mm)</span></div>
                         <div class="chart-legend-item chart-legend-item--prob"><span
                                 class="chart-legend-line chart-legend-line--prob"></span> Probability (%)</div>
                     </div>
@@ -540,7 +540,7 @@
                     </div>
                     <div class="chart-legend">
                         <div class="chart-legend-item chart-legend-item--wind"><span
-                                class="chart-legend-line chart-legend-line--wind"></span> Wind (km/h)</div>
+                                class="chart-legend-line chart-legend-line--wind"></span> <span id="legend-wind-label">Wind (km/h)</span></div>
                     </div>
                 </div>
             </div>
@@ -783,6 +783,18 @@
                 </span>
             </div>
 
+            <div class="settings-section-label">Units</div>
+            <div class="settings-unit-group" role="radiogroup" aria-label="Unit system">
+                <label class="radio-label settings-radio-pill">
+                    <input type="radio" name="unit-system" value="metric" checked>
+                    <span>Metric</span>
+                </label>
+                <label class="radio-label settings-radio-pill">
+                    <input type="radio" name="unit-system" value="imperial">
+                    <span>Imperial</span>
+                </label>
+            </div>
+
             <!-- Body Section: Weight & Height side by side -->
             <div class="settings-section-label">Body</div>
             <div class="settings-grid-two">
@@ -808,7 +820,7 @@
                     <div class="settings-input-wrapper">
                         <input type="number" id="runner-weight" class="settings-input" placeholder="65" step="0.5"
                             inputmode="decimal">
-                        <span class="unit-suffix">kg</span>
+                        <span id="settings-weight-unit" class="unit-suffix">kg</span>
                     </div>
                 </div>
 
@@ -834,7 +846,7 @@
                     <div class="settings-input-wrapper">
                         <input type="number" id="runner-height" class="settings-input" placeholder="175" step="1"
                             min="100" max="230" inputmode="numeric">
-                        <span class="unit-suffix">cm</span>
+                        <span id="settings-height-unit" class="unit-suffix">cm</span>
                     </div>
                 </div>
             </div>
@@ -865,7 +877,7 @@
                 <div class="settings-input-wrapper">
                     <input type="number" id="base-altitude" class="settings-input" placeholder="0" step="100"
                         inputmode="numeric" value="0">
-                    <span class="unit-suffix">m</span>
+                    <span id="settings-altitude-unit" class="unit-suffix">m</span>
                 </div>
             </div>
 

@@ -15,6 +15,19 @@ export { infoIcon, getImpactColor, getDewColor, getCondColor, getImpactCategory,
 import { openTab, setPaceMode, toggleForeSort, setBestRunRange, toggleImpactFilter, copyConditions, sortForecastTable, handleCellHover, showForeTooltip, moveForeTooltip, hideForeTooltip } from './ui/events.js';
 export { openTab, setPaceMode, toggleForeSort, setBestRunRange, toggleImpactFilter, copyConditions, sortForecastTable, handleCellHover, showForeTooltip, moveForeTooltip, hideForeTooltip };
 import { initRipple } from './ui/effects.js';
+import {
+    formatDisplayPrecip,
+    formatDisplayTemperature,
+    formatDisplayWind,
+    formatPace,
+    getUnitSystem,
+    paceUnit,
+    precipitationUnit,
+    temperatureUnit,
+    toMetricTemperature,
+    toMetricWind,
+    windUnit
+} from './units.js';
 
 function appendLocationLabel(container, name, subText, subClass) {
     const label = document.createElement('div');
@@ -34,6 +47,11 @@ function appendLocationLabel(container, name, subText, subClass) {
 let locationSearchDebounceTimer = null;
 let locationSearchSeq = 0;
 let lastLocationFocus = null;
+
+// Backward compatibility: older cached main bundles may still call this.
+export function initBottomNav() {
+    // Bottom nav was removed. Keep no-op to avoid runtime crashes on stale caches.
+}
 
 function setChartCardCollapsedState(wrapper, collapsed) {
     const card = wrapper?.closest('.forecast-card');
@@ -533,12 +551,16 @@ export function handleChartHover(e, totalW, chartW, padLeft, dataLen) {
         const type = e.target.getAttribute('data-type'); // Check chart type
 
         let html = '';
+        const system = getUnitSystem();
+        const tempUnitLabel = temperatureUnit(system);
+        const windUnitLabel = windUnit(system);
+        const precipUnitLabel = precipitationUnit(system);
 
         if (type === 'rain') {
             // Rain Tooltip
             html = `
                 <div class="tooltip-header">${dayName} ${dateStr} ${hourStr}:00</div>
-                <div class="tooltip-row"><span class="tooltip-label">Rain:</span> <span class="tooltip-val tooltip-val--rain">${d.rain != null ? d.rain.toFixed(1) : '0.0'} mm</span></div>
+                <div class="tooltip-row"><span class="tooltip-label">Rain:</span> <span class="tooltip-val tooltip-val--rain">${d.rain != null ? formatDisplayPrecip(d.rain, 1, 2, system) : '0.0'} ${precipUnitLabel}</span></div>
                 <div class="tooltip-row"><span class="tooltip-label">Prob:</span> <span class="tooltip-val tooltip-val--prob">${d.prob != null ? d.prob : '0'}%</span></div>
             `;
         } else if (type === 'wind') {
@@ -547,7 +569,7 @@ export function handleChartHover(e, totalW, chartW, padLeft, dataLen) {
             const dirStr = getCardinal(d.dir || 0);
             html = `
                 <div class="tooltip-header">${dayName} ${dateStr} ${hourStr}:00</div>
-                <div class="tooltip-row"><span class="tooltip-label">Wind:</span> <span class="tooltip-val tooltip-val--wind">${d.wind != null ? d.wind.toFixed(1) : '0'} km/h</span></div>
+                <div class="tooltip-row"><span class="tooltip-label">Wind:</span> <span class="tooltip-val tooltip-val--wind">${d.wind != null ? formatDisplayWind(d.wind, 1, system) : '0'} ${windUnitLabel}</span></div>
                 <div class="tooltip-row"><span class="tooltip-label">Dir:</span> <span class="tooltip-val tooltip-val--dir">${dirStr}</span></div>
             `;
         } else {
@@ -559,8 +581,8 @@ export function handleChartHover(e, totalW, chartW, padLeft, dataLen) {
 
             html = `
                 <div class="tooltip-header">${dayName} ${dateStr} ${hourStr}:00</div>
-                <div class="tooltip-row"><span class="tooltip-label">Temp:</span> <span class="tooltip-val tooltip-val--temp">${d.temp != null ? d.temp.toFixed(1) : '--'}°</span></div>
-                <div class="tooltip-row"><span class="tooltip-label">Dew:</span> <span class="tooltip-val tooltip-val--dew">${d.dew != null ? d.dew.toFixed(1) : '--'}°</span></div>
+                <div class="tooltip-row"><span class="tooltip-label">Temp:</span> <span class="tooltip-val tooltip-val--temp">${d.temp != null ? formatDisplayTemperature(d.temp, 1, system) : '--'} ${tempUnitLabel}</span></div>
+                <div class="tooltip-row"><span class="tooltip-label">Dew:</span> <span class="tooltip-val tooltip-val--dew">${d.dew != null ? formatDisplayTemperature(d.dew, 1, system) : '--'} ${tempUnitLabel}</span></div>
                 <div class="tooltip-row tooltip-row--divider">
                     <span class="tooltip-label">Impact:</span> <span class="tooltip-val tooltip-val--impact" style="--tooltip-impact-color:${color}">${pct.toFixed(2)}%</span>
                 </div>
@@ -592,13 +614,15 @@ export function showClimateTooltip(e, w, h, impact, temp, dew, count) {
 
     const dateStr = `${getDateFromWeek(w)}`;
     const timeStr = `${String(h).padStart(2, '0')}:00`;
+    const system = getUnitSystem();
+    const tempUnitLabel = temperatureUnit(system);
 
     // Exact HTML template as handleCellHover
     // Exact HTML template as handleCellHover
     const html = `
                     <div class="tooltip-header">Week ${w} (${dateStr}) ${timeStr}</div>
-                    <div class="tooltip-row"><span class="tooltip-label">Temp:</span> <span class="tooltip-val tooltip-val--temp">${(temp || 0).toFixed(1)}°</span></div>
-                    <div class="tooltip-row"><span class="tooltip-label">Dew:</span> <span class="tooltip-val tooltip-val--dew">${(dew || 0).toFixed(1)}°</span></div>
+                    <div class="tooltip-row"><span class="tooltip-label">Temp:</span> <span class="tooltip-val tooltip-val--temp">${formatDisplayTemperature(temp, 1, system)} ${tempUnitLabel}</span></div>
+                    <div class="tooltip-row"><span class="tooltip-label">Dew:</span> <span class="tooltip-val tooltip-val--dew">${formatDisplayTemperature(dew, 1, system)} ${tempUnitLabel}</span></div>
                     <div class="tooltip-row tooltip-row--divider">
                         <span class="tooltip-label">Impact:</span> <span class="tooltip-val tooltip-val--impact" style="--tooltip-impact-color:${impactColor}">${(impact || 0).toFixed(2)}%</span>
                     </div>
@@ -912,13 +936,18 @@ export function setupWindowHelpers() {
 }
 
 export function update(els, hapCalc) {
+    const system = getUnitSystem();
+    const tempMetric = toMetricTemperature(parseFloat(els.temp.value), system);
+    const dewMetric = toMetricTemperature(parseFloat(els.dew.value), system);
+    const windMetric = toMetricWind(parseFloat(els.wind ? els.wind.value : 0), system);
+
     // 1. Read Inputs
     const state = {
         distance: parseFloat(els.distance.value) || 0,
         timeSec: parseTime(els.time.value),
-        temp: parseFloat(els.temp.value),
-        dew: parseFloat(els.dew.value),
-        wind: parseFloat(els.wind ? els.wind.value : 0),
+        temp: Number.isFinite(tempMetric) ? tempMetric : NaN,
+        dew: Number.isFinite(dewMetric) ? dewMetric : NaN,
+        wind: Number.isFinite(windMetric) ? windMetric : 0,
         runnerWeight: AppState.runner.weight || 65,
         age: parseInt(els.age ? els.age.value : 0),
         gender: els.gender ? els.gender.value : '',
@@ -929,7 +958,7 @@ export function update(els, hapCalc) {
     // Logic Rule: Dew Point cannot be > Temp
     if (!isNaN(state.temp) && !isNaN(state.dew) && state.dew > state.temp) {
         state.dew = state.temp;
-        els.dew.value = state.temp; // Update UI immediately
+        els.dew.value = formatDisplayTemperature(state.temp, 1, system); // Update UI immediately
     }
 
     // 2. Pure Calculation (Engine)
@@ -940,7 +969,7 @@ export function update(els, hapCalc) {
         if (els.pred5k) els.pred5k.textContent = "--:--";
         if (els.vdot) els.vdot.textContent = "--";
         const elThreshold = document.getElementById('vdot-threshold');
-        if (elThreshold) elThreshold.textContent = "--/km";
+        if (elThreshold) elThreshold.textContent = `--/${paceUnit(system)}`;
         return;
     }
     // b) Valid Output Rendering
@@ -955,7 +984,7 @@ export function update(els, hapCalc) {
     }
     const elThreshold = document.getElementById('vdot-threshold');
     if (elThreshold) {
-        elThreshold.textContent = `${formatTime(res.paces.threshold)}/km`;
+        elThreshold.textContent = formatPace(res.paces.threshold, formatTime, system);
     }
 
     // Update VDOT Gauge with Age Grade
@@ -1055,7 +1084,7 @@ export function update(els, hapCalc) {
             let innerHtml = "";
             // Pace
             innerHtml += `<div style="font-weight:${col.isBase ? '600' : '500'}; color:${col.color}; white-space:nowrap; font-size:1em;">
-                            ${formatTime(col.paceSec)}/km
+                            ${formatPace(col.paceSec, formatTime, system)}
                           </div>`;
 
             // Distance (if applicable)
@@ -1156,6 +1185,7 @@ export function update(els, hapCalc) {
 
 export function copyResults(els) {
     if (!els || !els.time) return; // safety
+    const system = getUnitSystem();
     const inputTime = els.time.value;
     const inputDist = els.distance.value;
     const currentVDOT = els.vdot.textContent;
@@ -1174,7 +1204,7 @@ export function copyResults(els) {
     ];
 
     if (els.temp.value) {
-        results.splice(2, 0, `Weather: ${els.temp.value}°C (Dew: ${els.dew.value || '-'}°C)`);
+        results.splice(2, 0, `Weather: ${els.temp.value}${temperatureUnit(system)} (Dew: ${els.dew.value || '-'}${temperatureUnit(system)})`);
     }
     navigator.clipboard.writeText(results.join('\n')).then(() => {
         showToast("Results copied!");
@@ -1360,4 +1390,3 @@ export function setupTableScrollListeners() {
     // Init Effects
     initRipple();
 }
-

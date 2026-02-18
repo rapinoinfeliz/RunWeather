@@ -2,8 +2,81 @@
 import { loadFromStorage, saveToStorage } from './storage.js';
 import { AppState } from './appState.js';
 import { AppStore, StoreActions } from './store.js';
+import {
+    formatEditableValue,
+    heightUnit,
+    toDisplayElevation,
+    toDisplayHeight,
+    toDisplayTemperature,
+    toDisplayWeight,
+    toDisplayWind,
+    toMetricElevation,
+    toMetricHeight,
+    toMetricTemperature,
+    toMetricWeight,
+    toMetricWind,
+    updateUnitLabels,
+    weightUnit,
+    elevationUnit
+} from './units.js';
 
 let lastSettingsFocus = null;
+
+function getSelectedSystem(radios, fallback = 'metric') {
+    for (const radio of radios) {
+        if (radio.checked) return radio.value;
+    }
+    return fallback;
+}
+
+function setSelectedSystem(radios, system) {
+    for (const radio of radios) {
+        radio.checked = radio.value === system;
+    }
+}
+
+function convertInputBetweenSystems(input, toMetricFn, toDisplayFn, fromSystem, toSystem, decimals = 1) {
+    if (!input || fromSystem === toSystem) return;
+    const raw = parseFloat(input.value);
+    if (Number.isNaN(raw)) return;
+    const metricVal = toMetricFn(raw, fromSystem);
+    const converted = toDisplayFn(metricVal, toSystem);
+    input.value = formatEditableValue(converted, decimals);
+}
+
+function syncSettingsUnitFields(system, refs) {
+    const {
+        weightInput,
+        heightInput,
+        altitudeInput,
+        weightUnitEl,
+        heightUnitEl,
+        altitudeUnitEl
+    } = refs;
+
+    if (weightUnitEl) weightUnitEl.textContent = weightUnit(system);
+    if (heightUnitEl) heightUnitEl.textContent = heightUnit(system);
+    if (altitudeUnitEl) altitudeUnitEl.textContent = elevationUnit(system);
+
+    if (weightInput) {
+        weightInput.step = '0.5';
+        weightInput.placeholder = system === 'imperial' ? '143' : '65';
+        weightInput.min = system === 'imperial' ? '66' : '30';
+        weightInput.max = system === 'imperial' ? '551' : '250';
+    }
+
+    if (heightInput) {
+        heightInput.step = system === 'imperial' ? '0.5' : '1';
+        heightInput.placeholder = system === 'imperial' ? '69' : '175';
+        heightInput.min = system === 'imperial' ? '39' : '100';
+        heightInput.max = system === 'imperial' ? '91' : '230';
+    }
+
+    if (altitudeInput) {
+        altitudeInput.step = system === 'imperial' ? '300' : '100';
+        altitudeInput.placeholder = system === 'imperial' ? '0' : '0';
+    }
+}
 
 /**
  * Initialize the settings modal: open, close, save, and unit radio change handlers.
@@ -21,7 +94,21 @@ export function initSettings(els, updateFn) {
     const ageInput = document.getElementById('runner-age');
     const genderInput = document.getElementById('runner-gender');
     const altitudeInput = document.getElementById('base-altitude');
+    const weightUnitEl = document.getElementById('settings-weight-unit');
+    const heightUnitEl = document.getElementById('settings-height-unit');
+    const altitudeUnitEl = document.getElementById('settings-altitude-unit');
     const radios = document.getElementsByName('unit-system');
+
+    const unitFieldRefs = {
+        weightInput,
+        heightInput,
+        altitudeInput,
+        weightUnitEl,
+        heightUnitEl,
+        altitudeUnitEl
+    };
+
+    let modalUnitSystem = AppState.unitSystem || 'metric';
 
     function closeSettings() {
         settingsModal.classList.remove('open');
@@ -40,32 +127,32 @@ export function initSettings(els, updateFn) {
         settingsModal.setAttribute('aria-modal', 'true');
         settingsModal.setAttribute('aria-hidden', 'false');
         if (titleEl) settingsModal.setAttribute('aria-labelledby', titleEl.id);
-        // 1. Set Weight
+
+        modalUnitSystem = AppState.unitSystem || 'metric';
+        setSelectedSystem(radios, modalUnitSystem);
+        syncSettingsUnitFields(modalUnitSystem, unitFieldRefs);
+
         if (weightInput) {
-            let val = AppState.runner.weight || 65;
-            if (AppState.unitSystem === 'imperial') {
-                val = val * 2.20462;
-                val = Math.round(val * 10) / 10;
-            }
-            weightInput.value = val;
+            const val = toDisplayWeight(AppState.runner.weight || 65, modalUnitSystem);
+            weightInput.value = formatEditableValue(val, 1);
         }
 
-        // 1b. Set Height
         if (heightInput) {
-            heightInput.value = AppState.runner.height || '';
+            if (AppState.runner.height != null) {
+                const val = toDisplayHeight(AppState.runner.height, modalUnitSystem);
+                const decimals = modalUnitSystem === 'imperial' ? 1 : 0;
+                heightInput.value = formatEditableValue(val, decimals);
+            } else {
+                heightInput.value = '';
+            }
         }
 
-        // 2. Set Age/Gender
         if (ageInput) ageInput.value = AppState.runner.age || '';
         if (genderInput) genderInput.value = AppState.runner.gender || '';
 
-        // 3. Set Base Altitude
-        if (altitudeInput) altitudeInput.value = AppState.altitude.base || 0;
-
-        // 4. Set Radio
-        const currentSystem = AppState.unitSystem || 'metric';
-        for (const radio of radios) {
-            if (radio.value === currentSystem) radio.checked = true;
+        if (altitudeInput) {
+            const val = toDisplayElevation(AppState.altitude.base || 0, modalUnitSystem);
+            altitudeInput.value = formatEditableValue(val, 0);
         }
 
         settingsModal.classList.add('open');
@@ -73,74 +160,85 @@ export function initSettings(els, updateFn) {
     }
 
     function saveSettings() {
-        // 1. Unit System
-        let newSystem = 'metric';
-        for (const radio of radios) {
-            if (radio.checked) newSystem = radio.value;
+        const previousSystem = AppState.unitSystem || 'metric';
+        const newSystem = getSelectedSystem(radios, previousSystem);
+
+        const enteredWeight = weightInput ? parseFloat(weightInput.value) : NaN;
+        const weightKg = toMetricWeight(enteredWeight, newSystem);
+
+        if (!Number.isFinite(weightKg) || weightKg <= 0) {
+            alert('Please enter a valid weight.');
+            return;
         }
 
         AppStore.dispatch(StoreActions.patchApp({ unitSystem: newSystem }));
         saveToStorage('unit_system', newSystem);
 
-        // 2. Weight
-        const val = parseFloat(weightInput.value);
-        if (!isNaN(val) && val > 0) {
-            let weightKg = val;
-            if (newSystem === 'imperial') {
-                weightKg = val / 2.20462;
+        const runnerPatch = { weight: weightKg };
+        saveToStorage('runner_weight', weightKg);
+
+        if (heightInput) {
+            const enteredHeight = parseFloat(heightInput.value);
+            if (Number.isFinite(enteredHeight) && enteredHeight > 0) {
+                const heightCm = Math.round(toMetricHeight(enteredHeight, newSystem));
+                runnerPatch.height = heightCm;
+                saveToStorage('runner_height', heightCm);
+            } else {
+                runnerPatch.height = null;
+                saveToStorage('runner_height', null);
             }
-
-            const runnerPatch = { weight: weightKg };
-            saveToStorage('runner_weight', weightKg);
-
-            // 2b. Height
-            if (heightInput) {
-                const h = parseInt(heightInput.value);
-                if (!isNaN(h) && h > 0) {
-                    runnerPatch.height = h;
-                    saveToStorage('runner_height', h);
-                } else {
-                    runnerPatch.height = null;
-                    saveToStorage('runner_height', null);
-                }
-            }
-
-            // 3. Age & Gender
-            if (ageInput) {
-                const age = parseInt(ageInput.value);
-                if (!isNaN(age) && age > 0) {
-                    runnerPatch.age = age;
-                    saveToStorage('runner_age', age);
-                } else {
-                    runnerPatch.age = null;
-                    saveToStorage('runner_age', null);
-                }
-            }
-
-            if (genderInput) {
-                const gender = genderInput.value;
-                if (gender) {
-                    runnerPatch.gender = gender;
-                    saveToStorage('runner_gender', gender);
-                } else {
-                    runnerPatch.gender = null;
-                    saveToStorage('runner_gender', null);
-                }
-            }
-            AppStore.dispatch(StoreActions.patchRunner(runnerPatch));
-
-            // 4. Base Altitude
-            if (altitudeInput) {
-                const alt = parseInt(altitudeInput.value) || 0;
-                AppStore.dispatch(StoreActions.patchAltitude({ base: alt }));
-                saveToStorage('base_altitude', alt);
-            }
-
-            updateFn(els, AppState.hapCalc);
-            closeSettings();
-        } else {
-            alert("Please enter a valid weight.");
         }
+
+        if (ageInput) {
+            const age = parseInt(ageInput.value);
+            if (Number.isFinite(age) && age > 0) {
+                runnerPatch.age = age;
+                saveToStorage('runner_age', age);
+            } else {
+                runnerPatch.age = null;
+                saveToStorage('runner_age', null);
+            }
+        }
+
+        if (genderInput) {
+            const gender = genderInput.value;
+            if (gender) {
+                runnerPatch.gender = gender;
+                saveToStorage('runner_gender', gender);
+            } else {
+                runnerPatch.gender = null;
+                saveToStorage('runner_gender', null);
+            }
+        }
+
+        AppStore.dispatch(StoreActions.patchRunner(runnerPatch));
+
+        if (altitudeInput) {
+            const enteredAltitude = parseFloat(altitudeInput.value);
+            const altMeters = Number.isFinite(enteredAltitude)
+                ? Math.round(toMetricElevation(enteredAltitude, newSystem))
+                : 0;
+            AppStore.dispatch(StoreActions.patchAltitude({ base: altMeters }));
+            saveToStorage('base_altitude', altMeters);
+        }
+
+        if (previousSystem !== newSystem) {
+            convertInputBetweenSystems(els.temp, toMetricTemperature, toDisplayTemperature, previousSystem, newSystem, 1);
+            convertInputBetweenSystems(els.dew, toMetricTemperature, toDisplayTemperature, previousSystem, newSystem, 1);
+            convertInputBetweenSystems(els.wind, toMetricWind, toDisplayWind, previousSystem, newSystem, 1);
+        }
+
+        updateUnitLabels(newSystem);
+        updateFn(els, AppState.hapCalc);
+
+        document.dispatchEvent(new CustomEvent('runweather:unit-system-changed', {
+            detail: {
+                previousSystem,
+                unitSystem: newSystem
+            }
+        }));
+
+        closeSettings();
     }
 
     // Wire up event listeners
@@ -160,24 +258,18 @@ export function initSettings(els, updateFn) {
         }
     });
 
-    // Dynamic Label Updates on Radio Change
-    radios.forEach(r => {
-        r.addEventListener('change', () => {
-            const lbl = document.querySelector('label[for="runner-weight"]');
-            if (lbl) {
-                lbl.textContent = `Runner Weight (${r.value === 'imperial' ? 'lbs' : 'kg'})`;
-            }
-            if (weightInput.value) {
-                let v = parseFloat(weightInput.value);
-                if (!isNaN(v)) {
-                    if (r.value === 'imperial') {
-                        v = v * 2.20462;
-                    } else {
-                        v = v / 2.20462;
-                    }
-                    weightInput.value = Math.round(v * 10) / 10;
-                }
-            }
+    // Dynamic input conversion while selecting units in modal.
+    radios.forEach((radio) => {
+        radio.addEventListener('change', () => {
+            const nextSystem = getSelectedSystem(radios, modalUnitSystem);
+            if (nextSystem === modalUnitSystem) return;
+
+            convertInputBetweenSystems(weightInput, toMetricWeight, toDisplayWeight, modalUnitSystem, nextSystem, 1);
+            convertInputBetweenSystems(heightInput, toMetricHeight, toDisplayHeight, modalUnitSystem, nextSystem, nextSystem === 'imperial' ? 1 : 0);
+            convertInputBetweenSystems(altitudeInput, toMetricElevation, toDisplayElevation, modalUnitSystem, nextSystem, 0);
+
+            modalUnitSystem = nextSystem;
+            syncSettingsUnitFields(modalUnitSystem, unitFieldRefs);
         });
     });
 }
@@ -187,17 +279,16 @@ export function initSettings(els, updateFn) {
  * and assign to AppState.
  */
 export function loadSavedSettings() {
-    // Unit System
     const savedUnitSystem = loadFromStorage('unit_system');
-    AppStore.dispatch(StoreActions.patchApp({
-        unitSystem: savedUnitSystem || 'metric'
-    }));
+    const unitSystem = savedUnitSystem || 'metric';
 
-    // Weight
+    AppStore.dispatch(StoreActions.patchApp({ unitSystem }));
+
     const savedWeight = loadFromStorage('runner_weight');
     const savedHeight = loadFromStorage('runner_height');
     const savedAge = loadFromStorage('runner_age');
     const savedGender = loadFromStorage('runner_gender');
+
     AppStore.dispatch(StoreActions.patchRunner({
         weight: savedWeight ? parseFloat(savedWeight) : 65,
         height: savedHeight ? parseInt(savedHeight) : null,
@@ -205,9 +296,10 @@ export function loadSavedSettings() {
         gender: savedGender || null
     }));
 
-    // Base Altitude
     const savedAltitude = loadFromStorage('base_altitude');
     AppStore.dispatch(StoreActions.patchAltitude({
         base: savedAltitude ? parseInt(savedAltitude) : 0
     }));
+
+    updateUnitLabels(unitSystem);
 }

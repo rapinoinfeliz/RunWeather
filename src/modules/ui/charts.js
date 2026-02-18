@@ -1,10 +1,19 @@
 import { UIState } from './state.js';
-import { getImpactColor, getBasePaceSec } from './utils.js';
-import { formatTime } from '../core.js';
+import {
+    formatDisplayPrecip,
+    formatDisplayTemperature,
+    formatDisplayWind,
+    getUnitSystem,
+    precipitationUnit,
+    temperatureUnit,
+    windUnit
+} from '../units.js';
 
 export function renderForecastChart(containerId, dayLimit) {
     const cont = document.getElementById(containerId || 'forecast-chart-container');
     if (!cont || !UIState.forecastData || UIState.forecastData.length === 0) return;
+    const system = getUnitSystem();
+    const tempUnitLabel = temperatureUnit(system);
 
     // Data Slicing
     let chartData = UIState.forecastData;
@@ -75,7 +84,7 @@ export function renderForecastChart(containerId, dayLimit) {
         const val = minVal + (valRange * (i / steps));
         const y = getY(val);
         svg += `<line x1="${pad.left}" y1="${y}" x2="${w - pad.right}" y2="${y}" stroke="var(--border-color)" stroke-width="1" stroke-dasharray="4 4" opacity="0.3" class="chart-grid-line" />`;
-        svg += `<text x="${pad.left - 5}" y="${y + 3}" fill="var(--text-secondary)" font-size="9" text-anchor="end" class="chart-axis-label">${Math.round(val)}<tspan font-size="7" dx="1">°C</tspan></text>`;
+        svg += `<text x="${pad.left - 5}" y="${y + 3}" fill="var(--text-secondary)" font-size="9" text-anchor="end" class="chart-axis-label">${formatDisplayTemperature(val, 0, system)}<tspan font-size="7" dx="1">${tempUnitLabel}</tspan></text>`;
     }
 
     // Days Delimiter (Midnight) & Labels (Noon)
@@ -152,6 +161,8 @@ export function renderForecastChart(containerId, dayLimit) {
 export function renderRainChart(containerId, dayLimit) {
     const cont = document.getElementById(containerId || 'forecast-rain-chart-container-16');
     if (!cont || !UIState.forecastData || UIState.forecastData.length === 0) return;
+    const system = getUnitSystem();
+    const precipUnitLabel = precipitationUnit(system);
 
     // Data Slicing
     let chartData = UIState.forecastData;
@@ -227,7 +238,7 @@ export function renderRainChart(containerId, dayLimit) {
         svg += `<line x1="${pad.left}" y1="${y}" x2="${w - pad.right}" y2="${y}" stroke="var(--border-color)" stroke-width="1" stroke-dasharray="4 4" opacity="0.3" class="chart-grid-line" />`;
 
         // Label Left (Rain)
-        svg += `<text x="${pad.left - 5}" y="${y + 3}" fill="#60a5fa" font-size="9" text-anchor="end" class="chart-axis-label">${Math.round(valRain)} <tspan font-size="7">mm</tspan></text>`;
+        svg += `<text x="${pad.left - 5}" y="${y + 3}" fill="#60a5fa" font-size="9" text-anchor="end" class="chart-axis-label">${formatDisplayPrecip(valRain, 0, 2, system)} <tspan font-size="7">${precipUnitLabel}</tspan></text>`;
 
         // Label Right (Prob)
         svg += `<text x="${w - pad.right + 5}" y="${y + 3}" fill="#93c5fd" font-size="9" text-anchor="start" class="chart-axis-label">${Math.round(valProb)}%</text>`;
@@ -292,6 +303,8 @@ export function renderRainChart(containerId, dayLimit) {
 export function renderWindChart(containerId, dayLimit) {
     const cont = document.getElementById(containerId || 'forecast-wind-chart-container-16');
     if (!cont || !UIState.forecastData || UIState.forecastData.length === 0) return;
+    const system = getUnitSystem();
+    const windUnitLabel = windUnit(system);
 
     // Data Slicing
     let chartData = UIState.forecastData;
@@ -347,7 +360,7 @@ export function renderWindChart(containerId, dayLimit) {
         svg += `<line x1="${pad.left}" y1="${y}" x2="${w - pad.right}" y2="${y}" stroke="var(--border-color)" stroke-width="1" stroke-dasharray="4 4" opacity="0.3" class="chart-grid-line" />`;
 
         // Label Left (Wind)
-        svg += `<text x="${pad.left - 5}" y="${y + 3}" fill="#c084fc" font-size="9" text-anchor="end" class="chart-axis-label">${Math.round(val)} <tspan font-size="7">km/h</tspan></text>`;
+        svg += `<text x="${pad.left - 5}" y="${y + 3}" fill="#c084fc" font-size="9" text-anchor="end" class="chart-axis-label">${formatDisplayWind(val, 0, system)} <tspan font-size="7">${windUnitLabel}</tspan></text>`;
     }
 
     // Days Delimiter (Midnight) & Labels (Noon)
