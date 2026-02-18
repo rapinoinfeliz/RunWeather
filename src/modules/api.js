@@ -14,6 +14,154 @@ const CACHE_TTL = {
     ip: 15 * 60 * 1000               // 15 min
 };
 
+const WEATHER_CURRENT_KEYS = [
+    'temperature_2m',
+    'relative_humidity_2m',
+    'apparent_temperature',
+    'precipitation',
+    'rain',
+    'weather_code',
+    'wind_speed_10m',
+    'wind_gusts_10m',
+    'wind_direction_10m',
+    'dew_point_2m',
+    'uv_index',
+    'shortwave_radiation',
+    'pressure_msl',
+    'cloud_cover'
+];
+
+const WEATHER_HOURLY_KEYS = [
+    'temperature_2m',
+    'dew_point_2m',
+    'precipitation_probability',
+    'precipitation',
+    'wind_speed_10m',
+    'wind_gusts_10m',
+    'wind_direction_10m',
+    'shortwave_radiation',
+    'weather_code',
+    'pressure_msl'
+];
+
+function toFiniteNumber(value) {
+    const num = Number(value);
+    return Number.isFinite(num) ? num : null;
+}
+
+function normalizeNumberArray(input, length) {
+    const source = Array.isArray(input) ? input : [];
+    const out = new Array(length);
+    for (let i = 0; i < length; i++) {
+        out[i] = toFiniteNumber(source[i]);
+    }
+    return out;
+}
+
+function normalizeStringArray(input, length) {
+    const source = Array.isArray(input) ? input : [];
+    const out = new Array(length);
+    for (let i = 0; i < length; i++) {
+        const val = source[i];
+        out[i] = (typeof val === 'string' && val.length > 0) ? val : '';
+    }
+    return out;
+}
+
+function getRuntimeTimeZone() {
+    try {
+        return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+    } catch {
+        return 'UTC';
+    }
+}
+
+function computeArrayLength(obj, keys = []) {
+    const candidates = [0];
+    keys.forEach((key) => {
+        if (obj && Array.isArray(obj[key])) {
+            candidates.push(obj[key].length);
+        }
+    });
+    return Math.max(...candidates);
+}
+
+export function normalizeWeatherPayload(raw) {
+    const root = (raw && typeof raw === 'object') ? raw : {};
+    const currentRaw = (root.current && typeof root.current === 'object') ? root.current : {};
+    const hourlyRaw = (root.hourly && typeof root.hourly === 'object') ? root.hourly : {};
+    const dailyRaw = (root.daily && typeof root.daily === 'object') ? root.daily : {};
+
+    const hourlyLen = computeArrayLength(hourlyRaw, ['time', ...WEATHER_HOURLY_KEYS]);
+    const dailyLen = computeArrayLength(dailyRaw, ['time', 'sunrise', 'sunset']);
+
+    const current = {};
+    WEATHER_CURRENT_KEYS.forEach((key) => {
+        current[key] = toFiniteNumber(currentRaw[key]);
+    });
+
+    const hourly = {
+        time: normalizeStringArray(hourlyRaw.time, hourlyLen)
+    };
+    WEATHER_HOURLY_KEYS.forEach((key) => {
+        hourly[key] = normalizeNumberArray(hourlyRaw[key], hourlyLen);
+    });
+
+    const daily = {
+        time: normalizeStringArray(dailyRaw.time, dailyLen),
+        sunrise: normalizeStringArray(dailyRaw.sunrise, dailyLen),
+        sunset: normalizeStringArray(dailyRaw.sunset, dailyLen)
+    };
+
+    return {
+        ...root,
+        timezone: (typeof root.timezone === 'string' && root.timezone) ? root.timezone : getRuntimeTimeZone(),
+        elevation: toFiniteNumber(root.elevation) ?? 0,
+        current,
+        hourly,
+        daily
+    };
+}
+
+export function normalizeAirPayload(raw) {
+    const root = (raw && typeof raw === 'object') ? raw : {};
+    const currentRaw = (root.current && typeof root.current === 'object')
+        ? root.current
+        : root;
+
+    return {
+        ...root,
+        current: {
+            us_aqi: toFiniteNumber(currentRaw.us_aqi),
+            pm2_5: toFiniteNumber(currentRaw.pm2_5)
+        }
+    };
+}
+
+export function normalizeClimatePayload(raw) {
+    const root = (raw && typeof raw === 'object') ? raw : {};
+    const hourlyRaw = (root.hourly && typeof root.hourly === 'object') ? root.hourly : {};
+    const len = computeArrayLength(hourlyRaw, [
+        'time',
+        'temperature_2m',
+        'dew_point_2m',
+        'precipitation',
+        'wind_speed_10m'
+    ]);
+
+    return {
+        ...root,
+        timezone: (typeof root.timezone === 'string' && root.timezone) ? root.timezone : getRuntimeTimeZone(),
+        hourly: {
+            time: normalizeStringArray(hourlyRaw.time, len),
+            temperature_2m: normalizeNumberArray(hourlyRaw.temperature_2m, len),
+            dew_point_2m: normalizeNumberArray(hourlyRaw.dew_point_2m, len),
+            precipitation: normalizeNumberArray(hourlyRaw.precipitation, len),
+            wind_speed_10m: normalizeNumberArray(hourlyRaw.wind_speed_10m, len)
+        }
+    };
+}
+
 function toCoordKey(val) {
     return Number(val).toFixed(4);
 }
@@ -61,7 +209,10 @@ export async function fetchWeatherData(lat, lon, opts = {}) {
 
         if (!weather) throw new Error("Weather API failed");
 
-        return setCache(cacheKey, { weather, air }, CACHE_TTL.weather);
+        return setCache(cacheKey, {
+            weather: normalizeWeatherPayload(weather),
+            air: normalizeAirPayload(air)
+        }, CACHE_TTL.weather);
     } catch (e) {
         if (e && e.name === 'AbortError') throw e;
         console.error("fetchWeatherData error:", e);
@@ -89,7 +240,7 @@ export async function fetchClimateHistory(lat, lon, opts = {}) {
         const res = await fetch(url, { signal });
         if (!res.ok) throw new Error("Climate Archive API failed");
         const data = await res.json();
-        return setCache(cacheKey, data, CACHE_TTL.climate);
+        return setCache(cacheKey, normalizeClimatePayload(data), CACHE_TTL.climate);
     } catch (e) {
         if (e && e.name === 'AbortError') throw e;
         console.error("fetchClimateHistory error:", e);

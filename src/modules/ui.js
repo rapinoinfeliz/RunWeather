@@ -33,6 +33,7 @@ function appendLocationLabel(container, name, subText, subClass) {
 
 let locationSearchDebounceTimer = null;
 let locationSearchSeq = 0;
+let lastLocationFocus = null;
 
 function setChartCardCollapsedState(wrapper, collapsed) {
     const card = wrapper?.closest('.forecast-card');
@@ -399,8 +400,17 @@ export function showInfoTooltip(e, title, text) {
 
     if (preferSheet) return;
 
-    const pointerX = Number.isFinite(e?.clientX) ? e.clientX : (window.innerWidth / 2);
-    const pointerY = Number.isFinite(e?.clientY) ? e.clientY : (window.innerHeight / 2);
+    const anchor = e && e.target && typeof e.target.closest === 'function'
+        ? e.target.closest('[data-action="info-tooltip"]')
+        : null;
+    const anchorRect = anchor ? anchor.getBoundingClientRect() : null;
+    const hasMousePoint = Number.isFinite(e?.clientX) && Number.isFinite(e?.clientY) && !(e.clientX === 0 && e.clientY === 0);
+    const pointerX = hasMousePoint
+        ? e.clientX
+        : (anchorRect ? (anchorRect.left + (anchorRect.width / 2)) : (window.innerWidth / 2));
+    const pointerY = hasMousePoint
+        ? e.clientY
+        : (anchorRect ? (anchorRect.bottom + 8) : (window.innerHeight / 2));
     const rect = activeTooltip.getBoundingClientRect();
 
     // Position
@@ -687,6 +697,13 @@ export function openLocationModal() {
     console.log("Opening Location Modal...");
     var m = document.getElementById('loc-modal');
     if (m) {
+        lastLocationFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+        const titleEl = m.querySelector('.modal-title');
+        if (titleEl && !titleEl.id) titleEl.id = 'loc-modal-title';
+        m.setAttribute('role', 'dialog');
+        m.setAttribute('aria-modal', 'true');
+        m.setAttribute('aria-hidden', 'false');
+        if (titleEl) m.setAttribute('aria-labelledby', titleEl.id);
         m.classList.add('open');
         if (locationSearchDebounceTimer) {
             clearTimeout(locationSearchDebounceTimer);
@@ -791,6 +808,10 @@ export function closeLocationModal(e) {
     if (!m) return;
     if (e && e.target !== m && e.target.id !== 'close-modal') return;
     m.classList.remove('open');
+    m.setAttribute('aria-hidden', 'true');
+    if (lastLocationFocus && typeof lastLocationFocus.focus === 'function') {
+        requestAnimationFrame(() => lastLocationFocus.focus());
+    }
 }
 
 export function setupWindowHelpers() {

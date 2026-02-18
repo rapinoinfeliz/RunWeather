@@ -5,17 +5,62 @@ import { fetchWeatherData } from './modules/api.js';
 import { HAP_GRID } from '../data/hap_grid.js';
 import { AppState } from './modules/appState.js';
 import { AppStore, StoreActions, RequestKeys, beginRequest, endRequest, isRequestCurrent } from './modules/store.js';
+import { initObservability, reportError, reportEvent, measureAsync } from './modules/observability.js';
 
 import * as UI from './modules/ui.js';
 import { loadFromStorage, saveToStorage } from './modules/storage.js';
 import { formatTimeInput, handleTimeInput, setupFineTuning, saveCalcState } from './modules/inputs.js';
 import { initSettings, loadSavedSettings } from './modules/settings.js';
 
-console.log("Main JS Starting... v1.0.17");
+const APP_VERSION = '1.0.18';
+console.log(`Main JS Starting... v${APP_VERSION}`);
+
+function isNativeInteractiveElement(el) {
+    if (!el || !el.tagName) return false;
+    const tag = el.tagName.toLowerCase();
+    return tag === 'button'
+        || tag === 'a'
+        || tag === 'input'
+        || tag === 'select'
+        || tag === 'textarea'
+        || tag === 'summary';
+}
+
+function bootstrapAccessibility() {
+    const view = document.getElementById('view-weather');
+    if (!view) return;
+    const noTabStopActions = new Set(['climate-cell', 'select-forecast', 'chart-interact']);
+
+    const uiState = AppStore.getState().ui;
+    UI.updateWeatherTabState(view, uiState.activeWeatherTab || 'calculator');
+
+    document.querySelectorAll('[data-action]').forEach((el) => {
+        const action = el.dataset.action || '';
+        if (noTabStopActions.has(action)) return;
+        if (isNativeInteractiveElement(el)) return;
+        if (!el.hasAttribute('role')) el.setAttribute('role', 'button');
+        if (!el.hasAttribute('tabindex')) el.setAttribute('tabindex', '0');
+    });
+
+    document.querySelectorAll('[data-action="info-tooltip"]').forEach((el, index) => {
+        if (!el.hasAttribute('aria-label')) {
+            const title = (el.dataset.title || '').trim();
+            el.setAttribute('aria-label', title ? `Info: ${title}` : `Info ${index + 1}`);
+        }
+    });
+
+    const tooltip = document.getElementById('forecast-tooltip');
+    if (tooltip) {
+        tooltip.setAttribute('role', 'dialog');
+        tooltip.setAttribute('aria-live', 'polite');
+    }
+}
 
 // --- Initialization ---
 async function init() {
     console.log("Initializing App...");
+    initObservability({ version: APP_VERSION });
+    reportEvent('init_start', { version: APP_VERSION });
 
     // 1. Core Logic
     if (HAP_GRID) {
@@ -38,7 +83,10 @@ async function init() {
         UI.setLoading('forecast', true);
 
         refreshWeather(true)
-            .catch(console.error)
+            .catch((err) => {
+                reportError(err, { stage: 'location_change_refresh' });
+                console.error(err);
+            })
             .finally(() => {
                 UI.setLoading('current', false);
                 UI.setLoading('forecast', false);
@@ -47,7 +95,10 @@ async function init() {
         if (AppState.climateManager) {
             UI.setLoading('climate', true);
             AppState.climateManager.loadDataForCurrentLocation()
-                .catch(console.error)
+                .catch((err) => {
+                    reportError(err, { stage: 'location_change_climate_refresh' });
+                    console.error(err);
+                })
                 .finally(() => UI.setLoading('climate', false));
         }
 
@@ -93,6 +144,7 @@ async function init() {
     // Attach global click helpers (deselection, resize)
     UI.setupWindowHelpers();
     UI.initBottomNav();
+    bootstrapAccessibility();
 
     // Auto-format time inputs on blur
     formatTimeInput(els.time);
@@ -240,7 +292,7 @@ async function init() {
     if (locModal) {
         locModal.addEventListener('click', (e) => {
             if (e.target === locModal) {
-                locModal.classList.remove('open');
+                UI.closeLocationModal();
                 locModal.style.removeProperty('display'); // Clear any inline override
             }
         });
@@ -319,32 +371,53 @@ async function refreshWeather(force = false) {
     });
 
     try {
-        const { weather, air } = await fetchWeatherData(loc.lat, loc.lon, {
+        const { weather, air } = await measureAsync('weather_fetch', () => fetchWeatherData(loc.lat, loc.lon, {
             signal: request.signal,
             force
+        }), {
+            force,
+            lat: loc.lat,
+            lon: loc.lon,
+            seq: request.seq
         });
 
         // Ignore stale responses from superseded requests.
-        if (!isRequestCurrent(RequestKeys.WEATHER, request.seq)) return;
+        if (!isRequestCurrent(RequestKeys.WEATHER, request.seq)) {
+            reportEvent('weather_stale_ignored', { seq: request.seq, lat: loc.lat, lon: loc.lon }, 'warn');
+            return;
+        }
 
-        UI.setForecastData(processForecast(weather.hourly));
+        const hourly = weather && weather.hourly ? weather.hourly : {};
+        const daily = weather && weather.daily ? weather.daily : {};
+        const current = weather && weather.current ? weather.current : {};
+        const airCurrent = air && air.current ? air.current : {};
+        const firstProb = Array.isArray(hourly.precipitation_probability) ? (hourly.precipitation_probability[0] ?? 0) : 0;
+        const firstPrecip = Array.isArray(hourly.precipitation) ? (hourly.precipitation[0] ?? 0) : 0;
+
+        const renderStarted = performance.now();
+        UI.setForecastData(processForecast(hourly));
         AppStore.dispatch(StoreActions.setWeatherData(weather));
         AppStore.dispatch(StoreActions.setAirData(air));
 
-        UI.renderCurrentTab(weather.current, air.current,
-            weather.hourly.precipitation_probability[0],
-            weather.hourly.precipitation[0],
-            weather.daily,
+        UI.renderCurrentTab(current, airCurrent,
+            firstProb,
+            firstPrecip,
+            daily,
             weather.elevation
         );
 
         UI.renderAllForecasts({ data: true, range: true, selection: true });
+        reportEvent('weather_render', {
+            seq: request.seq,
+            durationMs: Number((performance.now() - renderStarted).toFixed(2)),
+            points: Array.isArray(hourly.time) ? hourly.time.length : 0
+        });
 
         const els = AppState.els;
         if ((!els.temp.value && !els.dew.value) || force) {
-            els.temp.value = weather.current.temperature_2m;
-            els.dew.value = weather.current.dew_point_2m;
-            if (els.wind) els.wind.value = weather.current.wind_speed_10m;
+            els.temp.value = (current.temperature_2m ?? 0);
+            els.dew.value = (current.dew_point_2m ?? 0);
+            if (els.wind) els.wind.value = (current.wind_speed_10m ?? 0);
             UI.update(els, AppState.hapCalc);
         }
 
@@ -360,25 +433,55 @@ async function refreshWeather(force = false) {
             return;
         }
         endRequest(RequestKeys.WEATHER, request.seq, 'error', e && e.message ? e.message : 'Weather refresh failed');
+        reportError(e, {
+            stage: 'refreshWeather',
+            force,
+            seq: request.seq,
+            lat: loc.lat,
+            lon: loc.lon
+        });
         console.error("Weather Refresh Failed", e);
     }
 }
 
 function processForecast(hourly) {
-    // Transform OpenMeteo hourly arrays to array of objects
-    if (!hourly) return [];
-    const len = hourly.time.length;
+    // Transform OpenMeteo hourly arrays to array of objects with defensive shape guards.
+    if (!hourly || typeof hourly !== 'object') return [];
+    const fields = [
+        'time',
+        'temperature_2m',
+        'dew_point_2m',
+        'precipitation',
+        'precipitation_probability',
+        'wind_speed_10m',
+        'wind_direction_10m',
+        'weather_code'
+    ];
+    const len = fields.reduce((maxLen, key) => {
+        const arr = hourly[key];
+        if (!Array.isArray(arr)) return maxLen;
+        return Math.max(maxLen, arr.length);
+    }, 0);
+    if (len <= 0) return [];
+
+    const valueAt = (key, idx, fallback = null) => {
+        const arr = hourly[key];
+        if (!Array.isArray(arr)) return fallback;
+        const val = arr[idx];
+        return val == null ? fallback : val;
+    };
+
     const data = [];
     for (let i = 0; i < len; i++) {
         data.push({
-            time: hourly.time[i],
-            temp: hourly.temperature_2m[i],
-            dew: hourly.dew_point_2m[i],
-            rain: hourly.precipitation[i],
-            prob: hourly.precipitation_probability[i],
-            wind: hourly.wind_speed_10m[i],
-            dir: hourly.wind_direction_10m[i],
-            weathercode: hourly.weather_code[i]
+            time: valueAt('time', i, ''),
+            temp: valueAt('temperature_2m', i, null),
+            dew: valueAt('dew_point_2m', i, null),
+            rain: valueAt('precipitation', i, 0),
+            prob: valueAt('precipitation_probability', i, 0),
+            wind: valueAt('wind_speed_10m', i, null),
+            dir: valueAt('wind_direction_10m', i, null),
+            weathercode: valueAt('weather_code', i, null)
         });
     }
     return data;
@@ -399,9 +502,13 @@ async function loadClimateModule() {
             });
             AppStore.dispatch(StoreActions.setClimateManager(climateManager));
         }
-        await AppState.climateManager.loadDataForCurrentLocation();
+        await measureAsync('climate_load', () => AppState.climateManager.loadDataForCurrentLocation(), {
+            lat: AppState.locManager && AppState.locManager.current ? AppState.locManager.current.lat : null,
+            lon: AppState.locManager && AppState.locManager.current ? AppState.locManager.current.lon : null
+        });
     } catch (e) {
         climateModulePromise = null;
+        reportError(e, { stage: 'loadClimateModule' });
         console.error("Failed to lazy load Climate Manager", e);
     } finally {
         UI.setLoading('climate', false);
@@ -567,6 +674,50 @@ function setupGlobalEvents() {
                 UI.filterClimateByImpact(target.dataset.label, target);
                 break;
         }
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            UI.hideForeTooltip();
+            UI.closeLocationModal();
+            const settingsModal = document.getElementById('settings-modal');
+            if (settingsModal && settingsModal.classList.contains('open')) {
+                const closeSettings = document.getElementById('close-settings');
+                if (closeSettings) closeSettings.click();
+            }
+            return;
+        }
+
+        const target = e.target.closest('[data-action]');
+        if (!target) return;
+        const action = target.dataset.action;
+
+        if (action === 'tab' && (e.key === 'ArrowRight' || e.key === 'ArrowLeft' || e.key === 'Home' || e.key === 'End')) {
+            const tabs = Array.from(document.querySelectorAll('#view-weather .tab-nav .tab-btn'));
+            if (tabs.length === 0) return;
+            const currentIndex = tabs.indexOf(target);
+            if (currentIndex < 0) return;
+
+            let nextIndex = currentIndex;
+            if (e.key === 'ArrowRight') nextIndex = (currentIndex + 1) % tabs.length;
+            if (e.key === 'ArrowLeft') nextIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+            if (e.key === 'Home') nextIndex = 0;
+            if (e.key === 'End') nextIndex = tabs.length - 1;
+
+            const next = tabs[nextIndex];
+            if (!next) return;
+            e.preventDefault();
+            next.focus();
+            next.click();
+            return;
+        }
+
+        const shouldActivate = e.key === 'Enter' || e.key === ' ';
+        if (!shouldActivate) return;
+        if (isNativeInteractiveElement(target)) return;
+
+        e.preventDefault();
+        target.click();
     });
 
     // Hover Events for Heatmap (Delegated + RAF throttle)

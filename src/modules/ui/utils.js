@@ -8,7 +8,7 @@ export function infoIcon(title, text, className = '') {
     const tSafe = safeTitle.replace(/'/g, "\\'").replace(/"/g, "&quot;");
     const txtSafe = safeText.replace(/'/g, "\\'").replace(/"/g, "&quot;");
     const extraClass = className ? ` ${className}` : '';
-    return `<span class="info-tooltip-trigger info-tooltip-trigger--inline${extraClass}" data-action="info-tooltip" data-title="${tSafe}" data-text="${txtSafe}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></span>`;
+    return `<span class="info-tooltip-trigger info-tooltip-trigger--inline${extraClass}" data-action="info-tooltip" data-title="${tSafe}" data-text="${txtSafe}" role="button" tabindex="0" aria-label="Info"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></span>`;
 }
 
 export function getImpactColor(pct) {
@@ -260,11 +260,20 @@ export function updateWeatherTabState(view, activeTabName) {
         return;
     }
 
+    nav.setAttribute('role', 'tablist');
     const buttons = nav.querySelectorAll('.tab-btn');
 
     buttons.forEach(b => {
         // Strict check against data-tab
         const shouldBeActive = b.dataset.tab === activeTabName;
+        const tabName = b.dataset.tab || '';
+        const panelId = `tab-${tabName}`;
+        const tabId = b.id || `tab-trigger-${tabName}`;
+        b.id = tabId;
+        b.setAttribute('role', 'tab');
+        b.setAttribute('aria-controls', panelId);
+        b.setAttribute('aria-selected', shouldBeActive ? 'true' : 'false');
+        b.setAttribute('tabindex', shouldBeActive ? '0' : '-1');
 
         // Remove known visual artifacts (Ripples)
         const ripples = b.getElementsByClassName('ripple');
@@ -272,31 +281,30 @@ export function updateWeatherTabState(view, activeTabName) {
             ripples[0].remove();
         }
 
-        // Reset element style first to ensure clean state
-        b.style.removeProperty('background-color');
-        b.style.removeProperty('color');
-
         if (shouldBeActive) {
             b.classList.add('active');
-            // Force visual confirmation
-            b.style.backgroundColor = 'var(--accent-color)';
-            b.style.color = '#fff';
         } else {
             b.classList.remove('active');
-
-            // Force reset visual
-            b.style.backgroundColor = '';
-            b.style.color = '';
         }
     });
 
     // Content Handling
     const contents = view.querySelectorAll('.tab-content');
     contents.forEach(c => {
-        if (c.id === `tab-${activeTabName}`) {
+        const isActive = c.id === `tab-${activeTabName}`;
+        const tabName = c.id.startsWith('tab-') ? c.id.slice(4) : '';
+        const owner = nav.querySelector(`.tab-btn[data-tab="${tabName}"]`);
+        c.setAttribute('role', 'tabpanel');
+        c.setAttribute('aria-hidden', isActive ? 'false' : 'true');
+        if (owner && owner.id) {
+            c.setAttribute('aria-labelledby', owner.id);
+        }
+        if (isActive) {
             c.classList.add('active');
+            c.removeAttribute('hidden');
         } else {
             c.classList.remove('active');
+            c.setAttribute('hidden', 'hidden');
         }
     });
 }

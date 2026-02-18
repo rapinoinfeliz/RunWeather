@@ -74,6 +74,7 @@ export function hideForeTooltip() {
         el.classList.remove('forecast-tooltip--sheet');
         el.dataset.mode = '';
         el.dataset.currentKey = '';
+        el.setAttribute('aria-hidden', 'true');
     }
     const backdrop = document.getElementById('forecast-tooltip-backdrop');
     if (backdrop) {
@@ -84,7 +85,7 @@ export function hideForeTooltip() {
 
 export function moveForeTooltip(e) {
     const el = document.getElementById('forecast-tooltip');
-    if (el && el.dataset.mode !== 'sheet') {
+    if (el && el.dataset.mode !== 'sheet' && e && Number.isFinite(e.clientX) && Number.isFinite(e.clientY)) {
         const w = el.offsetWidth;
         let x = e.clientX + 15;
         if (x + w > window.innerWidth - 10) {
@@ -112,6 +113,7 @@ export function showForeTooltip(e, htmlContent, options = {}) {
     el.style.display = 'block'; // Make sure it's visible if it was hidden
     el.style.opacity = '1';
     el.style.pointerEvents = 'auto'; // Re-enable clicks inside tooltip
+    el.setAttribute('aria-hidden', 'false');
 
     const useSheet = shouldUseTooltipSheet(Boolean(options.preferSheet));
     const backdrop = ensureTooltipBackdrop();
@@ -137,13 +139,20 @@ export function showForeTooltip(e, htmlContent, options = {}) {
     backdrop.style.display = 'none';
 
     // Initial Position
+    const anchor = e && e.target && typeof e.target.closest === 'function'
+        ? e.target.closest('[data-action]')
+        : null;
+    const anchorRect = anchor ? anchor.getBoundingClientRect() : null;
+    const hasPoint = Number.isFinite(e?.clientX) && Number.isFinite(e?.clientY) && !(e.clientX === 0 && e.clientY === 0);
+    const refX = hasPoint ? e.clientX : (anchorRect ? anchorRect.left + (anchorRect.width / 2) : window.innerWidth / 2);
+    const refY = hasPoint ? e.clientY : (anchorRect ? anchorRect.top + (anchorRect.height / 2) : window.innerHeight / 2);
     const w = el.offsetWidth;
-    let x = e.clientX + 15;
+    let x = refX + 15;
     // Flip if overflow right
     if (x + w > window.innerWidth - 10) {
-        x = e.clientX - w - 15;
+        x = refX - w - 15;
     }
-    const y = e.clientY - el.offsetHeight - 10;
+    const y = refY - el.offsetHeight - 10;
     el.style.left = x + 'px';
     el.style.top = y + 'px';
 }

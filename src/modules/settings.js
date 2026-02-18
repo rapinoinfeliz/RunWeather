@@ -3,6 +3,8 @@ import { loadFromStorage, saveToStorage } from './storage.js';
 import { AppState } from './appState.js';
 import { AppStore, StoreActions } from './store.js';
 
+let lastSettingsFocus = null;
+
 /**
  * Initialize the settings modal: open, close, save, and unit radio change handlers.
  * @param {object} els - Element references (must include btnSettings)
@@ -24,9 +26,20 @@ export function initSettings(els, updateFn) {
     function closeSettings() {
         settingsModal.classList.remove('open');
         settingsModal.style.removeProperty('display');
+        settingsModal.setAttribute('aria-hidden', 'true');
+        if (lastSettingsFocus && typeof lastSettingsFocus.focus === 'function') {
+            requestAnimationFrame(() => lastSettingsFocus.focus());
+        }
     }
 
     function openSettings() {
+        lastSettingsFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+        const titleEl = settingsModal.querySelector('.modal-title');
+        if (titleEl && !titleEl.id) titleEl.id = 'settings-modal-title';
+        settingsModal.setAttribute('role', 'dialog');
+        settingsModal.setAttribute('aria-modal', 'true');
+        settingsModal.setAttribute('aria-hidden', 'false');
+        if (titleEl) settingsModal.setAttribute('aria-labelledby', titleEl.id);
         // 1. Set Weight
         if (weightInput) {
             let val = AppState.runner.weight || 65;
@@ -138,6 +151,13 @@ export function initSettings(els, updateFn) {
     // Click outside to close
     settingsModal.addEventListener('click', (e) => {
         if (e.target === settingsModal) closeSettings();
+    });
+
+    settingsModal.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            closeSettings();
+        }
     });
 
     // Dynamic Label Updates on Radio Change
