@@ -1,9 +1,14 @@
 import { UIState } from './state.js';
+import { AppState } from '../appState.js';
+import { formatDateDdMm, getDateForISOWeek, getReferenceYear } from '../time.js';
 
-export function infoIcon(title, text) {
-    const tSafe = title.replace(/'/g, "\\'").replace(/"/g, "&quot;");
-    const txtSafe = text.replace(/'/g, "\\'").replace(/"/g, "&quot;");
-    return `<span data-action="info-tooltip" data-title="${tSafe}" data-text="${txtSafe}" style="cursor:pointer; opacity:0.5; margin-left:4px; display:inline-flex; vertical-align:middle;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></span>`;
+export function infoIcon(title, text, className = '') {
+    const safeTitle = String(title || '');
+    const safeText = String(text || '');
+    const tSafe = safeTitle.replace(/'/g, "\\'").replace(/"/g, "&quot;");
+    const txtSafe = safeText.replace(/'/g, "\\'").replace(/"/g, "&quot;");
+    const extraClass = className ? ` ${className}` : '';
+    return `<span class="info-tooltip-trigger info-tooltip-trigger--inline${extraClass}" data-action="info-tooltip" data-title="${tSafe}" data-text="${txtSafe}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></span>`;
 }
 
 export function getImpactColor(pct) {
@@ -223,10 +228,14 @@ export function getBasePaceSec() {
     return 300;
 }
 
-export function getDateFromWeek(w) {
-    // 2025 starts on a Wednesday
-    const date = new Date(2025, 0, 1 + (w - 1) * 7);
-    return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}`;
+export function getActiveWeatherTimeZone() {
+    return (AppState.weatherData && AppState.weatherData.timezone)
+        ? AppState.weatherData.timezone
+        : Intl.DateTimeFormat().resolvedOptions().timeZone;
+}
+
+export function getDateFromWeek(w, year = getReferenceYear(getActiveWeatherTimeZone())) {
+    return formatDateDdMm(getDateForISOWeek(w, year));
 }
 
 export function getWeatherIcon(code) {

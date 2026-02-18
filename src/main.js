@@ -193,7 +193,7 @@ async function init() {
                     // If we type 5001, we should select Custom.
                     els.preset.value = 'custom';
                 }
-                syncPaceFromTime();
+                syncTimeFromPace();
             }
             UI.update(els, AppState.hapCalc);
             saveCalcState(els);
@@ -228,6 +228,7 @@ async function init() {
             const val = els.preset.value;
             if (val !== 'custom') {
                 els.distance.value = val;
+                syncTimeFromPace();
                 UI.update(els, AppState.hapCalc);
                 saveCalcState(els);
             }
@@ -504,7 +505,9 @@ function setupGlobalEvents() {
                 );
                 break;
             case 'monthly-type':
-                UI.UIState.selectedMonthlyType = target.dataset.type;
+                AppStore.dispatch(StoreActions.patchUI({
+                    selectedMonthlyType: target.dataset.type
+                }));
                 if (target.parentElement) {
                     target.parentElement.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
                     target.classList.add('active');

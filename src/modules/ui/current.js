@@ -1,7 +1,7 @@
 import { UIState } from './state.js';
 import { infoIcon, getCondColor, getDewColor } from './utils.js';
 import { calculateWBGT } from '../engine.js';
-import { AppState } from '../appState.js';
+import { AppStore, StoreActions } from '../store.js';
 
 export function renderCurrentTab(w, a, prob2h = 0, precip2h = 0, daily, elevation) {
     const container = document.getElementById('current-content');
@@ -60,14 +60,6 @@ export function renderCurrentTab(w, a, prob2h = 0, precip2h = 0, daily, elevatio
     // --- New Metrics Calc ---
     const pressure = w.pressure_msl || 1013;
 
-    // Run Score
-    let runScore = 100;
-    if (AppState.hapCalc) {
-        const res = AppState.hapCalc.calculatePaceInHeat(300, w.temperature_2m, w.dew_point_2m);
-        runScore = Math.max(0, Math.round(100 - (res.percentImpact * 12)));
-    }
-    const getScoreColor = (s) => s >= 90 ? '#4ade80' : s >= 75 ? '#a3e635' : s >= 60 ? '#facc15' : s >= 40 ? '#fb923c' : '#f87171';
-
     // Sweat Rate (Heuristic)
     const srBase = wbgtVal !== null ? wbgtVal : feels;
     let sweatRate = 1.0 + (srBase - 20) * 0.05;
@@ -106,8 +98,10 @@ export function renderCurrentTab(w, a, prob2h = 0, precip2h = 0, daily, elevatio
     const sectionStyle = "background:var(--card-bg); padding:16px; border-radius:12px; border:1px solid var(--border-color);";
 
     // Update global store for copy
-    UIState.currentWeatherData = w;
-    UIState.dailyForecast = daily; // Store daily data specifically for Heatmap Shading lookup
+    AppStore.dispatch(StoreActions.patchUI({
+        currentWeatherData: w,
+        dailyForecast: daily // Store daily data specifically for Heatmap Shading lookup
+    }));
 
     // Header structure is now static in index.html
     let html = '';
@@ -322,7 +316,9 @@ export function renderCurrentTab(w, a, prob2h = 0, precip2h = 0, daily, elevatio
 
     // Freshness Footer: Store timestamp and show relative time
     const dataTime = w.time; // ISO string from Open-Meteo (e.g., "2024-01-15T14:00")
-    UIState.currentDataTimestamp = dataTime ? new Date(dataTime) : new Date();
+    AppStore.dispatch(StoreActions.patchUI({
+        currentDataTimestamp: dataTime ? new Date(dataTime) : new Date()
+    }));
 
     const freshnessFooter = `<div id="data-freshness" style="text-align:center; padding:12px 0 4px; font-size:0.7rem; color:var(--text-secondary); opacity:0.6;"></div>`;
 

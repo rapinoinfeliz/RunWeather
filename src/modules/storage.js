@@ -22,6 +22,7 @@ export function loadFromStorage(key) {
 const DB_NAME = 'RunWeatherDB';
 const DB_VERSION = 11; // Clean slate attempt
 const STORE_CLIMATE = 'climate_history';
+const CLIMATE_CACHE_TTL_MS = 12 * 60 * 60 * 1000;
 
 export function openDB() {
     return new Promise((resolve, reject) => {
@@ -53,12 +54,34 @@ export async function getCachedClimate(lat, lon) {
             }
             const store = tx.objectStore(STORE_CLIMATE);
             const req = store.get(key);
-            req.onsuccess = () => resolve(req.result ? req.result.data : null);
+            req.onsuccess = () => {
+                const entry = req.result;
+                if (!entry || !Array.isArray(entry.data)) {
+                    resolve(null);
+                    return;
+                }
+
+                if (typeof entry.timestamp !== 'number') {
+                    resolve(null);
+                    return;
+                }
+
+                if ((Date.now() - entry.timestamp) > CLIMATE_CACHE_TTL_MS) {
+                    resolve(null);
+                    return;
+                }
+
+                resolve(entry.data);
+            };
             req.onerror = () => resolve(null);
         });
     } catch (e) {
         console.warn("IDB unavailable, checking LS backup");
-        return loadFromStorage('rw_climate_backup_' + key);
+        const backup = loadFromStorage('rw_climate_backup_' + key);
+        if (!backup || typeof backup !== 'object') return null;
+        if (!Array.isArray(backup.data) || typeof backup.timestamp !== 'number') return null;
+        if ((Date.now() - backup.timestamp) > CLIMATE_CACHE_TTL_MS) return null;
+        return backup.data;
     }
 }
 
@@ -77,6 +100,9 @@ export async function cacheClimate(lat, lon, data) {
                 localStorage.removeItem(k);
             }
         }
-        saveToStorage('rw_climate_backup_' + key, data);
+        saveToStorage('rw_climate_backup_' + key, {
+            data,
+            timestamp: Date.now()
+        });
     }
 }

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Heatmap Now Indicator Fixture</title>
+    <link rel="stylesheet" href="/style.css">
+    <style>
+        :root {
+            color-scheme: dark;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            background: #0b1220;
+            font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        }
+
+        #visual-now {
+            width: 520px;
+            padding: 14px;
+            border-radius: 12px;
+            background: #101826;
+            border: 1px solid #1f2a40;
+            box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+        }
+    </style>
+</head>
+
+<body>
+    <div id="visual-now" aria-label="Heatmap now indicator fixture">
+        <svg viewBox="0 0 520 86" class="heatmap-svg">
+            <text x="40" y="16" text-anchor="end" class="heatmap-day-label heatmap-day-label--now">Today <tspan class="heatmap-day-label-date">18/02</tspan></text>
+            <text x="70" y="16" text-anchor="middle" font-size="8" class="heatmap-hour-label">8</text>
+            <text x="92" y="16" text-anchor="middle" font-size="8" class="heatmap-hour-label">9</text>
+            <text x="114" y="16" text-anchor="middle" font-size="8" class="heatmap-hour-label heatmap-hour-label--now">10</text>
+            <text x="136" y="16" text-anchor="middle" font-size="8" class="heatmap-hour-label">11</text>
+            <text x="158" y="16" text-anchor="middle" font-size="8" class="heatmap-hour-label">12</text>
+
+            <rect x="60" y="24" width="20" height="20" rx="2" class="heatmap-cell" fill="#8adf88"></rect>
+            <rect x="82" y="24" width="20" height="20" rx="2" class="heatmap-cell" fill="#d6d15e"></rect>
+            <rect x="104" y="24" width="20" height="20" rx="2" class="heatmap-cell heatmap-cell--now" fill="#f3955f"></rect>
+            <rect x="102.8" y="22.8" width="22.4" height="22.4" rx="3.2" class="heatmap-now-ring"></rect>
+            <rect x="126" y="24" width="20" height="20" rx="2" class="heatmap-cell" fill="#f47a7f"></rect>
+            <rect x="148" y="24" width="20" height="20" rx="2" class="heatmap-cell" fill="#cb96f1"></rect>
+        </svg>
+    </div>
+</body>
+
+</html>

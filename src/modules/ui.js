@@ -422,15 +422,13 @@ export function showInfoTooltip(e, title, text) {
 
 export function toggleForeSelection(isoTime, e) {
     if (e) e.stopPropagation();
-    if (isoTime === null) {
-        UIState.selectedForeHour = null;
-    } else {
-        if (UIState.selectedForeHour === isoTime) {
-            UIState.selectedForeHour = null;
-        } else {
-            UIState.selectedForeHour = isoTime;
-        }
+    let nextHour = null;
+    if (isoTime !== null) {
+        nextHour = (UIState.selectedForeHour === isoTime) ? null : isoTime;
     }
+    AppStore.dispatch(StoreActions.patchUI({
+        selectedForeHour: nextHour
+    }));
     renderAllForecasts({ selection: true });
 }
 
@@ -470,13 +468,14 @@ export function renderAltitudeCard() {
         return;
     }
 
-    // Match Wind Card Style: Centered vertically, aligned left horizontally
     card.style.display = 'flex';
-    card.style.flexDirection = 'column';
-    card.style.justifyContent = 'center'; // Center vertically
-    card.style.alignItems = 'flex-start'; // Align left horizontally
-    card.style.textAlign = 'left';        // Text aligned left
-    card.style.paddingLeft = '12px';      // Add some padding for visual balance
+    card.classList.add('impact-status-card');
+
+    const altitudeInfo = infoIcon(
+        '',
+        'Pace adjustment from altitude by &lt;a href=&quot;https://pubmed.ncbi.nlm.nih.gov/16311764/&quot; target=&quot;_blank&quot;&gt;Wehrlin &amp; Hallén (2006)&lt;/a&gt; for ascending, &lt;a href=&quot;https://pubmed.ncbi.nlm.nih.gov/9216951/&quot; target=&quot;_blank&quot;&gt;Levine &amp; Stray-Gundersen (1997)&lt;/a&gt; for descending.',
+        'info-tooltip-trigger--card-corner'
+    );
 
     import('./altitude.js').then(({ AltitudeCalc }) => {
         const isAscending = delta > 0;
@@ -487,10 +486,7 @@ export function renderAltitudeCard() {
 
             if (impact.impactPct > 0.5) {
                 card.style.display = 'flex';
-                // Add Info Icon using exact Wind card pattern
-                const infoIcon = `<span data-action="info-tooltip" data-title="" data-text="Pace adjustment from altitude by &lt;a href=&quot;https://pubmed.ncbi.nlm.nih.gov/16311764/&quot; target=&quot;_blank&quot;&gt;Wehrlin &amp; Hallén (2006)&lt;/a&gt; for ascending, &lt;a href=&quot;https://pubmed.ncbi.nlm.nih.gov/9216951/&quot; target=&quot;_blank&quot;&gt;Levine &amp; Stray-Gundersen (1997)&lt;/a&gt; for descending." style="cursor:pointer; opacity:0.5; position:absolute; top:4px; right:4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></span>`;
-
-                card.innerHTML = `<div>Altitude<br><span style="color:#f87171">~${impact.impactPct.toFixed(1)}% slowdown</span></div>${infoIcon}`;
+                card.innerHTML = `<div class="impact-status-copy">Altitude<br><span class="impact-note-value impact-note-value--headwind">~${impact.impactPct.toFixed(1)}% slowdown</span></div>${altitudeInfo}`;
             } else {
                 card.style.display = 'none';
             }
@@ -500,10 +496,7 @@ export function renderAltitudeCard() {
 
             if (boost.gainPercent > 0.5) {
                 card.style.display = 'flex';
-                // Add Info Icon using exact Wind card pattern
-                const infoIcon = `<span data-action="info-tooltip" data-title="" data-text="Pace adjustment from altitude by &lt;a href=&quot;https://pubmed.ncbi.nlm.nih.gov/16311764/&quot; target=&quot;_blank&quot;&gt;Wehrlin &amp; Hallén (2006)&lt;/a&gt; for ascending, &lt;a href=&quot;https://pubmed.ncbi.nlm.nih.gov/9216951/&quot; target=&quot;_blank&quot;&gt;Levine &amp; Stray-Gundersen (1997)&lt;/a&gt; for descending." style="cursor:pointer; opacity:0.5; position:absolute; top:4px; right:4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></span>`;
-
-                card.innerHTML = `<div>Altitude<br><span style="color:#22c55e">~${boost.gainPercent.toFixed(1)}% faster</span></div>${infoIcon}`;
+                card.innerHTML = `<div class="impact-status-copy">Altitude<br><span class="impact-note-value impact-note-value--tailwind">~${boost.gainPercent.toFixed(1)}% faster</span></div>${altitudeInfo}`;
             } else {
                 card.style.display = 'none';
             }
@@ -535,8 +528,8 @@ export function handleChartHover(e, totalW, chartW, padLeft, dataLen) {
             // Rain Tooltip
             html = `
                 <div class="tooltip-header">${dayName} ${dateStr} ${hourStr}:00</div>
-                <div class="tooltip-row"><span class="tooltip-label">Rain:</span> <span class="tooltip-val" style="color:#60a5fa">${d.rain != null ? d.rain.toFixed(1) : '0.0'} mm</span></div>
-                <div class="tooltip-row"><span class="tooltip-label">Prob:</span> <span class="tooltip-val" style="color:#93c5fd">${d.prob != null ? d.prob : '0'}%</span></div>
+                <div class="tooltip-row"><span class="tooltip-label">Rain:</span> <span class="tooltip-val tooltip-val--rain">${d.rain != null ? d.rain.toFixed(1) : '0.0'} mm</span></div>
+                <div class="tooltip-row"><span class="tooltip-label">Prob:</span> <span class="tooltip-val tooltip-val--prob">${d.prob != null ? d.prob : '0'}%</span></div>
             `;
         } else if (type === 'wind') {
             // Wind Tooltip
@@ -544,8 +537,8 @@ export function handleChartHover(e, totalW, chartW, padLeft, dataLen) {
             const dirStr = getCardinal(d.dir || 0);
             html = `
                 <div class="tooltip-header">${dayName} ${dateStr} ${hourStr}:00</div>
-                <div class="tooltip-row"><span class="tooltip-label">Wind:</span> <span class="tooltip-val" style="color:#c084fc">${d.wind != null ? d.wind.toFixed(1) : '0'} km/h</span></div>
-                <div class="tooltip-row"><span class="tooltip-label">Dir:</span> <span class="tooltip-val" style="color:#e9d5ff">${dirStr}</span></div>
+                <div class="tooltip-row"><span class="tooltip-label">Wind:</span> <span class="tooltip-val tooltip-val--wind">${d.wind != null ? d.wind.toFixed(1) : '0'} km/h</span></div>
+                <div class="tooltip-row"><span class="tooltip-label">Dir:</span> <span class="tooltip-val tooltip-val--dir">${dirStr}</span></div>
             `;
         } else {
             // Standard Temp/Impact Tooltip
@@ -556,10 +549,10 @@ export function handleChartHover(e, totalW, chartW, padLeft, dataLen) {
 
             html = `
                 <div class="tooltip-header">${dayName} ${dateStr} ${hourStr}:00</div>
-                <div class="tooltip-row"><span class="tooltip-label">Temp:</span> <span class="tooltip-val" style="color:#fff">${d.temp != null ? d.temp.toFixed(1) : '--'}°</span></div>
-                <div class="tooltip-row"><span class="tooltip-label">Dew:</span> <span class="tooltip-val" style="color:#60a5fa">${d.dew != null ? d.dew.toFixed(1) : '--'}°</span></div>
-                <div class="tooltip-row" style="margin-top:4px; padding-top:4px; border-top:1px solid #374151">
-                    <span class="tooltip-label">Impact:</span> <span class="tooltip-val" style="color:${color}">${pct.toFixed(2)}%</span>
+                <div class="tooltip-row"><span class="tooltip-label">Temp:</span> <span class="tooltip-val tooltip-val--temp">${d.temp != null ? d.temp.toFixed(1) : '--'}°</span></div>
+                <div class="tooltip-row"><span class="tooltip-label">Dew:</span> <span class="tooltip-val tooltip-val--dew">${d.dew != null ? d.dew.toFixed(1) : '--'}°</span></div>
+                <div class="tooltip-row tooltip-row--divider">
+                    <span class="tooltip-label">Impact:</span> <span class="tooltip-val tooltip-val--impact" style="--tooltip-impact-color:${color}">${pct.toFixed(2)}%</span>
                 </div>
             `;
         }
@@ -594,10 +587,10 @@ export function showClimateTooltip(e, w, h, impact, temp, dew, count) {
     // Exact HTML template as handleCellHover
     const html = `
                     <div class="tooltip-header">Week ${w} (${dateStr}) ${timeStr}</div>
-                    <div class="tooltip-row"><span class="tooltip-label">Temp:</span> <span class="tooltip-val" style="color:#fff">${(temp || 0).toFixed(1)}°</span></div>
-                    <div class="tooltip-row"><span class="tooltip-label">Dew:</span> <span class="tooltip-val" style="color:#60a5fa">${(dew || 0).toFixed(1)}°</span></div>
-                    <div class="tooltip-row" style="margin-top:4px; padding-top:4px; border-top:1px solid #374151">
-                        <span class="tooltip-label">Impact:</span> <span class="tooltip-val" style="color:${impactColor}">${(impact || 0).toFixed(2)}%</span>
+                    <div class="tooltip-row"><span class="tooltip-label">Temp:</span> <span class="tooltip-val tooltip-val--temp">${(temp || 0).toFixed(1)}°</span></div>
+                    <div class="tooltip-row"><span class="tooltip-label">Dew:</span> <span class="tooltip-val tooltip-val--dew">${(dew || 0).toFixed(1)}°</span></div>
+                    <div class="tooltip-row tooltip-row--divider">
+                        <span class="tooltip-label">Impact:</span> <span class="tooltip-val tooltip-val--impact" style="--tooltip-impact-color:${impactColor}">${(impact || 0).toFixed(2)}%</span>
                     </div>
                 `;
     showForeTooltip(e, html);
@@ -612,12 +605,14 @@ export function hideClimateTooltip() {
     hideForeTooltip();
 }
 export function filterClimateByImpact(idx, el) {
-    if (UIState.climateImpactFilter === idx) {
-        UIState.climateImpactFilter = null;
+    const nextFilter = UIState.climateImpactFilter === idx ? null : idx;
+    AppStore.dispatch(StoreActions.patchUI({
+        climateImpactFilter: nextFilter
+    }));
+    if (nextFilter === null) {
         // Clear dimming
         if (el && el.parentElement) el.parentElement.querySelectorAll('.legend-item').forEach(e => e.classList.remove('opacity-20'));
     } else {
-        UIState.climateImpactFilter = idx;
         // Set dimming
         if (el && el.parentElement) {
             el.parentElement.querySelectorAll('.legend-item').forEach(e => e.classList.add('opacity-20'));
@@ -629,28 +624,33 @@ export function filterClimateByImpact(idx, el) {
 }
 
 export function sortClimate(col) {
+    let nextCol = col;
+    let nextDir = 'asc';
     if (UIState.climateSortCol === col) {
-        UIState.climateSortDir = (UIState.climateSortDir === 'asc') ? 'desc' : 'asc';
+        nextDir = (UIState.climateSortDir === 'asc') ? 'desc' : 'asc';
     } else {
-        UIState.climateSortCol = col;
-        UIState.climateSortDir = 'desc'; // Default high impact/temp first
-        if (col === 'date' || col === 'hour') UIState.climateSortDir = 'asc';
+        nextDir = 'desc'; // Default high impact/temp first
+        if (col === 'date' || col === 'hour') nextDir = 'asc';
     }
+    AppStore.dispatch(StoreActions.patchUI({
+        climateSortCol: nextCol,
+        climateSortDir: nextDir
+    }));
     renderClimateTable();
 }
 
 export function toggleClimateFilter(w, h, e) {
     if (e) e.stopPropagation(); // Essential to prevent document click from clearing selection immediately
+    let nextKey = null;
     if (w === null) {
-        UIState.selectedClimateKey = null;
+        nextKey = null;
     } else {
         const key = `${w}-${h}`;
-        if (UIState.selectedClimateKey === key) {
-            UIState.selectedClimateKey = null;
-        } else {
-            UIState.selectedClimateKey = key;
-        }
+        nextKey = (UIState.selectedClimateKey === key) ? null : key;
     }
+    AppStore.dispatch(StoreActions.patchUI({
+        selectedClimateKey: nextKey
+    }));
     // Sync UIState
     renderClimateTable();
     renderClimateHeatmap(); // Update opacity
@@ -842,7 +842,9 @@ export function setupWindowHelpers() {
             const clickedForecastFilter = e.target.closest('[data-action="filter-impact"]');
             const clickedInsideForecastLegend = fLegend && fLegend.contains(e.target);
             if (!clickedForecastFilter && !clickedInsideForecastLegend) {
-                UIState.selectedImpactFilter = null;
+                AppStore.dispatch(StoreActions.patchUI({
+                    selectedImpactFilter: null
+                }));
                 renderAllForecasts({ filter: true });
             }
         }
@@ -853,7 +855,9 @@ export function setupWindowHelpers() {
             const clickedClimateFilter = e.target.closest('[data-action="filter-climate-impact"]');
             const clickedInsideClimateLegend = cLegend && cLegend.contains(e.target);
             if (!clickedClimateFilter && !clickedInsideClimateLegend) {
-                UIState.climateImpactFilter = null;
+                AppStore.dispatch(StoreActions.patchUI({
+                    climateImpactFilter: null
+                }));
                 renderClimateHeatmap();
                 renderClimateTable();
                 renderClimateLegend();
@@ -1081,8 +1085,12 @@ export function update(els, hapCalc) {
     // Impact Text - Heat
     if (res.weather.valid) {
         if (els.weatherImpact) {
-            const heatInfoIcon = `<span data-action="info-tooltip" data-title="" data-text="Pace adjustment from Hot-weather pace calculator by &lt;a href=&quot;https://apps.runningwritings.com/heat-adjusted-pace/&quot; target=&quot;_blank&quot;&gt;John Davis&lt;/a&gt;." style="cursor:pointer; opacity:0.5; position:absolute; top:4px; right:4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></span>`;
-            els.weatherImpact.innerHTML = `Heat Impact: <span style="color:${impactColor}">~${res.weather.impactPct.toFixed(1)}% slowdown</span>${heatInfoIcon}`;
+            const heatInfoIcon = infoIcon(
+                '',
+                'Pace adjustment from Hot-weather pace calculator by &lt;a href=&quot;https://apps.runningwritings.com/heat-adjusted-pace/&quot; target=&quot;_blank&quot;&gt;John Davis&lt;/a&gt;.',
+                'info-tooltip-trigger--card-corner'
+            );
+            els.weatherImpact.innerHTML = `Heat Impact: <span class="impact-note-value" style="--impact-note-color:${impactColor}">~${res.weather.impactPct.toFixed(1)}% slowdown</span>${heatInfoIcon}`;
         }
     } else {
         if (els.weatherImpact) els.weatherImpact.textContent = "";
@@ -1098,16 +1106,20 @@ export function update(els, hapCalc) {
 
             // Headwind (Slowdown)
             if (Math.abs(headwindPct) > 0.1) {
-                html += `<div style="margin-bottom:4px;">Headwind<br><span style="color:#f87171">~${headwindPct.toFixed(1)}% slowdown</span></div>`;
+                html += `<div class="impact-note-line impact-note-line--spaced">Headwind<br><span class="impact-note-value impact-note-value--headwind">~${headwindPct.toFixed(1)}% slowdown</span></div>`;
             }
 
             // Tailwind (Increase/Speedup)
             if (Math.abs(tailwindPct) > 0.1) {
                 const val = Math.abs(tailwindPct);
-                html += `<div>Tailwind<br><span style="color:#22c55e">~${val.toFixed(1)}% faster</span></div>`;
+                html += `<div class="impact-note-line">Tailwind<br><span class="impact-note-value impact-note-value--tailwind">~${val.toFixed(1)}% faster</span></div>`;
             }
             if (!html) html = "Wind Impact: Negligible";
-            const windInfoIcon = `<span data-action="info-tooltip" data-title="" data-text="Pace adjustment from Headwind and tailwind calculator by &lt;a href=&quot;https://apps.runningwritings.com/wind-calculator&quot; target=&quot;_blank&quot;&gt;John Davis&lt;/a&gt;." style="cursor:pointer; opacity:0.5; position:absolute; top:4px; right:4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></span>`;
+            const windInfoIcon = infoIcon(
+                '',
+                'Pace adjustment from Headwind and tailwind calculator by &lt;a href=&quot;https://apps.runningwritings.com/wind-calculator&quot; target=&quot;_blank&quot;&gt;John Davis&lt;/a&gt;.',
+                'info-tooltip-trigger--card-corner'
+            );
 
             els.windImpact.innerHTML = html + windInfoIcon;
         } else {
@@ -1287,9 +1299,15 @@ export function setupTableScrollListeners() {
         foreWrapper.addEventListener('scroll', () => {
             if (UIState.isBatchLoading) return;
             if (foreWrapper.scrollTop + foreWrapper.clientHeight >= foreWrapper.scrollHeight - 150) {
-                UIState.isBatchLoading = true;
+                AppStore.dispatch(StoreActions.patchUI({
+                    isBatchLoading: true
+                }));
                 renderForecastTable('forecast-body-16', 14, true);
-                setTimeout(() => { UIState.isBatchLoading = false; }, 200);
+                setTimeout(() => {
+                    AppStore.dispatch(StoreActions.patchUI({
+                        isBatchLoading: false
+                    }));
+                }, 200);
             }
         });
     }
@@ -1300,15 +1318,22 @@ export function setupTableScrollListeners() {
         climWrapper.addEventListener('scroll', () => {
             if (UIState.isBatchLoading) return;
             if (climWrapper.scrollTop + climWrapper.clientHeight >= climWrapper.scrollHeight - 150) {
-                UIState.isBatchLoading = true;
+                AppStore.dispatch(StoreActions.patchUI({
+                    isBatchLoading: true
+                }));
                 renderClimateTable(true);
-                setTimeout(() => { UIState.isBatchLoading = false; }, 200);
+                setTimeout(() => {
+                    AppStore.dispatch(StoreActions.patchUI({
+                        isBatchLoading: false
+                    }));
+                }, 200);
             }
         });
     }
 
-    UIState.isScrollListenersSetup = true;
-    UIState.isScrollListenersSetup = true;
+    AppStore.dispatch(StoreActions.patchUI({
+        isScrollListenersSetup: true
+    }));
     console.log("Virtual Scroll Ready");
 
     // Init Effects

@@ -161,13 +161,6 @@ export function setupFineTuning(el, type, els, updateFn) {
                     els.time.value = localFormatTime(tSec);
                     updateFn(els, AppState.hapCalc);
                 }
-            } else if (el === els.distance) {
-                const tSec = localParseTime(els.time.value);
-                const d = parseFloat(els.distance.value);
-                if (tSec > 0 && d > 0 && els.inputPace) {
-                    const pacePerKm = tSec / (d / 1000);
-                    els.inputPace.value = localFormatTime(pacePerKm);
-                }
             }
         }
     });

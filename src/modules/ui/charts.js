@@ -67,15 +67,15 @@ export function renderForecastChart(containerId, dayLimit) {
     });
 
     // Build SVG
-    let svg = `<svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg" style="cursor:crosshair;">`;
+    let svg = `<svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg" class="chart-svg">`;
 
     // Grid & Labels
     const steps = 5;
     for (let i = 0; i <= steps; i++) {
         const val = minVal + (valRange * (i / steps));
         const y = getY(val);
-        svg += `<line x1="${pad.left}" y1="${y}" x2="${w - pad.right}" y2="${y}" stroke="var(--border-color)" stroke-width="1" stroke-dasharray="4 4" opacity="0.3" style="pointer-events:none;" />`;
-        svg += `<text x="${pad.left - 5}" y="${y + 3}" fill="var(--text-secondary)" font-size="9" text-anchor="end" style="pointer-events:none;">${Math.round(val)}<tspan font-size="7" dx="1">°C</tspan></text>`;
+        svg += `<line x1="${pad.left}" y1="${y}" x2="${w - pad.right}" y2="${y}" stroke="var(--border-color)" stroke-width="1" stroke-dasharray="4 4" opacity="0.3" class="chart-grid-line" />`;
+        svg += `<text x="${pad.left - 5}" y="${y + 3}" fill="var(--text-secondary)" font-size="9" text-anchor="end" class="chart-axis-label">${Math.round(val)}<tspan font-size="7" dx="1">°C</tspan></text>`;
     }
 
     // Days Delimiter (Midnight) & Labels (Noon)
@@ -213,7 +213,7 @@ export function renderRainChart(containerId, dayLimit) {
         }
     });
 
-    let svg = `<svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg" style="cursor:crosshair;">`;
+    let svg = `<svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg" class="chart-svg">`;
 
     // Grid (Left Axis based - Rain)
     const steps = 5;
@@ -224,13 +224,13 @@ export function renderRainChart(containerId, dayLimit) {
         const valProb = pct * maxProb;
 
         // Grid Line
-        svg += `<line x1="${pad.left}" y1="${y}" x2="${w - pad.right}" y2="${y}" stroke="var(--border-color)" stroke-width="1" stroke-dasharray="4 4" opacity="0.3" style="pointer-events:none;" />`;
+        svg += `<line x1="${pad.left}" y1="${y}" x2="${w - pad.right}" y2="${y}" stroke="var(--border-color)" stroke-width="1" stroke-dasharray="4 4" opacity="0.3" class="chart-grid-line" />`;
 
         // Label Left (Rain)
-        svg += `<text x="${pad.left - 5}" y="${y + 3}" fill="#60a5fa" font-size="9" text-anchor="end" style="pointer-events:none;">${Math.round(valRain)} <tspan font-size="7">mm</tspan></text>`;
+        svg += `<text x="${pad.left - 5}" y="${y + 3}" fill="#60a5fa" font-size="9" text-anchor="end" class="chart-axis-label">${Math.round(valRain)} <tspan font-size="7">mm</tspan></text>`;
 
         // Label Right (Prob)
-        svg += `<text x="${w - pad.right + 5}" y="${y + 3}" fill="#93c5fd" font-size="9" text-anchor="start" style="pointer-events:none;">${Math.round(valProb)}%</text>`;
+        svg += `<text x="${w - pad.right + 5}" y="${y + 3}" fill="#93c5fd" font-size="9" text-anchor="start" class="chart-axis-label">${Math.round(valProb)}%</text>`;
     }
 
     // Days Delimiter (Midnight) & Labels (Noon)
@@ -277,7 +277,7 @@ export function renderRainChart(containerId, dayLimit) {
     // Is it possible CSS pointer-events or stacking is an issue?
     // Let's ensure this rect is ON TOP and has pointer events.
     svg += `<rect x="${pad.left}" y="${pad.top}" width="${chartW}" height="${chartH}" fill="white" fill-opacity="0" 
-                            style="cursor:crosshair; pointer-events:all;"
+                            class="chart-interact-layer"
                             data-action="chart-interact"
                             data-type="rain"
                             data-total-w="${w}"
@@ -334,7 +334,7 @@ export function renderWindChart(containerId, dayLimit) {
         }
     });
 
-    let svg = `<svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg" style="cursor:crosshair;">`;
+    let svg = `<svg width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg" class="chart-svg">`;
 
     // Grid (Left Axis based - Wind)
     const steps = 5;
@@ -344,10 +344,10 @@ export function renderWindChart(containerId, dayLimit) {
         const val = pct * maxWind;
 
         // Grid Line
-        svg += `<line x1="${pad.left}" y1="${y}" x2="${w - pad.right}" y2="${y}" stroke="var(--border-color)" stroke-width="1" stroke-dasharray="4 4" opacity="0.3" style="pointer-events:none;" />`;
+        svg += `<line x1="${pad.left}" y1="${y}" x2="${w - pad.right}" y2="${y}" stroke="var(--border-color)" stroke-width="1" stroke-dasharray="4 4" opacity="0.3" class="chart-grid-line" />`;
 
         // Label Left (Wind)
-        svg += `<text x="${pad.left - 5}" y="${y + 3}" fill="#c084fc" font-size="9" text-anchor="end" style="pointer-events:none;">${Math.round(val)} <tspan font-size="7">km/h</tspan></text>`;
+        svg += `<text x="${pad.left - 5}" y="${y + 3}" fill="#c084fc" font-size="9" text-anchor="end" class="chart-axis-label">${Math.round(val)} <tspan font-size="7">km/h</tspan></text>`;
     }
 
     // Days Delimiter (Midnight) & Labels (Noon)
@@ -386,7 +386,7 @@ export function renderWindChart(containerId, dayLimit) {
 
     // Interaction Layer
     svg += `<rect x="${pad.left}" y="${pad.top}" width="${chartW}" height="${chartH}" fill="white" fill-opacity="0" 
-                            style="cursor:crosshair; pointer-events:all;"
+                            class="chart-interact-layer"
                             data-action="chart-interact"
                             data-type="wind"
                             data-total-w="${w}"

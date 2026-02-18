@@ -1,9 +1,9 @@
 import { UIState } from './state.js';
-import { getImpactHeatmapColor, getImpactCategory, getBasePaceSec } from './utils.js';
-import { getISOWeek } from '../core.js';
+import { getImpactHeatmapColor, getImpactCategory, getBasePaceSec, getActiveWeatherTimeZone } from './utils.js';
 import { renderClimateTable } from './tables.js';
 import { renderMonthlyAverages } from './climate.js';
 import { AppState } from '../appState.js';
+import { getDateForISOWeek, getNowIsoHour, getNowIsoWeek, getReferenceYear, getTimeZoneParts } from '../time.js';
 
 export function renderForecastHeatmap(contId, legSelector, dayLimit) {
     const cont = document.getElementById(contId);
@@ -33,46 +33,40 @@ export function renderForecastHeatmap(contId, legSelector, dayLimit) {
 
     let svgInner = '';
 
+    const forecastTimeZone = getActiveWeatherTimeZone();
+    let currentIsoPrefix = '';
+    try {
+        currentIsoPrefix = getNowIsoHour(forecastTimeZone);
+    } catch (e) {
+        currentIsoPrefix = getNowIsoHour();
+    }
+    const currentDateIso = currentIsoPrefix.slice(0, 10);
+    const currentHour = Number.parseInt(currentIsoPrefix.slice(11, 13), 10);
+
+    const dayKeys = Object.keys(days).slice(0, dayLimit || 7);
+
     // Hour Labels (Top)
     for (let h = 0; h < 24; h++) {
         const x = labelW + (h * (cellW + gap)) + (cellW / 2);
         const y = headerH - 4;
-        svgInner += `<text x="${x}" y="${y}" text-anchor="middle" font-size="8" fill="var(--text-secondary)">${h}</text>`;
-    }
-
-    // Local ISO for "current hour" check
-    const getLocalIso = (timeZone) => {
-        const now = new Date();
-        const options = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', hour12: false };
-        if (timeZone) options.timeZone = timeZone;
-        const parts = new Intl.DateTimeFormat('en-CA', options).formatToParts(now);
-        const p = {};
-        parts.forEach(({ type, value }) => p[type] = value);
-        return `${p.year}-${p.month}-${p.day}T${p.hour}`;
-    };
-    const forecastTimeZone = AppState.weatherData && AppState.weatherData.timezone
-        ? AppState.weatherData.timezone
-        : Intl.DateTimeFormat().resolvedOptions().timeZone;
-    let currentIsoPrefix = '';
-    try {
-        currentIsoPrefix = getLocalIso(forecastTimeZone);
-    } catch (e) {
-        currentIsoPrefix = getLocalIso();
+        const isCurrentHourLabel = Number.isInteger(currentHour) && currentHour === h;
+        svgInner += `<text x="${x}" y="${y}" text-anchor="middle" font-size="8" class="${isCurrentHourLabel ? 'heatmap-hour-label heatmap-hour-label--now' : 'heatmap-hour-label'}">${h}</text>`;
     }
 
     // Render Days
-    const dayKeys = Object.keys(days).slice(0, dayLimit || 7);
     dayKeys.forEach((dayKey, i) => {
         const dayData = days[dayKey];
         const dObj = new Date(dayKey + 'T12:00:00');
-        const dayName = dObj.toLocaleDateString('en-US', { weekday: 'short' });
+        const rawDayName = dObj.toLocaleDateString('en-US', { weekday: 'short' });
         const dateStr = dayKey.substring(8) + '/' + dayKey.substring(5, 7);
+        const isCurrentDay = dayKey === currentDateIso;
+        const dayName = isCurrentDay ? 'Today' : rawDayName;
 
         const yBase = headerH + (i * (cellH + gap));
 
         // Day Label (Left)
-        svgInner += `<text x="${labelW - 6}" y="${yBase + (cellH / 2) + 3}" text-anchor="end" font-size="9" font-weight="600" fill="var(--text-primary)">
-            ${dayName} <tspan font-size="7" font-weight="normal" opacity="0.7">${dateStr}</tspan>
+        svgInner += `<text x="${labelW - 6}" y="${yBase + (cellH / 2) + 3}" text-anchor="end" class="${isCurrentDay ? 'heatmap-day-label heatmap-day-label--now' : 'heatmap-day-label'}">
+            ${dayName} <tspan class="heatmap-day-label-date">${dateStr}</tspan>
         </text>`;
 
         // Cells
@@ -101,12 +95,14 @@ export function renderForecastHeatmap(contId, legSelector, dayLimit) {
                 if (UIState.selectedImpactFilter && category !== UIState.selectedImpactFilter) opacity = '0.05';
                 if (UIState.selectedForeHour && UIState.selectedForeHour !== d.time) opacity = '0.2';
 
+                const isCurrentSlot = (dayKey === currentDateIso) && (h === currentHour);
+                if (isCurrentSlot && opacity !== '1') opacity = '0.5';
+
                 let stroke = '';
-                if (d.time.startsWith(currentIsoPrefix)) {
-                    stroke = 'stroke="#fff" stroke-width="1.5"';
-                }
                 if (UIState.selectedForeHour === d.time) {
                     stroke = 'stroke="#fff" stroke-width="2" paint-order="stroke"';
+                } else if (isCurrentSlot) {
+                    stroke = 'stroke="#dbeafe" stroke-width="2.4" paint-order="stroke"';
                 }
 
                 // Night Shading Logic (Forecast - Fractional with Dawn/Dusk)
@@ -149,7 +145,7 @@ export function renderForecastHeatmap(contId, legSelector, dayLimit) {
 
                 svgInner += `<rect x="${x}" y="${yBase}" width="${cellW}" height="${cellH}" rx="2" 
                     fill="${color}" fill-opacity="${opacity}" ${stroke}
-                    class="heatmap-cell"
+                    class="${isCurrentSlot ? 'heatmap-cell heatmap-cell--now' : 'heatmap-cell'}"
                     data-action="select-forecast"
                     data-time="${d.time}"
                     data-day="${dayName} ${dateStr}"
@@ -166,6 +162,9 @@ export function renderForecastHeatmap(contId, legSelector, dayLimit) {
                     svgInner += `<rect x="${x + (rect.xOffset * cellW)}" y="${yBase}" width="${rect.wFrac * cellW}" height="${cellH}" rx="2" 
                         fill="#000" fill-opacity="${opacity === '1' ? '0.2' : '0.05'}" pointer-events="none" />`;
                 });
+                if (isCurrentSlot) {
+                    svgInner += `<rect x="${x - 1.4}" y="${yBase - 1.4}" width="${cellW + 2.8}" height="${cellH + 2.8}" rx="3.5" class="heatmap-now-ring" />`;
+                }
             } else {
                 svgInner += `<rect x="${x}" y="${yBase}" width="${cellW}" height="${cellH}" rx="2" fill="var(--card-bg)" opacity="0.1" />`;
             }
@@ -232,9 +231,18 @@ export function renderClimateHeatmap(data) {
     renderMonthlyAverages(); // Update monthly list
 
     // Calculate Current Time for Highlight
-    const now = new Date();
-    const curH = now.getHours();
-    const curW = getISOWeek(now);
+    const forecastTimeZone = getActiveWeatherTimeZone();
+    let curH = new Date().getHours();
+    let curW = getNowIsoWeek();
+    let refYear = getReferenceYear();
+    try {
+        const nowParts = getTimeZoneParts(forecastTimeZone);
+        curH = nowParts.hour;
+        curW = getNowIsoWeek(forecastTimeZone);
+        refYear = nowParts.year;
+    } catch (e) {
+        // keep fallback values
+    }
 
     // Dimensions
     const cellW = 12; // Base unit
@@ -256,8 +264,8 @@ export function renderClimateHeatmap(data) {
     // Use local date calculation to get Month name (getDateFromWeek returns string, we need Date)
     let lastMonth = "";
     for (let w = 1; w <= cols; w++) {
-        const d = new Date(2025, 0, 1 + (w - 1) * 7);
-        const m = d.toLocaleString('en-US', { month: 'short' });
+        const d = getDateForISOWeek(w, refYear);
+        const m = d.toLocaleString('en-US', { month: 'short', timeZone: 'UTC' });
 
         if (m !== lastMonth) {
             const x = labelW + ((w - 1) * (cellW + gap));
@@ -271,7 +279,8 @@ export function renderClimateHeatmap(data) {
     // 2. Hour Labels (Left) - Show ALL 24h
     for (let h = 0; h < 24; h++) {
         const y = headerH + (h * (cellH + gap)) + (cellH / 2) + 3;
-        svgInner += `<text x="${labelW - 6}" y="${y}" text-anchor="end" font-size="9" fill="var(--text-secondary)">${h}</text>`;
+        const isCurrentHourLabel = h === curH;
+        svgInner += `<text x="${labelW - 6}" y="${y}" text-anchor="end" font-size="9" class="${isCurrentHourLabel ? 'heatmap-hour-label heatmap-hour-label--now' : 'heatmap-hour-label'}">${h}</text>`;
     }
 
     // 3. Cells
@@ -287,6 +296,7 @@ export function renderClimateHeatmap(data) {
             let color = 'transparent';
             let opacity = '1';
             let stroke = '';
+            const isCurrentSlot = (w === curW && h === curH);
 
             // Dimming Logic (Filter by Selection)
             if (UIState.selectedClimateKey) {
@@ -301,6 +311,7 @@ export function renderClimateHeatmap(data) {
                     if (catIdx !== UIState.climateImpactFilter) opacity = '0.1';
                 }
             }
+            if (isCurrentSlot && opacity !== '1') opacity = '0.45';
 
             if (pt) {
                 const val = pt.mean_impact;
@@ -310,24 +321,29 @@ export function renderClimateHeatmap(data) {
                 if (UIState.climateImpactFilter !== null && catIdx !== UIState.climateImpactFilter) {
                     opacity = '0.1';
                 }
+                if (isCurrentSlot && opacity !== '1') opacity = '0.45';
 
                 color = getImpactHeatmapColor(val);
 
                 // Highlight Current Time
-                if (w === curW && h === curH) {
-                    stroke = 'stroke="#3b82f6" stroke-width="2" paint-order="stroke"';
-                } else if (UIState.selectedClimateKey === `${w}-${h}`) {
+                if (UIState.selectedClimateKey === `${w}-${h}`) {
                     stroke = 'stroke="#fff" stroke-width="2" paint-order="stroke"';
+                } else if (isCurrentSlot) {
+                    stroke = 'stroke="#dbeafe" stroke-width="2.4" paint-order="stroke"';
                 }
 
 
                 svgInner += `<rect x="${x}" y="${y}" width="${cellW}" height="${cellH}" rx="1"
                         fill="${color}" fill-opacity="${opacity}" ${stroke}
-                        class="heatmap-cell"
+                        class="${isCurrentSlot ? 'heatmap-cell heatmap-cell--now' : 'heatmap-cell'}"
                         data-action="climate-cell"
                         data-week="${w}" data-hour="${h}"
-                        data-impact="${val}" data-temp="${pt.mean_temp}" data-dew="${pt.mean_dew}" data-count="${pt.count}"
+                        data-impact="${val}" data-temp="${pt.mean_temp}" data-dew="${pt.mean_dew}" data-count="${pt.samples || 0}"
                     />`;
+                if (isCurrentSlot) {
+                    svgInner += `<rect x="${x - 1.2}" y="${y - 1.2}" width="${cellW + 2.4}" height="${cellH + 2.4}" rx="2.2" class="heatmap-now-ring heatmap-now-ring--small" />`;
+                    svgInner += `<circle cx="${x + (cellW / 2)}" cy="${y + (cellH / 2)}" r="1.15" class="heatmap-now-dot" />`;
+                }
 
 
             } else {

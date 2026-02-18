@@ -1,7 +1,15 @@
 import { UIState } from './state.js';
-import { getImpactColor, getImpactCategory } from './utils.js';
+import { getImpactColor, getActiveWeatherTimeZone } from './utils.js';
 import { loadFromStorage, saveToStorage } from '../storage.js';
 import { AppState } from '../appState.js';
+import {
+    addDaysToIsoMinute,
+    getDateForISOWeek,
+    getNowIsoMinute,
+    getReferenceYear,
+    getTimeZoneParts,
+    parseIsoMinuteToUtcDate
+} from '../time.js';
 
 export function renderOverview() {
     // Placeholder if needed
@@ -11,22 +19,25 @@ export function calculateBestRunTime(data) {
     const banner = document.getElementById('best-run-banner');
     if (!banner || !data || data.length === 0) return;
 
-    const now = new Date();
-    let end;
+    const timeZone = getActiveWeatherTimeZone();
+    let nowIso = getNowIsoMinute();
+    try {
+        nowIso = getNowIsoMinute(timeZone);
+    } catch (e) {
+        nowIso = getNowIsoMinute();
+    }
+    let endIso = addDaysToIsoMinute(nowIso, 1) || nowIso;
 
     // Range Logic
     if (UIState.selectedBestRunRange === '7d') {
-        end = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+        endIso = addDaysToIsoMinute(nowIso, 7) || endIso;
     } else if (UIState.selectedBestRunRange === '14d') {
-        end = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
-    } else {
-        // Default 24h
-        end = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+        endIso = addDaysToIsoMinute(nowIso, 14) || endIso;
     }
 
     const windowData = data.filter(d => {
-        const t = new Date(d.time);
-        return t >= now && t <= end && d.temp != null && d.dew != null;
+        if (!d || typeof d.time !== 'string') return false;
+        return d.time >= nowIso && d.time <= endIso && d.temp != null && d.dew != null;
     });
 
     if (windowData.length === 0) {
@@ -58,17 +69,22 @@ export function calculateBestRunTime(data) {
     if (!bestHour) return;
 
     // 4. Update UI
-    const dateBest = new Date(bestHour.time);
-    const timeStr = dateBest.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const bestDateIso = bestHour.time.slice(0, 10);
+    const timeStr = bestHour.time.slice(11, 16);
+    const todayIso = nowIso.slice(0, 10);
+    const tomorrowIso = addDaysToIsoMinute(`${todayIso}T00:00`, 1).slice(0, 10);
 
     // Smart Date String
     let dayStr;
-    if (dateBest.getDate() === now.getDate()) {
+    if (bestDateIso === todayIso) {
         dayStr = 'Today';
-    } else if (dateBest.getDate() === new Date(now.getTime() + 86400000).getDate()) {
+    } else if (bestDateIso === tomorrowIso) {
         dayStr = 'Tomorrow';
     } else {
-        dayStr = dateBest.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+        const dayDate = parseIsoMinuteToUtcDate(`${bestDateIso}T00:00`);
+        dayStr = dayDate
+            ? dayDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' })
+            : bestDateIso;
     }
 
     const elVal = document.getElementById('best-run-val');
@@ -102,9 +118,20 @@ export function renderMonthlyAverages(data) {
         return;
     }
 
+    const timeZone = getActiveWeatherTimeZone();
+    let refYear = getReferenceYear();
+    let currentMIdx = new Date().getMonth();
+    try {
+        refYear = getReferenceYear(timeZone);
+        currentMIdx = getTimeZoneParts(timeZone).month - 1;
+    } catch (e) {
+        refYear = getReferenceYear();
+        currentMIdx = new Date().getMonth();
+    }
+
     const months = Array.from({ length: 12 }, (_, i) => ({
         index: i,
-        name: new Date(2025, i, 1).toLocaleString('en-US', { month: 'short' }),
+        name: new Date(Date.UTC(refYear, i, 1)).toLocaleString('en-US', { month: 'short', timeZone: 'UTC' }),
         weeks: [],
         stats: { min: Infinity, max: -Infinity, rain: 0 }
     }));
@@ -121,8 +148,8 @@ export function renderMonthlyAverages(data) {
     Object.keys(weeks).forEach(w => {
         const wk = weeks[w];
         const weekNum = parseInt(w);
-        const d = new Date(2025, 0, 1 + (weekNum - 1) * 7 + 3);
-        const mIdx = d.getMonth();
+        const d = getDateForISOWeek(weekNum, refYear);
+        const mIdx = d.getUTCMonth();
 
         const wMin = Math.min(...wk.temps);
         const wMax = Math.max(...wk.temps);
@@ -151,7 +178,7 @@ export function renderMonthlyAverages(data) {
 
         // Rain
         const avgDailyRain = m.weeks.reduce((a, b) => a + b.dailyRain, 0) / m.weeks.length;
-        const daysInMonth = new Date(2025, m.index + 1, 0).getDate();
+        const daysInMonth = new Date(Date.UTC(refYear, m.index + 1, 0)).getUTCDate();
         m.stats.rain = avgDailyRain * daysInMonth;
 
         // Track globals
@@ -173,8 +200,6 @@ export function renderMonthlyAverages(data) {
         <div class="monthly-rain-header" style="flex:0 0 120px; text-align:center;">Rain</div>
     </div>
     `;
-    const currentMIdx = new Date().getMonth();
-
     months.forEach(m => {
         const isCurrent = (m.index === currentMIdx);
         const rowBg = isCurrent ? 'background:rgba(255,255,255,0.05); border-radius:6px;' : '';

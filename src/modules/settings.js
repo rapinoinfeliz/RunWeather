@@ -1,6 +1,7 @@
 // Settings modal logic extracted from main.js init()
 import { loadFromStorage, saveToStorage } from './storage.js';
 import { AppState } from './appState.js';
+import { AppStore, StoreActions } from './store.js';
 
 /**
  * Initialize the settings modal: open, close, save, and unit radio change handlers.
@@ -65,8 +66,7 @@ export function initSettings(els, updateFn) {
             if (radio.checked) newSystem = radio.value;
         }
 
-        const systemChanged = newSystem !== AppState.unitSystem;
-        AppState.unitSystem = newSystem;
+        AppStore.dispatch(StoreActions.patchApp({ unitSystem: newSystem }));
         saveToStorage('unit_system', newSystem);
 
         // 2. Weight
@@ -77,17 +77,17 @@ export function initSettings(els, updateFn) {
                 weightKg = val / 2.20462;
             }
 
-            AppState.runner.weight = weightKg;
+            const runnerPatch = { weight: weightKg };
             saveToStorage('runner_weight', weightKg);
 
             // 2b. Height
             if (heightInput) {
                 const h = parseInt(heightInput.value);
                 if (!isNaN(h) && h > 0) {
-                    AppState.runner.height = h;
+                    runnerPatch.height = h;
                     saveToStorage('runner_height', h);
                 } else {
-                    AppState.runner.height = null;
+                    runnerPatch.height = null;
                     saveToStorage('runner_height', null);
                 }
             }
@@ -96,10 +96,10 @@ export function initSettings(els, updateFn) {
             if (ageInput) {
                 const age = parseInt(ageInput.value);
                 if (!isNaN(age) && age > 0) {
-                    AppState.runner.age = age;
+                    runnerPatch.age = age;
                     saveToStorage('runner_age', age);
                 } else {
-                    AppState.runner.age = null;
+                    runnerPatch.age = null;
                     saveToStorage('runner_age', null);
                 }
             }
@@ -107,18 +107,19 @@ export function initSettings(els, updateFn) {
             if (genderInput) {
                 const gender = genderInput.value;
                 if (gender) {
-                    AppState.runner.gender = gender;
+                    runnerPatch.gender = gender;
                     saveToStorage('runner_gender', gender);
                 } else {
-                    AppState.runner.gender = null;
+                    runnerPatch.gender = null;
                     saveToStorage('runner_gender', null);
                 }
             }
+            AppStore.dispatch(StoreActions.patchRunner(runnerPatch));
 
             // 4. Base Altitude
             if (altitudeInput) {
                 const alt = parseInt(altitudeInput.value) || 0;
-                AppState.altitude.base = alt;
+                AppStore.dispatch(StoreActions.patchAltitude({ base: alt }));
                 saveToStorage('base_altitude', alt);
             }
 
@@ -168,24 +169,25 @@ export function initSettings(els, updateFn) {
 export function loadSavedSettings() {
     // Unit System
     const savedUnitSystem = loadFromStorage('unit_system');
-    AppState.unitSystem = savedUnitSystem || 'metric';
+    AppStore.dispatch(StoreActions.patchApp({
+        unitSystem: savedUnitSystem || 'metric'
+    }));
 
     // Weight
     const savedWeight = loadFromStorage('runner_weight');
-    AppState.runner.weight = savedWeight ? parseFloat(savedWeight) : 65;
-
-    // Height
     const savedHeight = loadFromStorage('runner_height');
-    AppState.runner.height = savedHeight ? parseInt(savedHeight) : null;
-
-    // Age & Gender
     const savedAge = loadFromStorage('runner_age');
-    if (savedAge) AppState.runner.age = parseInt(savedAge);
-
     const savedGender = loadFromStorage('runner_gender');
-    if (savedGender) AppState.runner.gender = savedGender;
+    AppStore.dispatch(StoreActions.patchRunner({
+        weight: savedWeight ? parseFloat(savedWeight) : 65,
+        height: savedHeight ? parseInt(savedHeight) : null,
+        age: savedAge ? parseInt(savedAge) : null,
+        gender: savedGender || null
+    }));
 
     // Base Altitude
     const savedAltitude = loadFromStorage('base_altitude');
-    AppState.altitude.base = savedAltitude ? parseInt(savedAltitude) : 0;
+    AppStore.dispatch(StoreActions.patchAltitude({
+        base: savedAltitude ? parseInt(savedAltitude) : 0
+    }));
 }

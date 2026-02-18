@@ -1,8 +1,10 @@
 import { UIState } from './state.js';
-import { infoIcon, getImpactColor, getDewColor, getCondColor, getImpactCategory, getBasePaceSec, getDateFromWeek, getWeatherIcon } from './utils.js';
+import { infoIcon, getImpactColor, getDewColor, getCondColor, getImpactCategory, getBasePaceSec, getDateFromWeek, getWeatherIcon, getActiveWeatherTimeZone } from './utils.js';
 import { VDOT_MATH, parseTime, formatTime } from '../core.js';
 import { calculateAgeGrade } from '../engine.js';
 import { AppState } from '../appState.js';
+import { AppStore, StoreActions } from '../store.js';
+import { addDaysToIsoMinute, getNowIsoMinute, parseIsoMinuteToUtcDate } from '../time.js';
 
 let _vdotWeightActive = false;
 let _vdotWeightTimer = null;
@@ -448,20 +450,24 @@ function getForecastViewKey(dayLimit, baseSec) {
 
 function buildForecastViewData(dayLimit, baseSec) {
     let viewData = [];
-    let displayLimitDate = null;
+    let displayLimitIso = null;
+    const timeZone = getActiveWeatherTimeZone();
+    let nowIso = getNowIsoMinute();
+    try {
+        nowIso = getNowIsoMinute(timeZone);
+    } catch (e) {
+        nowIso = getNowIsoMinute();
+    }
+
     if (dayLimit) {
-        const start = new Date(UIState.forecastData[0].time);
-        displayLimitDate = new Date(start);
-        displayLimitDate.setDate(start.getDate() + dayLimit);
+        displayLimitIso = addDaysToIsoMinute(UIState.forecastData[0].time, dayLimit) || null;
     }
 
     if (UIState.selectedForeHour) {
         viewData = UIState.forecastData.filter(d => d.time === UIState.selectedForeHour);
     } else {
-        const now = new Date();
         viewData = UIState.forecastData.filter(item => {
-            const t = new Date(item.time);
-            return t > now && (!displayLimitDate || t < displayLimitDate);
+            return item.time >= nowIso && (!displayLimitIso || item.time < displayLimitIso);
         });
     }
 
@@ -477,7 +483,7 @@ function buildForecastViewData(dayLimit, baseSec) {
         let valA;
         let valB;
         if (UIState.forecastSortCol === 'time') {
-            return (new Date(a.time) - new Date(b.time)) * (UIState.forecastSortDir === 'asc' ? 1 : -1);
+            return a.time.localeCompare(b.time) * (UIState.forecastSortDir === 'asc' ? 1 : -1);
         }
         if (UIState.forecastSortCol === 'temp') { valA = a.temp; valB = b.temp; }
         else if (UIState.forecastSortCol === 'dew') { valA = a.dew; valB = b.dew; }
@@ -499,7 +505,7 @@ function buildForecastViewData(dayLimit, baseSec) {
 
         if (valA < valB) return UIState.forecastSortDir === 'asc' ? -1 : 1;
         if (valA > valB) return UIState.forecastSortDir === 'asc' ? 1 : -1;
-        return new Date(a.time) - new Date(b.time);
+        return a.time.localeCompare(b.time);
     });
 
     return viewData;
@@ -522,9 +528,13 @@ export function renderForecastTable(tableBodyId, dayLimit, isAppend = false) {
 
     // Reset limit if not appending (new filter/sort/initial load)
     if (!isAppend) {
-        UIState.forecastRenderLimit = 50;
+        AppStore.dispatch(StoreActions.patchUI({
+            forecastRenderLimit: 50
+        }));
     } else {
-        UIState.forecastRenderLimit += UIState.SCROLL_BATCH_SIZE;
+        AppStore.dispatch(StoreActions.patchUI({
+            forecastRenderLimit: UIState.forecastRenderLimit + UIState.SCROLL_BATCH_SIZE
+        }));
     }
 
     const table = tbody.closest('table');
@@ -560,6 +570,12 @@ export function renderForecastTable(tableBodyId, dayLimit, isAppend = false) {
     let baseSec = getBasePaceSec();
 
     const viewData = getForecastViewDataMemoized(dayLimit, baseSec);
+    let todayIso = getNowIsoMinute().slice(0, 10);
+    try {
+        todayIso = getNowIsoMinute(getActiveWeatherTimeZone()).slice(0, 10);
+    } catch (e) {
+        todayIso = getNowIsoMinute().slice(0, 10);
+    }
 
     // Pagination Slice
     const startIdx = isAppend ? UIState.forecastRenderLimit - UIState.SCROLL_BATCH_SIZE : 0;
@@ -569,11 +585,13 @@ export function renderForecastTable(tableBodyId, dayLimit, isAppend = false) {
     if (!itemsToRender.length && isAppend) return; // No more data to append
 
     const html = itemsToRender.map(h => {
-        const date = new Date(h.time);
-        const now = new Date();
-        const isToday = date.getDate() === now.getDate();
-        const dayName = isToday ? 'Today' : date.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' });
-        const timeStr = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+        const dateIso = h.time.slice(0, 10);
+        const isToday = dateIso === todayIso;
+        const dayDate = parseIsoMinuteToUtcDate(`${dateIso}T00:00`);
+        const dayName = isToday
+            ? 'Today'
+            : (dayDate ? dayDate.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', timeZone: 'UTC' }) : dateIso);
+        const timeStr = h.time.slice(11, 16);
 
         let pct = 0;
         let impactColor = '#333';
@@ -611,13 +629,13 @@ export function renderForecastTable(tableBodyId, dayLimit, isAppend = false) {
                     ${timeStr}
                 </div>
             </td>
-            <td class="forecast-cell-center" style="color:${tempColor};">${h.temp != null ? h.temp.toFixed(1) : '-'}\u00b0</td>
-            <td class="forecast-cell-center" style="color:${dewColor};">${h.dew != null ? h.dew.toFixed(1) : '-'}\u00b0</td>
-            <td class="forecast-cell-center" style="color:${rainColor};">
+            <td class="forecast-cell-center forecast-cell-color" style="--cell-fg:${tempColor};">${h.temp != null ? h.temp.toFixed(1) : '-'}\u00b0</td>
+            <td class="forecast-cell-center forecast-cell-color" style="--cell-fg:${dewColor};">${h.dew != null ? h.dew.toFixed(1) : '-'}\u00b0</td>
+            <td class="forecast-cell-center forecast-cell-color" style="--cell-fg:${rainColor};">
                 <div class="forecast-rain-main">${rain > 0 ? rain.toFixed(1) + 'mm' : '-'}</div>
                 <div class="forecast-rain-prob" style="--cell-prob-color:${probColor};">${prob}%</div>
             </td>
-            <td class="forecast-cell-center" style="color:${windColor};">
+            <td class="forecast-cell-center forecast-cell-color" style="--cell-fg:${windColor};">
                 <div>${wind.toFixed(1)} <span class="forecast-wind-unit">km/h</span></div>
                 <div class="forecast-wind-dir-wrap">
                    <span class="forecast-wind-arrow" style="--wind-dir-deg:${dir}deg;">\u2193</span>
@@ -651,9 +669,13 @@ export function renderClimateTable(isAppend = false) {
 
     // Reset pagination limit if not appending
     if (!isAppend) {
-        UIState.climateRenderLimit = 50;
+        AppStore.dispatch(StoreActions.patchUI({
+            climateRenderLimit: 50
+        }));
     } else {
-        UIState.climateRenderLimit += UIState.SCROLL_BATCH_SIZE;
+        AppStore.dispatch(StoreActions.patchUI({
+            climateRenderLimit: UIState.climateRenderLimit + UIState.SCROLL_BATCH_SIZE
+        }));
     }
 
     let data = (UIState.climateData || []).slice();
@@ -745,10 +767,10 @@ export function renderClimateTable(isAppend = false) {
                     <div class="climate-date-line">${dateStr}</div>
                     <div class="climate-time-line">${timeStr}</div>
                 </td>
-                <td class="forecast-cell-center" style="color:${tempColor}">${(d.mean_temp != null ? d.mean_temp : 0).toFixed(1)}\u00b0</td>
-                <td class="forecast-cell-center" style="color:${dewColor}">${(d.mean_dew != null ? d.mean_dew : 0).toFixed(1)}\u00b0</td>
-                <td class="forecast-cell-center" style="color:${rainColor}">${d.mean_precip > 0 ? (d.mean_precip || 0).toFixed(2) + 'mm' : '-'}</td>
-                <td class="forecast-cell-center" style="color:${windColor}">${(d.mean_wind || 0).toFixed(1)} <span class="climate-wind-unit">km/h</span></td>
+                <td class="forecast-cell-center forecast-cell-color" style="--cell-fg:${tempColor}">${(d.mean_temp != null ? d.mean_temp : 0).toFixed(1)}\u00b0</td>
+                <td class="forecast-cell-center forecast-cell-color" style="--cell-fg:${dewColor}">${(d.mean_dew != null ? d.mean_dew : 0).toFixed(1)}\u00b0</td>
+                <td class="forecast-cell-center forecast-cell-color" style="--cell-fg:${rainColor}">${d.mean_precip > 0 ? (d.mean_precip || 0).toFixed(2) + 'mm' : '-'}</td>
+                <td class="forecast-cell-center forecast-cell-color" style="--cell-fg:${windColor}">${(d.mean_wind || 0).toFixed(1)} <span class="climate-wind-unit">km/h</span></td>
                 <td class="forecast-cell-center">
                     <span class="impact-badge impact-badge--compact ${impactCategoryClass}" style="--impact-bg:${impactColor};">
                         ${(d.mean_impact || 0).toFixed(2)}%

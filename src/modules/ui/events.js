@@ -2,6 +2,11 @@ import { UIState } from './state.js';
 import { renderAllForecasts, renderClimateHeatmap, renderClimateTable, renderClimateLegend, calculateBestRunTime } from './renderers.js';
 import { formatTime } from '../core.js';
 import { getCondColor, showToast } from './utils.js';
+import { AppStore, StoreActions } from '../store.js';
+
+function patchUI(patch) {
+    AppStore.dispatch(StoreActions.patchUI(patch));
+}
 
 function shouldUseTooltipSheet(preferSheet = false) {
     if (preferSheet) return true;
@@ -153,34 +158,38 @@ export function handleCellHover(e, el) {
 
     const html = `
                         <div class="tooltip-header">${day} ${hour}:00</div>
-                        <div class="tooltip-row"><span class="tooltip-label">Temp:</span> <span class="tooltip-val" style="color:#fff">${temp}°</span></div>
-                        <div class="tooltip-row"><span class="tooltip-label">Dew:</span> <span class="tooltip-val" style="color:#60a5fa">${dew}°</span></div>
-                        <div class="tooltip-row" style="margin-top:4px; padding-top:4px; border-top:1px solid #374151">
-                            <span class="tooltip-label">Impact:</span> <span class="tooltip-val" style="color:${color}">${pct}%</span>
+                        <div class="tooltip-row"><span class="tooltip-label">Temp:</span> <span class="tooltip-val tooltip-val--temp">${temp}°</span></div>
+                        <div class="tooltip-row"><span class="tooltip-label">Dew:</span> <span class="tooltip-val tooltip-val--dew">${dew}°</span></div>
+                        <div class="tooltip-row tooltip-row--divider">
+                            <span class="tooltip-label">Impact:</span> <span class="tooltip-val tooltip-val--impact" style="--tooltip-impact-color:${color}">${pct}%</span>
                         </div>
                     `;
     showForeTooltip(e, html);
 }
 
 export function sortForecastTable(col) {
+    let nextSortCol = col;
+    let nextSortDir = 'asc';
     if (UIState.forecastSortCol === col) {
-        UIState.forecastSortDir = UIState.forecastSortDir === 'asc' ? 'desc' : 'asc';
-    } else {
-        UIState.forecastSortCol = col;
-        UIState.forecastSortDir = 'asc';
+        nextSortDir = UIState.forecastSortDir === 'asc' ? 'desc' : 'asc';
     }
+    patchUI({
+        forecastSortCol: nextSortCol,
+        forecastSortDir: nextSortDir
+    });
     renderAllForecasts({ sort: true });
 }
 
 export function toggleImpactFilter(cat) {
-    if (UIState.selectedImpactFilter === cat) UIState.selectedImpactFilter = null;
-    else UIState.selectedImpactFilter = cat;
+    patchUI({
+        selectedImpactFilter: UIState.selectedImpactFilter === cat ? null : cat
+    });
     renderAllForecasts({ filter: true });
 }
 
 export function setBestRunRange(range, event) {
     if (event) event.stopPropagation();
-    UIState.selectedBestRunRange = range;
+    patchUI({ selectedBestRunRange: range });
 
     // Update UI
     const btns = document.querySelectorAll('.insight-btn');
@@ -193,7 +202,7 @@ export function setBestRunRange(range, event) {
     // Recalculate
     const bestTime = calculateBestRunTime(UIState.forecastData);
     if (bestTime) {
-        UIState.selectedForeHour = bestTime;
+        patchUI({ selectedForeHour: bestTime });
         renderAllForecasts({ range: true, selection: true });
         return;
     }
@@ -201,11 +210,12 @@ export function setBestRunRange(range, event) {
 }
 
 export function toggleForeSort(col) {
+    let nextSortCol = col;
+    let nextSortDir = 'asc';
     if (UIState.forecastSortCol === col) {
-        UIState.forecastSortDir = (UIState.forecastSortDir === 'asc') ? 'desc' : 'asc';
+        nextSortDir = (UIState.forecastSortDir === 'asc') ? 'desc' : 'asc';
     } else {
-        UIState.forecastSortCol = col;
-        UIState.forecastSortDir = 'desc'; // Default to high-to-low for most metrics (Temp, Impact, etc) make sense? 
+        nextSortDir = 'desc'; // Default to high-to-low for most metrics (Temp, Impact, etc) make sense? 
         // Actually:
         // Time: asc default
         // Temp: desc (hotter first)
@@ -214,14 +224,18 @@ export function toggleForeSort(col) {
         // But standard table UX usually defaults asc. Let's stick to standard toggle or smart default.
         // Let's standard toggle: if new col, default asc. 
         // User can click again.
-        UIState.forecastSortDir = 'asc';
-        if (['impact', 'temp', 'dew', 'wind', 'rain', 'prob'].includes(col)) UIState.forecastSortDir = 'desc';
+        nextSortDir = 'asc';
+        if (['impact', 'temp', 'dew', 'wind', 'rain', 'prob'].includes(col)) nextSortDir = 'desc';
     }
+    patchUI({
+        forecastSortCol: nextSortCol,
+        forecastSortDir: nextSortDir
+    });
     renderAllForecasts({ sort: true });
 }
 
 export function setPaceMode(mode) {
-    UIState.currentPaceMode = mode;
+    patchUI({ currentPaceMode: mode });
     // Update Buttons (Sync across both tabs - now just one actually, but safe to keep)
     ['pace-tag-container-16'].forEach(id => {
         const container = document.getElementById(id);
@@ -243,7 +257,7 @@ import { updateWeatherTabState } from './utils.js';
 
 export function openTab(tabName, btn) {
     // Save State
-    UIState.activeWeatherTab = tabName;
+    patchUI({ activeWeatherTab: tabName });
 
     // Use centralized update logic
     const view = document.getElementById('view-weather');
@@ -277,10 +291,8 @@ export function openTab(tabName, btn) {
 }
 
 export function toggleForeSelection(time, event) {
-    if (UIState.selectedForeHour === time) {
-        UIState.selectedForeHour = null;
-    } else {
-        UIState.selectedForeHour = time;
-    }
+    patchUI({
+        selectedForeHour: UIState.selectedForeHour === time ? null : time
+    });
     renderAllForecasts({ selection: true });
 }

@@ -47,9 +47,12 @@ const INITIAL_STATE = {
         selectedForeHour: null,
         isDark: false,
         currentWeatherData: null,
+        dailyForecast: null,
+        currentDataTimestamp: null,
         climateData: [],
         currentPaceMode: 'HMP',
         selectedBestRunRange: '24h',
+        selectedMonthlyType: null,
         // Infinite Scroll State
         forecastRenderLimit: 50,
         climateRenderLimit: 50,
@@ -99,6 +102,7 @@ export const StoreActionTypes = {
     APP_SET_WEATHER_DATA: 'APP_SET_WEATHER_DATA',
     APP_SET_AIR_DATA: 'APP_SET_AIR_DATA',
     APP_PATCH_PACE_VIEW: 'APP_PATCH_PACE_VIEW',
+    APP_PATCH_RUNNER: 'APP_PATCH_RUNNER',
     APP_PATCH_ALTITUDE: 'APP_PATCH_ALTITUDE',
     APP_PATCH: 'APP_PATCH',
     UI_SET_FORECAST_DATA: 'UI_SET_FORECAST_DATA',
@@ -125,6 +129,7 @@ export const StoreActions = {
     setWeatherData: (weatherData) => ({ type: StoreActionTypes.APP_SET_WEATHER_DATA, payload: weatherData }),
     setAirData: (airData) => ({ type: StoreActionTypes.APP_SET_AIR_DATA, payload: airData }),
     patchPaceView: (patch) => ({ type: StoreActionTypes.APP_PATCH_PACE_VIEW, payload: patch }),
+    patchRunner: (patch) => ({ type: StoreActionTypes.APP_PATCH_RUNNER, payload: patch }),
     patchAltitude: (patch) => ({ type: StoreActionTypes.APP_PATCH_ALTITUDE, payload: patch }),
     patchApp: (patch) => ({ type: StoreActionTypes.APP_PATCH, payload: patch }),
     setForecastData: (forecastData) => ({ type: StoreActionTypes.UI_SET_FORECAST_DATA, payload: forecastData }),
@@ -171,6 +176,9 @@ export const AppStore = {
                 break;
             case StoreActionTypes.APP_PATCH_PACE_VIEW:
                 Object.assign(state.app.paceView, action.payload || {});
+                break;
+            case StoreActionTypes.APP_PATCH_RUNNER:
+                Object.assign(state.app.runner, action.payload || {});
                 break;
             case StoreActionTypes.APP_PATCH_ALTITUDE:
                 Object.assign(state.app.altitude, action.payload || {});
