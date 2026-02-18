@@ -30,6 +30,7 @@ export class LocationManager {
             // Force Number types to prevent downstream crashes
             r.lat = Number(r.lat);
             r.lon = Number(r.lon);
+            r.region = (r.region || '').toString().trim();
 
             if (!unique.some(u => this._isSameLocation(u, r))) {
                 unique.push(r);
@@ -49,7 +50,11 @@ export class LocationManager {
     // --- Favorites Logic ---
     loadFavorites() {
         const favs = loadFromStorage('rw_favorites') || [];
-        favs.forEach(f => { f.lat = Number(f.lat); f.lon = Number(f.lon); });
+        favs.forEach(f => {
+            f.lat = Number(f.lat);
+            f.lon = Number(f.lon);
+            f.region = (f.region || '').toString().trim();
+        });
         return favs;
     }
 
@@ -73,19 +78,23 @@ export class LocationManager {
                 lat: Number(loc.lat),
                 lon: Number(loc.lon),
                 name: loc.name,
-                country: loc.country
+                country: loc.country,
+                region: loc.region || ''
             });
         }
         this.saveFavorites();
         return this.isFavorite(loc);
     }
 
-    async setLocation(lat, lon, name, country) {
+    async setLocation(lat, lon, name, country, options = {}) {
         lat = Number(lat);
         lon = Number(lon);
+        const region = typeof options === 'string'
+            ? options
+            : (options.region || options.admin1 || options.state || '');
         // 1. Snap to existing recent location to stabilize coordinates (and cache keys)
         // If we are "at" a known recent location, use its saved lat/lon.
-        let newLoc = { lat, lon, name, country, isDefault: false };
+        let newLoc = { lat, lon, name, country, region, isDefault: false };
 
         // Find match in recents (using our robust check)
         const match = this.recents.find(r => this._isSameLocation(r, newLoc));
@@ -129,17 +138,26 @@ export class LocationManager {
         const n2 = this._normalize(loc2.name);
         const c1 = this._normalize(loc1.country);
         const c2 = this._normalize(loc2.country);
+        const r1 = this._normalize(loc1.region || loc1.admin1 || loc1.state);
+        const r2 = this._normalize(loc2.region || loc2.admin1 || loc2.state);
 
-        // 1. Same Name -> Same Location (Solves 'BR' vs 'Brazil' mismatch)
-        if (n1 === n2) return true;
-
-        // 2. Coordinate Match (fallback for diverse names)
-        if (loc1.lat != null && loc1.lon != null && loc2.lat != null && loc2.lon != null) {
+        // 1. Coordinate match first (same city with small coordinate drift).
+        const hasCoords1 = Number.isFinite(Number(loc1.lat)) && Number.isFinite(Number(loc1.lon));
+        const hasCoords2 = Number.isFinite(Number(loc2.lat)) && Number.isFinite(Number(loc2.lon));
+        const hasCoordsBoth = hasCoords1 && hasCoords2;
+        if (hasCoordsBoth) {
             const dLat = Math.abs(Number(loc1.lat) - Number(loc2.lat));
             const dLon = Math.abs(Number(loc1.lon) - Number(loc2.lon));
             if (dLat < 0.1 && dLon < 0.1) return true;
         }
-        return false;
+
+        // 2. Name fallback only when coordinates are not both available.
+        // This avoids collisions for homonymous cities in different regions.
+        if (hasCoordsBoth) return false;
+        if (!n1 || !n2 || n1 !== n2) return false;
+        if (c1 && c2 && c1 !== c2) return false;
+        if (r1 && r2 && r1 !== r2) return false;
+        return true;
     }
 
     _normalize(str) {

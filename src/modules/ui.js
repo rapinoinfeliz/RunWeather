@@ -44,6 +44,13 @@ function appendLocationLabel(container, name, subText, subClass) {
     container.appendChild(label);
 }
 
+function getLocationSubtext(loc) {
+    if (!loc) return '';
+    const region = (loc.region || loc.admin1 || loc.state || '').toString().trim();
+    const country = (loc.country || '').toString().trim();
+    return [region, country].filter(Boolean).join(', ');
+}
+
 let locationSearchDebounceTimer = null;
 let locationSearchSeq = 0;
 let lastLocationFocus = null;
@@ -200,9 +207,9 @@ export function toggleLocationDropdown(arg) {
         AppState.locManager.favorites.forEach(fav => {
             const item = document.createElement('div');
             item.className = 'dropdown-item';
-            appendLocationLabel(item, fav.name, fav.country, 'sub');
+            appendLocationLabel(item, fav.name, getLocationSubtext(fav), 'sub');
             item.onclick = () => {
-                AppState.locManager.setLocation(fav.lat, fav.lon, fav.name, fav.country);
+                AppState.locManager.setLocation(fav.lat, fav.lon, fav.name, fav.country, { region: fav.region || '' });
                 dropdown.style.display = 'none';
                 setDropdownOpenState(false);
             };
@@ -225,9 +232,9 @@ export function toggleLocationDropdown(arg) {
         recentsToUse.forEach(rec => {
             const item = document.createElement('div');
             item.className = 'dropdown-item';
-            appendLocationLabel(item, rec.name, rec.country, 'sub');
+            appendLocationLabel(item, rec.name, getLocationSubtext(rec), 'sub');
             item.onclick = () => {
-                AppState.locManager.setLocation(rec.lat, rec.lon, rec.name, rec.country);
+                AppState.locManager.setLocation(rec.lat, rec.lon, rec.name, rec.country, { region: rec.region || '' });
                 dropdown.style.display = 'none';
                 setDropdownOpenState(false);
             };
@@ -750,8 +757,8 @@ export function openLocationModal() {
                     var div = document.createElement('div');
                     div.className = 'loc-item';
                     var country = item.country || '';
-                    appendLocationLabel(div, item.name, country, 'loc-sub');
-                    div.onclick = function () { AppState.locManager.setLocation(item.lat, item.lon, item.name, country); };
+                    appendLocationLabel(div, item.name, getLocationSubtext(item), 'loc-sub');
+                    div.onclick = function () { AppState.locManager.setLocation(item.lat, item.lon, item.name, country, { region: item.region || '' }); };
                     list.appendChild(div);
                 });
             }
@@ -768,7 +775,7 @@ export function openLocationModal() {
                     var country = item.country || '';
                     var subText = [state, country].filter(Boolean).join(', ');
                     appendLocationLabel(div, item.name, subText, 'loc-sub');
-                    div.onclick = function () { AppState.locManager.setLocation(item.latitude, item.longitude, item.name, country); };
+                    div.onclick = function () { AppState.locManager.setLocation(item.latitude, item.longitude, item.name, country, { region: state }); };
                     list.appendChild(div);
                 });
             }
