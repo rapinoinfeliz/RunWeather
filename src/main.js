@@ -143,7 +143,6 @@ async function init() {
 
     // Attach global click helpers (deselection, resize)
     UI.setupWindowHelpers();
-    UI.initBottomNav();
     bootstrapAccessibility();
 
     // Auto-format time inputs on blur
