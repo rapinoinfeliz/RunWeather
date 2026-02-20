@@ -72,6 +72,12 @@ function supportsHoverPointer() {
         && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 }
 
+function isMobilePaceFocusViewport() {
+    return typeof window !== 'undefined'
+        && typeof window.matchMedia === 'function'
+        && window.matchMedia('(max-width: 860px)').matches;
+}
+
 function escapeAttr(value) {
     return String(value || '')
         .replace(/&/g, '&amp;')
@@ -88,7 +94,8 @@ function setHoverPaceText(el, showKmh) {
 }
 
 function bindPaceHoverInteractions(root) {
-    if (!root || !supportsHoverPointer()) return;
+    if (!root) return;
+    const isHoverMode = supportsHoverPointer();
     root.querySelectorAll('.pace-hover-value').forEach((el) => {
         if (!el.dataset.paceDefault) {
             el.dataset.paceDefault = (el.textContent || '').trim();
@@ -96,9 +103,73 @@ function bindPaceHoverInteractions(root) {
         setHoverPaceText(el, false);
         if (el.dataset.hoverBound === '1') return;
 
-        el.addEventListener('mouseenter', () => setHoverPaceText(el, true));
-        el.addEventListener('mouseleave', () => setHoverPaceText(el, false));
+        if (isHoverMode) {
+            el.addEventListener('mouseenter', () => setHoverPaceText(el, true));
+            el.addEventListener('mouseleave', () => setHoverPaceText(el, false));
+            el.addEventListener('focus', () => setHoverPaceText(el, true));
+            el.addEventListener('blur', () => setHoverPaceText(el, false));
+        } else {
+            el.dataset.paceMobileState = 'base';
+            el.addEventListener('click', (evt) => {
+                evt.preventDefault();
+                evt.stopPropagation();
+                const nextIsKmh = el.dataset.paceMobileState !== 'kmh';
+                setHoverPaceText(el, nextIsKmh);
+                el.dataset.paceMobileState = nextIsKmh ? 'kmh' : 'base';
+                if (typeof el.blur === 'function') el.blur();
+            });
+        }
+
         el.dataset.hoverBound = '1';
+    });
+}
+
+function bindPaceCarousel(root) {
+    if (!root) return;
+    root.querySelectorAll('.pace-carousel').forEach((carousel) => {
+        if (carousel.dataset.bound === '1') return;
+        const track = carousel.querySelector('.pace-carousel-track');
+        const dots = Array.from(carousel.querySelectorAll('.pace-carousel-dot'));
+        if (!track || dots.length === 0) {
+            carousel.dataset.bound = '1';
+            return;
+        }
+
+        const setActiveDot = (index) => {
+            dots.forEach((dot, i) => {
+                dot.classList.toggle('is-active', i === index);
+            });
+        };
+
+        const getIndex = () => {
+            if (!track.clientWidth) return 0;
+            return Math.round(track.scrollLeft / track.clientWidth);
+        };
+
+        let raf = 0;
+        track.addEventListener('scroll', () => {
+            if (raf) return;
+            raf = requestAnimationFrame(() => {
+                raf = 0;
+                setActiveDot(getIndex());
+            });
+        }, { passive: true });
+
+        dots.forEach((dot) => {
+            dot.addEventListener('click', (evt) => {
+                evt.preventDefault();
+                const index = Number.parseInt(dot.dataset.slideIndex || '0', 10);
+                if (!Number.isFinite(index) || index < 0) return;
+                track.scrollTo({
+                    left: track.clientWidth * index,
+                    behavior: 'smooth'
+                });
+                setActiveDot(index);
+            });
+        });
+
+        setActiveDot(getIndex());
+        carousel.dataset.bound = '1';
     });
 }
 
@@ -1050,6 +1121,7 @@ export function update(els, hapCalc) {
     if (res.weather.valid) {
         impactColor = getImpactColor(res.weather.impactPct);
     }
+    const view = AppState.paceView || { heat: false, headwind: false, tailwind: false, altitude: false };
 
     // Helper: Render Pace Row
     const renderRow = (key, elPace, elDist, distDuration) => {
@@ -1062,13 +1134,12 @@ export function update(els, hapCalc) {
 
         // 1. Base Pace (Always Shown)
         cols.push({
+            id: "base",
             label: "Base",
             paceSec: pace,
             color: "#e6edf3", // default text color
             isBase: true
         });
-        // Toggle State (Global or default to false)
-        const view = AppState.paceView || { heat: false, headwind: false, tailwind: false };
 
         // 2. Heat Adjusted (if valid AND toggled)
         if (view.heat && res.weather.valid && res.weather.adjustedPaces[key]) {
@@ -1076,6 +1147,7 @@ export function update(els, hapCalc) {
             // Show only if meaningful difference (> 0.5s)
             if (adj > 0 && Math.abs(adj - pace) > 0.5) {
                 cols.push({
+                    id: "heat",
                     label: "Heat",
                     paceSec: adj,
                     color: impactColor
@@ -1089,6 +1161,7 @@ export function update(els, hapCalc) {
             // Headwind
             if (view.headwind && wp.headwind && wp.headwind > 0) {
                 cols.push({
+                    id: "headwind",
                     label: "Headwind",
                     paceSec: wp.headwind,
                     color: "#f87171" // Soft Red (Tailwind Red-400)
@@ -1098,6 +1171,7 @@ export function update(els, hapCalc) {
             // Tailwind
             if (view.tailwind && wp.tailwind && wp.tailwind > 0) {
                 cols.push({
+                    id: "tailwind",
                     label: "Tailwind",
                     paceSec: wp.tailwind,
                     color: "#4ade80" // Soft Green (Tailwind Green-400)
@@ -1112,60 +1186,120 @@ export function update(els, hapCalc) {
             // Show only if meaningful difference (> 0.5s)
             if (altAdj > 0 && Math.abs(altAdj - pace) > 0.5) {
                 cols.push({
+                    id: "altitude",
                     label: isGain ? "Alt ↓" : "Alt ↑",
                     paceSec: altAdj,
                     color: isGain ? "#4ade80" : "#a78bfa" // Green for gain, Purple for penalty
                 });
             }
         }
-        // Render HTML Container
-        // Use Flexbox for columns
-        let htmlCanvas = `<div style="display:flex; gap:8px; justify-content: flex-end; align-items:flex-start;">`;
+        const renderColsCanvas = (renderCols) => {
+            const wrapClass = renderCols.length > 1
+                ? 'pace-columns-wrap pace-columns-wrap--multi'
+                : 'pace-columns-wrap pace-columns-wrap--single';
+            const trackClass = `pace-columns-track cols-${Math.min(renderCols.length, 5)}`;
+            let html = `<div class="${wrapClass}"><div class="${trackClass}" style="--pace-col-count:${renderCols.length};">`;
 
-        cols.forEach((col, i) => {
-            // Inner content: Pace on top, Distance below
-            let innerHtml = "";
-            // Pace
-            const basePace = formatPace(col.paceSec, formatTime, system);
-            const speedKmh = (Number.isFinite(col.paceSec) && col.paceSec > 0)
-                ? `${(3600 / col.paceSec).toFixed(1)}km/h`
-                : '--.-km/h';
-            innerHtml += `<div class="pace-hover-value" data-pace-default="${escapeAttr(basePace)}" data-pace-kmh="${escapeAttr(speedKmh)}" style="font-weight:${col.isBase ? '600' : '500'}; color:${col.color}; white-space:nowrap; font-size:1em;">
-                            ${basePace}
-                          </div>`;
+            renderCols.forEach((col, i) => {
+                let innerHtml = "";
+                const basePace = formatPace(col.paceSec, formatTime, system);
+                const speedKmh = (Number.isFinite(col.paceSec) && col.paceSec > 0)
+                    ? `${(3600 / col.paceSec).toFixed(1)}km/h`
+                    : '--.-km/h';
+                innerHtml += `<div class="pace-hover-value" data-pace-default="${escapeAttr(basePace)}" data-pace-kmh="${escapeAttr(speedKmh)}" style="font-weight:${col.isBase ? '600' : '500'}; color:${col.color}; white-space:nowrap;">
+                                ${basePace}
+                              </div>`;
 
-            // Distance (if applicable)
-            if (distDuration > 0) {
-                const dMeters = Math.round((distDuration / col.paceSec) * 1000);
-                innerHtml += `<div style="font-size:0.8em; opacity:0.8; color:${col.color}; margin-top:2px;">
-                                 ${dMeters} m
-                               </div>`;
-            }
-            // Wrapper for the column
-            let labelHtml = "";
-            if (!col.isBase) {
-                labelHtml = `<div style="font-size:0.65em; text-transform:uppercase; letter-spacing:0.5px; opacity:0.6; margin-bottom:2px;">${col.label}</div>`;
-            } else {
-                // Explicit BASE label if others exist, or if we want clarity
-                if (cols.length > 1) {
-                    labelHtml = `<div style="font-size:0.65em; text-transform:uppercase; letter-spacing:0.5px; opacity:0.4; margin-bottom:2px;">Base</div>`;
+                if (distDuration > 0) {
+                    const dMeters = Math.round((distDuration / col.paceSec) * 1000);
+                    innerHtml += `<div class="pace-distance-value" style="color:${col.color};">
+                                     ${dMeters} m
+                                   </div>`;
                 }
+
+                let labelHtml = "";
+                if (!col.isBase) {
+                    labelHtml = `<div class="pace-col-label">${col.label}</div>`;
+                } else if (renderCols.length > 1) {
+                    labelHtml = `<div class="pace-col-label pace-col-label--base">Base</div>`;
+                }
+
+                const colClass = i > 0 ? 'pace-column pace-column--with-separator' : 'pace-column';
+                html += `<div class="${colClass}">
+                            ${labelHtml}
+                            ${innerHtml}
+                         </div>`;
+            });
+
+            html += `</div></div>`;
+            return html;
+        };
+
+        const isMobile = isMobilePaceFocusViewport();
+        let htmlCanvas = '';
+        if (isMobile && cols.length > 2) {
+            const baseCol = cols[0];
+            const adjustments = cols.slice(1);
+            const byId = Object.create(null);
+            adjustments.forEach((adj) => {
+                if (adj && adj.id) byId[adj.id] = adj;
+            });
+
+            const usedIds = new Set();
+            const slides = [];
+
+            if (byId.heat) {
+                slides.push([baseCol, byId.heat]);
+                usedIds.add('heat');
             }
 
-            htmlCanvas += `<div style="display:flex; flex-direction:column; align-items:center; min-width:60px;">
-                                ${labelHtml}
-                                ${innerHtml}
-                           </div>`;
-            // Add divider if not last
-            if (i < cols.length - 1) {
-                htmlCanvas += `<div style="width:1px; background:rgba(255,255,255,0.1); align-self:stretch; margin:0 4px;"></div>`;
+            const windSlide = [baseCol];
+            if (byId.headwind) {
+                windSlide.push(byId.headwind);
+                usedIds.add('headwind');
             }
-        });
+            if (byId.tailwind) {
+                windSlide.push(byId.tailwind);
+                usedIds.add('tailwind');
+            }
+            if (windSlide.length > 1) {
+                slides.push(windSlide);
+            }
 
-        htmlCanvas += `</div>`;
+            if (byId.altitude) {
+                slides.push([baseCol, byId.altitude]);
+                usedIds.add('altitude');
+            }
+
+            adjustments.forEach((adj) => {
+                if (!adj || !adj.id || usedIds.has(adj.id)) return;
+                slides.push([baseCol, adj]);
+                usedIds.add(adj.id);
+            });
+
+            if (slides.length <= 1) {
+                htmlCanvas = renderColsCanvas(slides[0] || cols);
+            } else {
+                htmlCanvas = `<div class="pace-carousel"><div class="pace-carousel-track">`;
+                slides.forEach((slideCols) => {
+                    htmlCanvas += `<div class="pace-carousel-slide">${renderColsCanvas(slideCols)}</div>`;
+                });
+                htmlCanvas += `</div>`;
+
+                htmlCanvas += `<div class="pace-carousel-dots">`;
+                slides.forEach((_, idx) => {
+                    const activeClass = idx === 0 ? ' is-active' : '';
+                    htmlCanvas += `<button type="button" class="pace-carousel-dot${activeClass}" data-slide-index="${idx}" aria-label="Pace slide ${idx + 1}"></button>`;
+                });
+                htmlCanvas += `</div></div>`;
+            }
+        } else {
+            htmlCanvas = renderColsCanvas(cols);
+        }
         // We replace elPace content with the canvas.
         elPace.innerHTML = htmlCanvas;
         bindPaceHoverInteractions(elPace);
+        bindPaceCarousel(elPace);
         if (Number.isFinite(pace) && pace > 0) {
             elPace.dataset.basePaceSec = String(pace);
         } else {

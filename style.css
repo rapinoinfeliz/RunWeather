@@ -2057,34 +2057,217 @@ select.modern-input {
 
 /* Fix Pace Card Overflow on Mobile */
 .data-row {
-    flex-wrap: wrap;
-    /* Allow wrapping */
+    flex-wrap: nowrap;
+    gap: 10px;
+}
+
+.data-label-group {
+    flex: 0 0 auto;
 }
 
 .data-value-group {
+    flex: 1 1 auto;
+    min-width: 0;
     max-width: 100%;
     /* Ensure it doesn't exceed parent */
     overflow-x: auto;
+    overflow-y: hidden;
     /* Scroll if too wide */
     -webkit-overflow-scrolling: touch;
 }
 
+.pace-columns-wrap {
+    display: flex;
+    width: 100%;
+    justify-content: flex-end;
+}
+
+.pace-columns-track {
+    display: grid;
+    grid-template-columns: repeat(var(--pace-col-count, 1), minmax(0, 1fr));
+    column-gap: 6px;
+    align-items: flex-start;
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
+}
+
+.pace-columns-track.cols-1 {
+    width: auto;
+    grid-template-columns: auto;
+}
+
+.pace-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 58px;
+    position: relative;
+    padding: 0 3px;
+}
+
+.pace-column--with-separator::before {
+    content: "";
+    position: absolute;
+    left: -3px;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.pace-col-label {
+    font-size: 0.64em;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    opacity: 0.62;
+    margin-bottom: 2px;
+}
+
+.pace-col-label--base {
+    opacity: 0.42;
+}
+
+.pace-distance-value {
+    font-size: 0.78em;
+    opacity: 0.82;
+    margin-top: 2px;
+}
+
+.pace-hover-value {
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+}
+
+.pace-hover-value:focus,
+.pace-hover-value:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
 /* On very small screens, stack them */
 @media (max-width: 400px) {
-    .data-row {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 6px;
-    }
-
     .data-value-group {
-        width: 100%;
-        text-align: left;
+        width: auto;
+        text-align: right;
     }
 
-    /* Force left alignment of the inner flex container so scrolling works naturally from left */
-    .data-value>div {
-        justify-content: flex-start !important;
+    /* Keep right alignment in compact screens as requested. */
+    .data-value>div,
+    .pace-columns-wrap--single {
+        justify-content: flex-end !important;
+    }
+
+    .pace-columns-wrap--multi {
+        justify-content: flex-end !important;
+    }
+}
+
+@media (max-width: 860px) {
+    .pace-columns-wrap--multi {
+        justify-content: flex-end;
+        overflow: visible;
+    }
+
+    .pace-columns-wrap--multi .pace-columns-track {
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+        grid-template-columns: repeat(var(--pace-col-count, 1), minmax(0, 1fr));
+        column-gap: 6px;
+    }
+
+    .pace-carousel {
+        width: 100%;
+    }
+
+    .pace-carousel-track {
+        display: flex;
+        overflow-x: auto;
+        overflow-y: hidden;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+
+    .pace-carousel-track::-webkit-scrollbar {
+        display: none;
+    }
+
+    .pace-carousel-slide {
+        flex: 0 0 100%;
+        scroll-snap-align: start;
+        scroll-snap-stop: always;
+        min-width: 0;
+    }
+
+    .pace-carousel-slide .pace-columns-wrap {
+        justify-content: flex-end;
+    }
+
+    .pace-carousel-dots {
+        display: flex;
+        justify-content: center;
+        gap: 6px;
+        margin-top: 8px;
+    }
+
+    .pace-carousel-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 999px;
+        border: 0;
+        background: rgba(255, 255, 255, 0.28);
+        padding: 0;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .pace-carousel-dot.is-active {
+        width: 14px;
+        background: rgba(88, 166, 255, 0.86);
+    }
+
+    .pace-carousel-dot:focus,
+    .pace-carousel-dot:focus-visible {
+        outline: none;
+        box-shadow: none;
+    }
+}
+
+@media (min-width: 861px) {
+    .data-value-group {
+        overflow-x: hidden;
+    }
+
+    .pace-columns-track {
+        column-gap: 4px;
+    }
+
+    .pace-columns-track.cols-4 .pace-column {
+        min-width: 46px;
+        padding: 0 1px;
+    }
+
+    .pace-columns-track.cols-5 .pace-column {
+        min-width: 38px;
+        padding: 0 1px;
+    }
+
+    .pace-columns-track.cols-4 .pace-hover-value,
+    .pace-columns-track.cols-5 .pace-hover-value {
+        font-size: 0.83em !important;
+        letter-spacing: -0.01em;
+    }
+
+    .pace-columns-track.cols-4 .pace-distance-value,
+    .pace-columns-track.cols-5 .pace-distance-value {
+        font-size: 0.62em;
+    }
+
+    .pace-columns-track.cols-4 .pace-col-label,
+    .pace-columns-track.cols-5 .pace-col-label {
+        font-size: 0.5em;
     }
 }
 
