@@ -56,6 +56,28 @@ let locationSearchDebounceTimer = null;
 let locationSearchSeq = 0;
 let lastLocationFocus = null;
 
+function restoreFocusOutsideModal(modal, preferredTarget) {
+    if (!modal || !modal.contains(document.activeElement)) return;
+
+    const fallbackTarget = document.querySelector('[data-action="location-modal"]');
+    const focusTarget = (preferredTarget && document.contains(preferredTarget))
+        ? preferredTarget
+        : fallbackTarget;
+
+    if (focusTarget && typeof focusTarget.focus === 'function') {
+        try {
+            focusTarget.focus({ preventScroll: true });
+        } catch {
+            focusTarget.focus();
+        }
+        return;
+    }
+
+    if (document.activeElement && typeof document.activeElement.blur === 'function') {
+        document.activeElement.blur();
+    }
+}
+
 // Backward compatibility: older cached main bundles may still call this.
 export function initBottomNav() {
     // Bottom nav was removed. Keep no-op to avoid runtime crashes on stale caches.
@@ -71,6 +93,12 @@ function supportsHoverPointer() {
     return typeof window !== 'undefined'
         && typeof window.matchMedia === 'function'
         && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+}
+
+function prefersSheetTooltip() {
+    return typeof window !== 'undefined'
+        && typeof window.matchMedia === 'function'
+        && window.matchMedia('(hover: none), (pointer: coarse)').matches;
 }
 
 function isMobilePaceFocusViewport() {
@@ -174,6 +202,22 @@ function buildThresholdRangeTooltipHtml(el) {
     `;
 }
 
+function getThresholdRangeTooltipKey(el) {
+    if (!el) return 'threshold-range';
+    return [
+        'threshold-range',
+        el.getAttribute('data-threshold-safe') || '',
+        el.getAttribute('data-threshold-median') || '',
+        el.getAttribute('data-threshold-range') || '',
+        el.getAttribute('data-cv-safe') || '',
+        el.getAttribute('data-cv-median') || '',
+        el.getAttribute('data-cv-range') || '',
+        el.getAttribute('data-vo2-safe') || '',
+        el.getAttribute('data-vo2-median') || '',
+        el.getAttribute('data-vo2-range') || ''
+    ].join('__');
+}
+
 function setThresholdRangeTooltipState(el, trainingPaces, system) {
     if (!el) return;
     const clearKeys = [
@@ -191,6 +235,8 @@ function setThresholdRangeTooltipState(el, trainingPaces, system) {
     if (!trainingPaces) {
         clearKeys.forEach((key) => el.removeAttribute(key));
         el.classList.remove('vdot-threshold-range-enabled');
+        el.removeAttribute('aria-haspopup');
+        el.removeAttribute('aria-label');
         return;
     }
 
@@ -209,12 +255,14 @@ function setThresholdRangeTooltipState(el, trainingPaces, system) {
     el.setAttribute('data-vo2-median', formatPace(trainingPaces.vo2max.medianSecPerKm, formatTime, system));
     el.setAttribute('data-vo2-range', formatRange(trainingPaces.vo2max.rangeFastSecPerKm, trainingPaces.vo2max.rangeSlowSecPerKm));
 
-    if (supportsHoverPointer()) el.classList.add('vdot-threshold-range-enabled');
-    else el.classList.remove('vdot-threshold-range-enabled');
+    el.classList.add('vdot-threshold-range-enabled');
+    el.setAttribute('aria-haspopup', 'dialog');
+    el.setAttribute('aria-label', 'Show threshold pace range details');
 }
 
 function bindThresholdRangeTooltip(el) {
     if (!el || el.dataset.thresholdRangeBound === '1') return;
+    let lastTouchOpenTs = 0;
 
     const onEnter = (evt) => {
         if (!supportsHoverPointer()) return;
@@ -234,10 +282,45 @@ function bindThresholdRangeTooltip(el) {
         if (active) active.classList.remove('forecast-tooltip--training-model');
         hideForeTooltip();
     };
+    const onMobilePress = (evt) => {
+        const now = Date.now();
+        const isTouchLikeEvent = evt?.type === 'touchend';
+        if (evt?.type === 'click' && (now - lastTouchOpenTs) < 500) return;
+        if (isTouchLikeEvent) lastTouchOpenTs = now;
+
+        if (!el.hasAttribute('data-threshold-safe')) return;
+        const tableHtml = buildThresholdRangeTooltipHtml(el);
+        if (!tableHtml) return;
+
+        evt.preventDefault();
+        evt.stopPropagation();
+
+        const contentKey = getThresholdRangeTooltipKey(el);
+        const active = document.getElementById('forecast-tooltip');
+        if (active && active.style.opacity === '1' && active.dataset.currentKey === contentKey) {
+            hideForeTooltip();
+            return;
+        }
+
+        const html = tableHtml;
+        const useSheet = prefersSheetTooltip() || isTouchLikeEvent;
+        showForeTooltip(evt, html, { preferSheet: useSheet });
+        const tooltip = document.getElementById('forecast-tooltip');
+        if (!tooltip) return;
+        tooltip.classList.add('forecast-tooltip--training-model');
+        tooltip.dataset.currentKey = contentKey;
+    };
+    const onMobileKeyDown = (evt) => {
+        if (evt.key !== 'Enter' && evt.key !== ' ') return;
+        onMobilePress(evt);
+    };
 
     el.addEventListener('mouseenter', onEnter);
     el.addEventListener('mousemove', onMove);
     el.addEventListener('mouseleave', onLeave);
+    el.addEventListener('touchend', onMobilePress, { passive: false });
+    el.addEventListener('click', onMobilePress);
+    el.addEventListener('keydown', onMobileKeyDown);
     el.dataset.thresholdRangeBound = '1';
 }
 
@@ -620,11 +703,7 @@ export function showInfoTooltip(e, title, text) {
     }
 
     const titleHtml = title ? `<div class="tooltip-header">${title}</div>` : '';
-    const closeButton = preferSheet
-        ? `<button type="button" class="tooltip-sheet-close" data-tooltip-close aria-label="Close tooltip">×</button>`
-        : '';
     const html = `
-                        ${closeButton}
                         ${titleHtml}
                         <div class="tooltip-content-body">${text}</div>
                     `;
@@ -637,16 +716,6 @@ export function showInfoTooltip(e, title, text) {
         activeTooltip.style.maxWidth = `${maxWidth}px`;
     }
     activeTooltip.dataset.currentKey = contentKey;
-
-    const closeBtn = activeTooltip.querySelector('[data-tooltip-close]');
-    if (closeBtn && closeBtn.dataset.bound !== '1') {
-        closeBtn.addEventListener('click', (evt) => {
-            evt.preventDefault();
-            evt.stopPropagation();
-            hideForeTooltip();
-        });
-        closeBtn.dataset.bound = '1';
-    }
 
     if (preferSheet) return;
 
@@ -959,6 +1028,7 @@ export function openLocationModal() {
         m.setAttribute('role', 'dialog');
         m.setAttribute('aria-modal', 'true');
         m.setAttribute('aria-hidden', 'false');
+        m.removeAttribute('inert');
         if (titleEl) m.setAttribute('aria-labelledby', titleEl.id);
         m.classList.add('open');
         if (locationSearchDebounceTimer) {
@@ -1062,12 +1132,15 @@ export function openLocationModal() {
 export function closeLocationModal(e) {
     var m = document.getElementById('loc-modal');
     if (!m) return;
-    if (e && e.target !== m && e.target.id !== 'close-modal') return;
+    const closeBtnTarget = e && e.target && typeof e.target.closest === 'function'
+        ? e.target.closest('[data-action="location-close"]')
+        : null;
+    if (e && e.target !== m && !closeBtnTarget) return;
+
+    restoreFocusOutsideModal(m, lastLocationFocus);
     m.classList.remove('open');
     m.setAttribute('aria-hidden', 'true');
-    if (lastLocationFocus && typeof lastLocationFocus.focus === 'function') {
-        requestAnimationFrame(() => lastLocationFocus.focus());
-    }
+    m.setAttribute('inert', '');
 }
 
 export function setupWindowHelpers() {

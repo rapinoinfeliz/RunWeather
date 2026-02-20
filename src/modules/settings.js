@@ -22,6 +22,30 @@ import {
 
 let lastSettingsFocus = null;
 
+function restoreFocusOutsideModal(modal, preferredTarget, fallbackTarget) {
+    if (!modal || !modal.contains(document.activeElement)) return;
+
+    let focusTarget = null;
+    if (preferredTarget && document.contains(preferredTarget)) {
+        focusTarget = preferredTarget;
+    } else if (fallbackTarget && document.contains(fallbackTarget)) {
+        focusTarget = fallbackTarget;
+    }
+
+    if (focusTarget && typeof focusTarget.focus === 'function') {
+        try {
+            focusTarget.focus({ preventScroll: true });
+        } catch {
+            focusTarget.focus();
+        }
+        return;
+    }
+
+    if (document.activeElement && typeof document.activeElement.blur === 'function') {
+        document.activeElement.blur();
+    }
+}
+
 function getSelectedSystem(radios, fallback = 'metric') {
     for (const radio of radios) {
         if (radio.checked) return radio.value;
@@ -113,12 +137,11 @@ export function initSettings(els, updateFn) {
     let modalUnitSystem = AppState.unitSystem || 'metric';
 
     function closeSettings() {
+        restoreFocusOutsideModal(settingsModal, lastSettingsFocus, els.btnSettings);
         settingsModal.classList.remove('open');
         settingsModal.style.removeProperty('display');
         settingsModal.setAttribute('aria-hidden', 'true');
-        if (lastSettingsFocus && typeof lastSettingsFocus.focus === 'function') {
-            requestAnimationFrame(() => lastSettingsFocus.focus());
-        }
+        settingsModal.setAttribute('inert', '');
     }
 
     function openSettings() {
@@ -128,6 +151,7 @@ export function initSettings(els, updateFn) {
         settingsModal.setAttribute('role', 'dialog');
         settingsModal.setAttribute('aria-modal', 'true');
         settingsModal.setAttribute('aria-hidden', 'false');
+        settingsModal.removeAttribute('inert');
         if (titleEl) settingsModal.setAttribute('aria-labelledby', titleEl.id);
 
         modalUnitSystem = AppState.unitSystem || 'metric';

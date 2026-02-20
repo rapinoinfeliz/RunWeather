@@ -82,6 +82,13 @@
                     </svg>
                 </button>
 
+                <button class="copy-btn" id="copy-btn" title="Copy results to clipboard" aria-label="Copy Results">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                </button>
+
                 <!-- Location Group -->
                 <div class="location-group">
                     <div class="location-search-btn">
@@ -115,12 +122,6 @@
                         <!-- JS Injected Content -->
                     </div>
                 </div>
-                <button class="copy-btn" id="copy-btn" title="Copy results to clipboard" aria-label="Copy Results">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                    </svg>
-                </button>
             </div>
 
             <div class="input-section input-section-flat">
@@ -343,8 +344,17 @@
                         </span>
                     </div>
                 </div>
+
+                <button class="copy-btn" id="btn-copy-cond" data-action="copy-conditions"
+                    title="Copy conditions to clipboard" aria-label="Copy Conditions">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                </button>
+
                 <!-- Location Group -->
-                <div class="location-group push-right">
+                <div class="location-group">
                     <div class="location-search-btn">
                         <!-- Star Button -->
                         <button data-action="toggle-favorite" class="icon-btn btn-favorite location-search-icon"
@@ -378,13 +388,6 @@
                 </div>
 
 
-                <button class="copy-btn" id="btn-copy-cond" data-action="copy-conditions"
-                    title="Copy conditions to clipboard" aria-label="Copy Conditions">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                    </svg>
-                </button>
             </div>
             <div id="current-content" class="current-grid">
                 <div class="loading-state loading-state--card">
@@ -729,17 +732,18 @@
 
     <div id="forecast-tooltip" class="forecast-tooltip" role="dialog" aria-live="polite" aria-hidden="true"></div>
     <!-- Location Modal -->
-    <div id="loc-modal" class="modal-backdrop" aria-hidden="true">
+    <div id="loc-modal" class="modal-backdrop" aria-hidden="true" inert>
         <div class="modal-content premium-modal">
             <div class="modal-header-row">
                 <span class="modal-title">Select Location</span>
-                <span id="close-modal" class="close-modal-btn" data-action="location-close">
+                <button type="button" id="close-modal" class="close-modal-btn" data-action="location-close"
+                    aria-label="Close location modal">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                         stroke-linecap="round" stroke-linejoin="round">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
                         <line x1="6" y1="6" x2="18" y2="18"></line>
                     </svg>
-                </span>
+                </button>
             </div>
 
             <button data-action="gps" class="modern-button modal-gps-btn" id="gps-btn">
@@ -770,17 +774,18 @@
     </div>
 
     <!-- Settings Modal -->
-    <div id="settings-modal" class="modal-backdrop" aria-hidden="true">
-        <div class="modal-content premium-modal">
-            <div class="modal-header-row">
+    <div id="settings-modal" class="modal-backdrop" aria-hidden="true" inert>
+        <div class="modal-content premium-modal settings-modal-content">
+            <div class="modal-header-row settings-modal-header">
                 <span class="modal-title">Settings</span>
-                <span id="close-settings" class="close-modal-btn" data-action="settings-close">
+                <button type="button" id="close-settings" class="close-modal-btn" data-action="settings-close"
+                    aria-label="Close settings modal">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                         stroke-linecap="round" stroke-linejoin="round">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
                         <line x1="6" y1="6" x2="18" y2="18"></line>
                     </svg>
-                </span>
+                </button>
             </div>
 
             <div class="settings-section-label">Units</div>
@@ -795,13 +800,12 @@
                 </label>
             </div>
 
-            <!-- Body Section: Weight & Height side by side -->
             <div class="settings-section-label">Body</div>
             <div class="settings-grid-two">
                 <div class="settings-col">
                     <label for="runner-weight" class="settings-label">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
                             <path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"></path>
                             <line x1="16" y1="8" x2="2" y2="22"></line>
                             <line x1="17.5" y1="15" x2="9" y2="15"></line>
@@ -809,9 +813,8 @@
                         Weight
                         <span data-action="info-tooltip" data-title="Weight"
                             data-text="Used for wind resistance calculation and weight-based pace projections"
-                            class="info-tooltip-trigger info-tooltip-trigger--inline"><svg
-                                width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2">
+                            class="info-tooltip-trigger info-tooltip-trigger--inline"><svg width="12" height="12"
+                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <circle cx="12" cy="12" r="10"></circle>
                                 <line x1="12" y1="16" x2="12" y2="12"></line>
                                 <line x1="12" y1="8" x2="12.01" y2="8"></line>
@@ -826,8 +829,8 @@
 
                 <div class="settings-col">
                     <label for="runner-height" class="settings-label">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
                             <path d="M12 2v20"></path>
                             <path d="M2 12h4"></path>
                             <path d="M18 12h4"></path>
@@ -835,9 +838,8 @@
                         Height
                         <span data-action="info-tooltip" data-title="Height"
                             data-text="Used to estimate minimum healthy weight (BMI 18.5) in VDOT weight projections"
-                            class="info-tooltip-trigger info-tooltip-trigger--inline"><svg
-                                width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2">
+                            class="info-tooltip-trigger info-tooltip-trigger--inline"><svg width="12" height="12"
+                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <circle cx="12" cy="12" r="10"></circle>
                                 <line x1="12" y1="16" x2="12" y2="12"></line>
                                 <line x1="12" y1="8" x2="12.01" y2="8"></line>
@@ -851,43 +853,12 @@
                 </div>
             </div>
 
-            <!-- Environment Section -->
-            <div class="settings-section-label">Environment</div>
-            <div class="settings-block">
-                <label for="base-altitude" class="settings-label">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M8 3v2"></path>
-                        <path d="M16 3v2"></path>
-                        <path d="M12 3v6"></path>
-                        <path d="m17 8-5 5-5-5"></path>
-                        <path d="M3 18h18"></path>
-                    </svg>
-                    Base Altitude
-                    <span data-action="info-tooltip" data-title="Base Altitude"
-                        data-text="Your acclimatized home altitude. Pace penalty is calculated when running at higher elevations"
-                        class="info-tooltip-trigger info-tooltip-trigger--inline"><svg
-                            width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <line x1="12" y1="16" x2="12" y2="12"></line>
-                            <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                        </svg></span>
-                </label>
-                <div class="settings-input-wrapper">
-                    <input type="number" id="base-altitude" class="settings-input" placeholder="0" step="100"
-                        inputmode="numeric" value="0">
-                    <span id="settings-altitude-unit" class="unit-suffix">m</span>
-                </div>
-            </div>
-
-            <!-- Demographics Section: Gender & Age side by side -->
             <div class="settings-section-label">Demographics</div>
             <div class="settings-grid-two">
                 <div class="settings-col">
                     <label for="runner-gender" class="settings-label">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="12" cy="12" r="10"></circle>
                             <path d="M12 16v-4"></path>
                             <path d="M12 8h.01"></path>
@@ -895,9 +866,8 @@
                         Gender
                         <span data-action="info-tooltip" data-title="Gender"
                             data-text="Used for Age-Graded Performance calculations"
-                            class="info-tooltip-trigger info-tooltip-trigger--inline"><svg
-                                width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2">
+                            class="info-tooltip-trigger info-tooltip-trigger--inline"><svg width="12" height="12"
+                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <circle cx="12" cy="12" r="10"></circle>
                                 <line x1="12" y1="16" x2="12" y2="12"></line>
                                 <line x1="12" y1="8" x2="12.01" y2="8"></line>
@@ -914,17 +884,16 @@
 
                 <div class="settings-col">
                     <label for="runner-age" class="settings-label">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="12" cy="12" r="10"></circle>
                             <polyline points="12 6 12 12 16 14"></polyline>
                         </svg>
                         Age
                         <span data-action="info-tooltip" data-title="Age"
                             data-text="Used for Age-Graded Performance calculations"
-                            class="info-tooltip-trigger info-tooltip-trigger--inline"><svg
-                                width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2">
+                            class="info-tooltip-trigger info-tooltip-trigger--inline"><svg width="12" height="12"
+                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <circle cx="12" cy="12" r="10"></circle>
                                 <line x1="12" y1="16" x2="12" y2="12"></line>
                                 <line x1="12" y1="8" x2="12.01" y2="8"></line>
@@ -938,54 +907,39 @@
                 </div>
             </div>
 
-            <div class="settings-section-label">Heart Rate</div>
-            <div class="settings-grid-two">
-                <div class="settings-col">
-                    <label for="runner-hr-max" class="settings-label">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z">
-                            </path>
-                        </svg>
-                        HR Max
-                        <span data-action="info-tooltip" data-title="HR Max"
-                            data-text="Maximum heart rate used for threshold and HR zone references"
-                            class="info-tooltip-trigger info-tooltip-trigger--inline"><svg width="12" height="12"
-                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <line x1="12" y1="16" x2="12" y2="12"></line>
-                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                            </svg></span>
-                    </label>
-                    <div class="settings-input-wrapper">
-                        <input type="number" id="runner-hr-max" class="settings-input" placeholder="190" step="1"
-                            min="100" max="260" inputmode="numeric">
-                        <span class="unit-suffix">bpm</span>
-                    </div>
+            <div class="settings-section-label">Environment</div>
+            <div class="settings-block">
+                <label for="base-altitude" class="settings-label">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M8 3v2"></path>
+                        <path d="M16 3v2"></path>
+                        <path d="M12 3v6"></path>
+                        <path d="m17 8-5 5-5-5"></path>
+                        <path d="M3 18h18"></path>
+                    </svg>
+                    Base Altitude
+                    <span data-action="info-tooltip" data-title="Base Altitude"
+                        data-text="Your acclimatized home altitude. Pace penalty is calculated when running at higher elevations"
+                        class="info-tooltip-trigger info-tooltip-trigger--inline"><svg width="12" height="12"
+                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="16" x2="12" y2="12"></line>
+                            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                        </svg></span>
+                </label>
+                <div class="settings-input-wrapper">
+                    <input type="number" id="base-altitude" class="settings-input" placeholder="0" step="100"
+                        inputmode="numeric" value="0">
+                    <span id="settings-altitude-unit" class="unit-suffix">m</span>
                 </div>
+            </div>
 
-                <div class="settings-col">
-                    <label for="runner-resting-hr" class="settings-label">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
-                        </svg>
-                        Resting HR
-                        <span data-action="info-tooltip" data-title="Resting HR"
-                            data-text="Resting heart rate used with HR max to derive heart-rate reserve zones"
-                            class="info-tooltip-trigger info-tooltip-trigger--inline"><svg width="12" height="12"
-                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <line x1="12" y1="16" x2="12" y2="12"></line>
-                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                            </svg></span>
-                    </label>
-                    <div class="settings-input-wrapper">
-                        <input type="number" id="runner-resting-hr" class="settings-input" placeholder="52" step="1"
-                            min="25" max="120" inputmode="numeric">
-                        <span class="unit-suffix">bpm</span>
-                    </div>
-                </div>
+            <div class="settings-hr-hidden" hidden>
+                <input type="number" id="runner-hr-max" class="settings-input" placeholder="190" step="1" min="100"
+                    max="260" inputmode="numeric">
+                <input type="number" id="runner-resting-hr" class="settings-input" placeholder="52" step="1" min="25"
+                    max="120" inputmode="numeric">
             </div>
 
             <button id="save-settings" class="modern-button settings-save-btn">

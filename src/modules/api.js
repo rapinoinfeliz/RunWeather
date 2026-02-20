@@ -37,11 +37,8 @@ const WEATHER_HOURLY_KEYS = [
     'precipitation_probability',
     'precipitation',
     'wind_speed_10m',
-    'wind_gusts_10m',
     'wind_direction_10m',
-    'shortwave_radiation',
-    'weather_code',
-    'pressure_msl'
+    'weather_code'
 ];
 
 function toFiniteNumber(value) {
@@ -192,8 +189,8 @@ export async function fetchWeatherData(lat, lon, opts = {}) {
         if (cached) return cached;
     }
 
-    const wUrl = `${OPEN_METEO_BASE}/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,rain,weather_code,wind_speed_10m,wind_gusts_10m,wind_direction_10m,dew_point_2m,uv_index,shortwave_radiation,pressure_msl,cloud_cover&hourly=temperature_2m,dew_point_2m,precipitation_probability,precipitation,wind_speed_10m,wind_gusts_10m,wind_direction_10m,shortwave_radiation,weather_code,pressure_msl&daily=sunrise,sunset&timezone=auto&forecast_days=14&temperature_unit=celsius&wind_speed_unit=kmh&precipitation_unit=mm`;
-    const aUrl = `${AIR_QUALITY_BASE}/air-quality?latitude=${lat}&longitude=${lon}&current=us_aqi,pm2_5&timezone=auto`;
+    const wUrl = `${OPEN_METEO_BASE}/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,rain,weather_code,wind_speed_10m,wind_gusts_10m,wind_direction_10m,dew_point_2m,uv_index,shortwave_radiation,pressure_msl,cloud_cover&hourly=temperature_2m,dew_point_2m,precipitation_probability,precipitation,wind_speed_10m,wind_direction_10m,weather_code&daily=sunrise,sunset&timezone=auto&forecast_days=14&temperature_unit=celsius&wind_speed_unit=kmh&precipitation_unit=mm`;
+    const aUrl = `${AIR_QUALITY_BASE}/air-quality?latitude=${lat}&longitude=${lon}&current=us_aqi,pm2_5&cell_selection=land&domains=auto&timezone=auto`;
 
     try {
         const [wRes, aRes] = await Promise.all([
@@ -234,7 +231,7 @@ export async function fetchClimateHistory(lat, lon, opts = {}) {
         if (cached) return cached;
     }
 
-    const url = `${ARCHIVE_BASE}/archive?latitude=${lat}&longitude=${lon}&start_date=${startStr}&end_date=${endStr}&hourly=temperature_2m,dew_point_2m,precipitation,wind_speed_10m&timezone=auto`;
+    const url = `${ARCHIVE_BASE}/archive?latitude=${lat}&longitude=${lon}&start_date=${startStr}&end_date=${endStr}&hourly=temperature_2m,dew_point_2m,precipitation,wind_speed_10m&models=era5_seamless&timezone=auto`;
 
     try {
         const res = await fetch(url, { signal });
@@ -249,17 +246,30 @@ export async function fetchClimateHistory(lat, lon, opts = {}) {
 }
 
 export async function searchCity(query, opts = {}) {
-    const { signal, force = false } = opts;
+    const {
+        signal,
+        force = false,
+        countryCode = '',
+        count = 10
+    } = opts;
     const normalized = (query || '').trim();
     if (normalized.length < 3) return [];
 
-    const cacheKey = `city:${normalized.toLowerCase()}`;
+    const normalizedCountryCode = String(countryCode || '').trim().toUpperCase();
+    const constrainedCountryCode = /^[A-Z]{2}$/.test(normalizedCountryCode) ? normalizedCountryCode : '';
+    const parsedCount = Number(count);
+    const safeCount = Number.isFinite(parsedCount)
+        ? Math.max(1, Math.min(15, Math.trunc(parsedCount)))
+        : 10;
+
+    const cacheKey = `city:${normalized.toLowerCase()}:${constrainedCountryCode || 'any'}:${safeCount}`;
     if (!force) {
         const cached = getCache(cacheKey);
         if (cached) return cached;
     }
 
-    const url = `${GEOCODING_BASE}/search?name=${encodeURIComponent(normalized)}&count=5&language=pt&format=json`;
+    const countryFilter = constrainedCountryCode ? `&countryCode=${constrainedCountryCode}` : '';
+    const url = `${GEOCODING_BASE}/search?name=${encodeURIComponent(normalized)}&count=${safeCount}&language=pt&format=json${countryFilter}`;
     try {
         const res = await fetch(url, { signal });
         const data = await res.json();

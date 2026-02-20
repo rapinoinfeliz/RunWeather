@@ -230,10 +230,15 @@ h1 {
     gap: 12px;
 }
 
-:focus {
+:focus-visible {
     outline: none;
     border-color: var(--accent-color);
     box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.2);
+}
+
+:focus:not(:focus-visible) {
+    outline: none;
+    box-shadow: none;
 }
 
 /* Results Structure */
@@ -346,7 +351,7 @@ h1 {
 }
 
 .vdot-threshold-range-enabled {
-    cursor: inherit;
+    cursor: pointer;
     text-decoration: none;
 }
 
@@ -419,6 +424,15 @@ h1 {
 .location-group {
     position: relative;
     margin-right: 8px;
+}
+
+#tab-current #btn-copy-cond {
+    margin-left: auto;
+    margin-right: 6px;
+}
+
+#tab-calculator #copy-btn {
+    margin-right: 6px;
 }
 
 /* Copy Button */
@@ -3070,6 +3084,13 @@ select.settings-input {
     align-items: center;
     justify-content: space-between;
     cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.chart-toggle-header:focus,
+.chart-toggle-header:focus-visible {
+    outline: none;
+    box-shadow: none;
 }
 
 .chart-toggle-icon {
@@ -4326,25 +4347,6 @@ h1 {
     z-index: 10000;
 }
 
-.tooltip-sheet-close {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    width: 28px;
-    height: 28px;
-    border: 1px solid rgba(255, 255, 255, 0.16);
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.04);
-    color: var(--text-primary);
-    font-size: 1rem;
-    line-height: 1;
-    cursor: pointer;
-}
-
-.tooltip-sheet-close:active {
-    transform: scale(0.96);
-}
-
 .tooltip-content-body {
     font-size: 0.86em;
     opacity: 0.94;
@@ -4416,6 +4418,11 @@ h1 {
     width: auto;
     min-width: 360px;
     max-width: min(92vw, 520px);
+}
+
+.forecast-tooltip--sheet.forecast-tooltip--training-model {
+    min-width: 0 !important;
+    max-width: none !important;
 }
 
 .threshold-tooltip-table {
@@ -4841,5 +4848,96 @@ h1 {
     .pace-mode-row {
         flex-wrap: wrap;
         row-gap: 8px;
+    }
+}
+
+/* Settings modal: same visual language as Select Location, but wider for form content */
+#settings-modal .settings-modal-content {
+    width: min(94vw, 540px);
+    max-width: 540px;
+    max-height: none;
+    overflow: visible;
+    padding: 24px;
+    gap: 12px;
+}
+
+#settings-modal .settings-modal-header {
+    margin-bottom: 8px;
+}
+
+#settings-modal .settings-section-label {
+    margin-top: 4px;
+    margin-bottom: 8px;
+}
+
+#settings-modal .settings-grid-two {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: end;
+    column-gap: 10px;
+    row-gap: 8px;
+    margin-bottom: 8px;
+}
+
+#settings-modal .settings-block {
+    margin-bottom: 8px;
+}
+
+#settings-modal .settings-save-btn {
+    margin-top: 10px;
+    min-height: 42px;
+}
+
+@media (max-width: 600px) {
+    #settings-modal .settings-modal-content {
+        width: calc(100vw - 14px);
+        padding: 12px;
+    }
+
+    #settings-modal .settings-grid-two {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        column-gap: 8px;
+        row-gap: 6px;
+    }
+
+    #settings-modal .settings-input-wrapper {
+        margin-top: 4px;
+    }
+
+    #settings-modal .settings-input {
+        padding: 8px 28px 8px 9px;
+        font-size: 0.84rem;
+    }
+
+    #settings-modal .settings-label {
+        font-size: 0.72rem;
+        gap: 3px;
+        line-height: 1.15;
+    }
+
+    #settings-modal .settings-label svg {
+        width: 12px;
+        height: 12px;
+    }
+
+    #settings-modal .info-tooltip-trigger--inline svg {
+        width: 10px;
+        height: 10px;
+    }
+
+    #settings-modal .unit-suffix {
+        font-size: 0.72rem;
+        right: 8px;
+    }
+
+    #settings-modal .settings-section-label {
+        margin-top: 2px;
+        margin-bottom: 6px;
+        font-size: 0.62rem;
+    }
+
+    #settings-modal .settings-save-btn {
+        margin-top: 8px;
+        padding: 10px;
     }
 }
