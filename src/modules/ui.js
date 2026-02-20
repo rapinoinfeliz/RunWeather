@@ -45,11 +45,47 @@ function appendLocationLabel(container, name, subText, subClass) {
     container.appendChild(label);
 }
 
+const COUNTRY_LABEL_BY_CODE = {
+    BR: 'Brasil',
+    US: 'EUA',
+    GB: 'Reino Unido',
+    AR: 'Argentina',
+    CL: 'Chile',
+    CO: 'Colômbia',
+    UY: 'Uruguai',
+    PY: 'Paraguai',
+    PE: 'Peru',
+    BO: 'Bolívia',
+    MX: 'México',
+    CA: 'Canadá',
+    ES: 'Espanha',
+    PT: 'Portugal',
+    FR: 'França',
+    DE: 'Alemanha',
+    IT: 'Itália',
+    JP: 'Japão',
+    CN: 'China',
+    AU: 'Austrália',
+    NZ: 'Nova Zelândia'
+};
+
+function formatCountryLabel(country) {
+    const value = String(country || '').trim();
+    if (!value) return '';
+    if (/^[A-Za-z]{2}$/.test(value)) {
+        const code = value.toUpperCase();
+        return COUNTRY_LABEL_BY_CODE[code] || code;
+    }
+    return value;
+}
+
 function getLocationSubtext(loc) {
     if (!loc) return '';
     const region = (loc.region || loc.admin1 || loc.state || '').toString().trim();
-    const country = (loc.country || '').toString().trim();
-    return [region, country].filter(Boolean).join(', ');
+    const country = formatCountryLabel(loc.country);
+    const stateText = region || '--';
+    const countryText = country || '--';
+    return `${stateText}, ${countryText}`;
 }
 
 let locationSearchDebounceTimer = null;
@@ -1068,8 +1104,7 @@ export function openLocationModal() {
                     div.className = 'loc-item';
                     var state = item.admin1 || '';
                     var country = item.country || '';
-                    var subText = [state, country].filter(Boolean).join(', ');
-                    appendLocationLabel(div, item.name, subText, 'loc-sub');
+                    appendLocationLabel(div, item.name, getLocationSubtext({ region: state, country }), 'loc-sub');
                     div.onclick = function () { AppState.locManager.setLocation(item.latitude, item.longitude, item.name, country, { region: state }); };
                     list.appendChild(div);
                 });
@@ -1621,7 +1656,8 @@ export function useGPS() {
             if (!isRequestCurrent(RequestKeys.REVERSE_GEOCODE, request.seq)) return;
             const name = city ? city.name : "My Location";
             const country = city ? city.country : "";
-            if (AppState.locManager) AppState.locManager.setLocation(lat, lon, name, country);
+            const region = city ? city.region : '';
+            if (AppState.locManager) AppState.locManager.setLocation(lat, lon, name, country, { region });
             endRequest(RequestKeys.REVERSE_GEOCODE, request.seq, 'success');
         } catch (e) {
             if (e && e.name === 'AbortError') {
@@ -1750,12 +1786,17 @@ const blockLoadingTargets = {
     ],
     climate: [
         {
-            resolve: () => document.getElementById('climate-heatmap-container'),
+            // Use the card wrapper so overlay visual is not removed by heatmap re-renders.
+            resolve: () => document.getElementById('climate-heatmap-container')?.closest('.forecast-card'),
             classes: ['block-skeleton', 'block-skeleton-heatmap']
         },
         {
             resolve: () => document.getElementById('monthly-averages-content'),
             classes: ['block-skeleton', 'block-skeleton-list']
+        },
+        {
+            resolve: () => document.querySelector('#tab-climate .section-row'),
+            classes: ['block-skeleton', 'block-skeleton-strip']
         },
         {
             resolve: () => document.getElementById('climateTableBody')?.closest('.table-wrapper'),

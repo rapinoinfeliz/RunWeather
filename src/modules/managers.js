@@ -1,8 +1,8 @@
 // Managers: State Management for Location and Climate
 import { loadFromStorage, saveToStorage } from './storage.js';
-import { searchCity } from './api.js';
+import { reverseGeocode, searchCity } from './api.js';
 
-export const DEFAULT_LOC = { lat: -27.5969, lon: -48.5495, name: 'Florianópolis', country: 'BR', isDefault: true };
+export const DEFAULT_LOC = { lat: -27.5969, lon: -48.5495, name: 'Florianópolis', country: 'BR', region: 'Santa Catarina', isDefault: true };
 
 
 export class LocationManager {
@@ -11,6 +11,7 @@ export class LocationManager {
         this.recents = this.loadRecents() || [];
         this.favorites = this.loadFavorites() || [];
         this.onLocationChanged = onLocationChanged;
+        this.backfillMissingRegions();
     }
 
     loadState() {
@@ -18,6 +19,7 @@ export class LocationManager {
         if (saved) {
             saved.lat = Number(saved.lat);
             saved.lon = Number(saved.lon);
+            saved.region = (saved.region || '').toString().trim();
         }
         return saved;
     }
@@ -56,6 +58,59 @@ export class LocationManager {
             f.region = (f.region || '').toString().trim();
         });
         return favs;
+    }
+
+    async backfillMissingRegions() {
+        const targets = [];
+        const seen = new Set();
+        const queue = [];
+
+        const collect = (loc) => {
+            if (!loc) return;
+            const lat = Number(loc.lat);
+            const lon = Number(loc.lon);
+            if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
+            if ((loc.region || '').toString().trim()) return;
+            const key = `${lat.toFixed(4)},${lon.toFixed(4)}`;
+            targets.push(loc);
+            if (!seen.has(key)) {
+                seen.add(key);
+                queue.push({ key, lat, lon });
+            }
+        };
+
+        collect(this.current);
+        this.recents.forEach(collect);
+        this.favorites.forEach(collect);
+
+        if (queue.length === 0) return;
+
+        const resolved = new Map();
+        for (const item of queue) {
+            try {
+                const geo = await reverseGeocode(item.lat, item.lon);
+                resolved.set(item.key, {
+                    region: geo && geo.region ? String(geo.region).trim() : ''
+                });
+            } catch {
+                resolved.set(item.key, { region: '' });
+            }
+        }
+
+        let changedState = false;
+        targets.forEach((loc) => {
+            const key = `${Number(loc.lat).toFixed(4)},${Number(loc.lon).toFixed(4)}`;
+            const data = resolved.get(key);
+            const region = data && data.region ? data.region : '';
+            if (!region) return;
+            loc.region = region;
+            changedState = true;
+        });
+
+        if (!changedState) return;
+        this.saveState();
+        this.saveRecents();
+        this.saveFavorites();
     }
 
     saveFavorites() {

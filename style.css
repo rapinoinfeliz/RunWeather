@@ -1755,6 +1755,10 @@ select.modern-input {
     --skeleton-min-height: 180px;
 }
 
+.block-skeleton-strip {
+    --skeleton-min-height: 44px;
+}
+
 .block-skeleton-table {
     --skeleton-min-height: 300px;
 }
