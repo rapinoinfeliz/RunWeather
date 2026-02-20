@@ -66,6 +66,42 @@ function setChartCardCollapsedState(wrapper, collapsed) {
     card.classList.toggle('chart-card-collapsed', collapsed);
 }
 
+function supportsHoverPointer() {
+    return typeof window !== 'undefined'
+        && typeof window.matchMedia === 'function'
+        && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+}
+
+function escapeAttr(value) {
+    return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+}
+
+function setHoverPaceText(el, showKmh) {
+    if (!el) return;
+    const base = el.dataset.paceDefault || '';
+    const kmh = el.dataset.paceKmh || base;
+    el.textContent = showKmh ? kmh : base;
+}
+
+function bindPaceHoverInteractions(root) {
+    if (!root || !supportsHoverPointer()) return;
+    root.querySelectorAll('.pace-hover-value').forEach((el) => {
+        if (!el.dataset.paceDefault) {
+            el.dataset.paceDefault = (el.textContent || '').trim();
+        }
+        setHoverPaceText(el, false);
+        if (el.dataset.hoverBound === '1') return;
+
+        el.addEventListener('mouseenter', () => setHoverPaceText(el, true));
+        el.addEventListener('mouseleave', () => setHoverPaceText(el, false));
+        el.dataset.hoverBound = '1';
+    });
+}
+
 
 // --- Chart Toggle Functions ---
 export function toggleTempChart() {
@@ -1090,8 +1126,12 @@ export function update(els, hapCalc) {
             // Inner content: Pace on top, Distance below
             let innerHtml = "";
             // Pace
-            innerHtml += `<div style="font-weight:${col.isBase ? '600' : '500'}; color:${col.color}; white-space:nowrap; font-size:1em;">
-                            ${formatPace(col.paceSec, formatTime, system)}
+            const basePace = formatPace(col.paceSec, formatTime, system);
+            const speedKmh = (Number.isFinite(col.paceSec) && col.paceSec > 0)
+                ? `${(3600 / col.paceSec).toFixed(1)}km/h`
+                : '--.-km/h';
+            innerHtml += `<div class="pace-hover-value" data-pace-default="${escapeAttr(basePace)}" data-pace-kmh="${escapeAttr(speedKmh)}" style="font-weight:${col.isBase ? '600' : '500'}; color:${col.color}; white-space:nowrap; font-size:1em;">
+                            ${basePace}
                           </div>`;
 
             // Distance (if applicable)
@@ -1125,6 +1165,12 @@ export function update(els, hapCalc) {
         htmlCanvas += `</div>`;
         // We replace elPace content with the canvas.
         elPace.innerHTML = htmlCanvas;
+        bindPaceHoverInteractions(elPace);
+        if (Number.isFinite(pace) && pace > 0) {
+            elPace.dataset.basePaceSec = String(pace);
+        } else {
+            delete elPace.dataset.basePaceSec;
+        }
         // Hide separate distance element logic
         if (elDist) {
             elDist.innerHTML = "";
@@ -1330,10 +1376,16 @@ function applyBlockLoading(type, visible) {
 export function setLoading(type, visible) {
     if (visible) {
         // Debounce to avoid flicker on fast responses.
+        // Climate gets immediate skeleton to avoid transient layout shift on first open.
         if (loadTimers[type]) clearTimeout(loadTimers[type]);
+        const delayMs = type === 'climate' ? 0 : 220;
+        if (delayMs <= 0) {
+            applyBlockLoading(type, true);
+            return;
+        }
         loadTimers[type] = setTimeout(() => {
             applyBlockLoading(type, true);
-        }, 220);
+        }, delayMs);
         return;
     }
 

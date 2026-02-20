@@ -18,6 +18,11 @@
     box-sizing: border-box;
 }
 
+html {
+    /* Keep viewport width stable when vertical scrollbars appear/disappear. */
+    scrollbar-gutter: stable both-edges;
+}
+
 /* Custom Scrollbar (Slim & Dark) */
 ::-webkit-scrollbar {
     width: 6px;
@@ -55,6 +60,13 @@ body {
     align-items: center;
     min-height: 100vh;
     padding-bottom: 20px;
+}
+
+#view-weather.main-view {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 /* Removed @keyframes gradientMesh */
@@ -804,7 +816,12 @@ h1 {
 }
 
 .heatmap-empty {
+    width: 100%;
+    min-height: 150px;
     padding: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     text-align: center;
     color: var(--text-secondary);
 }
@@ -2025,6 +2042,17 @@ select.modern-input {
     background: rgba(255, 255, 255, 0.15);
     border-color: rgba(255, 255, 255, 0.3);
     box-shadow: 0 0 12px rgba(0, 0, 0, 0.2);
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .pace-hover-value {
+        cursor: pointer;
+        transition: text-shadow 0.15s ease;
+    }
+
+    .pace-hover-value:hover {
+        text-shadow: 0 0 10px rgba(88, 166, 255, 0.35);
+    }
 }
 
 /* Fix Pace Card Overflow on Mobile */
@@ -3818,6 +3846,13 @@ h1 {
 .forecast-card,
 .insight-banner {
     animation: panelRiseIn var(--motion-slow) var(--motion-spring) both;
+}
+
+/* Keep Climate tab width visually stable while content/skeleton swaps. */
+#tab-climate .forecast-card,
+#tab-climate .table-wrapper {
+    animation: none !important;
+    transform: none !important;
 }
 
 .tab-btn,

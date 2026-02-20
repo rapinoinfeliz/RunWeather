@@ -211,11 +211,22 @@ export function getBasePaceSec() {
     const parseEl = (id) => {
         const el = document.getElementById(id);
         if (!el || !el.innerText) return 300;
+        const fromData = Number(el.dataset.basePaceSec);
+        if (Number.isFinite(fromData) && fromData > 0) {
+            return fromData;
+        }
         const match = el.innerText.match(/(\d{1,2}:\d{2})/);
         // Simple parseTime
         if (match) {
             const p = match[1].split(':').map(Number);
             return p[0] * 60 + p[1];
+        }
+        const kmhMatch = el.innerText.match(/(\d+(?:\.\d+)?)\s*km\/h/i);
+        if (kmhMatch) {
+            const kmh = Number(kmhMatch[1]);
+            if (Number.isFinite(kmh) && kmh > 0) {
+                return 3600 / kmh;
+            }
         }
         return 300;
     };
