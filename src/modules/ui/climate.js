@@ -95,7 +95,7 @@ export function calculateBestRunTime(data) {
         elVal.innerHTML = `${dayStr} ${timeStr}`;
 
         // Use unified color logic
-        const color = getImpactColor(minImpact);
+        const color = getImpactColor(minImpact, bestHour.temp);
 
         elImp.textContent = `+${minImpact.toFixed(1)}% Impact`;
         elImp.className = `insight-impact`;

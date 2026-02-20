@@ -3,7 +3,7 @@ import { getImpactHeatmapColor, getImpactCategory, getBasePaceSec, getActiveWeat
 import { renderClimateTable } from './tables.js';
 import { renderMonthlyAverages } from './climate.js';
 import { AppState } from '../appState.js';
-import { getDateForISOWeek, getNowIsoHour, getNowIsoWeek, getReferenceYear, getTimeZoneParts } from '../time.js';
+import { getDateForISOWeek, getNowIsoHour, getNowIsoWeek, getReferenceYear, getTimeZoneParts, getISOWeekFromYmd } from '../time.js';
 
 export function renderForecastHeatmap(contId, legSelector, dayLimit) {
     const cont = document.getElementById(contId);
@@ -85,7 +85,7 @@ export function renderForecastHeatmap(contId, legSelector, dayLimit) {
                 if (d.temp != null && d.dew != null && AppState.hapCalc) {
                     const adjPace = AppState.hapCalc.calculatePaceInHeat(baseSec, d.temp, d.dew);
                     pct = ((adjPace - baseSec) / baseSec) * 100;
-                    color = getImpactHeatmapColor(pct);
+                    color = getImpactHeatmapColor(pct, d.temp);
                     category = getImpactCategory(pct);
                 } else {
                     pct = 0;
@@ -231,18 +231,32 @@ export function renderClimateHeatmap(data) {
     renderClimateLegend(); // Update legend
     renderMonthlyAverages(); // Update monthly list
 
-    // Calculate Current Time for Highlight
-    const forecastTimeZone = getActiveWeatherTimeZone();
+    // Align current slot with climate archive timezone first (authoritative for this dataset).
+    const firstRow = Array.isArray(rawData) && rawData.length > 0 ? rawData[0] : null;
+    const climateTimeZone = (firstRow && typeof firstRow.timezone === 'string' && firstRow.timezone)
+        ? firstRow.timezone
+        : getActiveWeatherTimeZone();
+    const climateUtcOffset = (firstRow && Number.isFinite(Number(firstRow.utc_offset_seconds)))
+        ? Number(firstRow.utc_offset_seconds)
+        : null;
     let curH = new Date().getHours();
     let curW = getNowIsoWeek();
     let refYear = getReferenceYear();
     try {
-        const nowParts = getTimeZoneParts(forecastTimeZone);
+        const nowParts = getTimeZoneParts(climateTimeZone);
         curH = nowParts.hour;
-        curW = getNowIsoWeek(forecastTimeZone);
+        curW = getNowIsoWeek(climateTimeZone);
         refYear = nowParts.year;
     } catch (e) {
-        // keep fallback values
+        if (Number.isFinite(climateUtcOffset)) {
+            const shifted = new Date(Date.now() + (climateUtcOffset * 1000));
+            const y = shifted.getUTCFullYear();
+            const m = shifted.getUTCMonth() + 1;
+            const d = shifted.getUTCDate();
+            curH = shifted.getUTCHours();
+            curW = getISOWeekFromYmd(y, m, d);
+            refYear = y;
+        }
     }
 
     // Dimensions
@@ -324,7 +338,7 @@ export function renderClimateHeatmap(data) {
                 }
                 if (isCurrentSlot && opacity !== '1') opacity = '0.45';
 
-                color = getImpactHeatmapColor(val);
+                color = getImpactHeatmapColor(val, pt.mean_temp);
 
                 // Highlight Current Time
                 if (UIState.selectedClimateKey === `${w}-${h}`) {

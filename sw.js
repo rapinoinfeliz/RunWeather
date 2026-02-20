@@ -1,4 +1,4 @@
-const CACHE_NAME = 'runweather-v59-cache-sync-fix';
+const CACHE_NAME = 'runweather-v62-sw-response-fix';
 const ASSETS = [
     './',
     './index.html',
@@ -41,6 +41,29 @@ self.addEventListener('activate', (e) => {
     );
 });
 
+function offlineResponse(status = 503, statusText = 'Service Unavailable') {
+    return new Response('Offline', {
+        status,
+        statusText,
+        headers: {
+            'Content-Type': 'text/plain; charset=utf-8',
+            'Cache-Control': 'no-store'
+        }
+    });
+}
+
+async function fallbackFromCache(request) {
+    const direct = await caches.match(request, { ignoreSearch: true });
+    if (direct) return direct;
+
+    if (request.mode === 'navigate' || request.destination === 'document') {
+        const shell = await caches.match('./index.html', { ignoreSearch: true });
+        if (shell) return shell;
+    }
+
+    return offlineResponse(504, 'Gateway Timeout');
+}
+
 self.addEventListener('fetch', (e) => {
     // Explicitly bypass external API domains to prevent CORS/Opaque issues
     const url = e.request.url;
@@ -65,7 +88,7 @@ self.addEventListener('fetch', (e) => {
                     }
                     return res;
                 })
-                .catch(() => caches.match(e.request, { ignoreSearch: true }))
+                .catch(() => fallbackFromCache(e.request))
         );
         return;
     }
@@ -82,6 +105,7 @@ self.addEventListener('fetch', (e) => {
                 return netRes;
             }).catch((err) => {
                 console.warn('SW Fetch Fail:', e.request.url, err);
+                return fallbackFromCache(e.request);
             });
         })
     );

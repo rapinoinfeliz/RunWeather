@@ -81,6 +81,38 @@ const BR_STATES_SORTED = BR_STATES
     .map((state) => ({ ...state, normalized: normalizeSearchText(state.name) }))
     .sort((a, b) => b.normalized.length - a.normalized.length);
 
+const COUNTRY_HINTS = [
+    { code: 'BR', aliases: ['brasil', 'brazil', 'br'] },
+    { code: 'AR', aliases: ['argentina', 'ar'] },
+    { code: 'CL', aliases: ['chile', 'cl'] },
+    { code: 'UY', aliases: ['uruguai', 'uruguay', 'uy'] },
+    { code: 'PY', aliases: ['paraguai', 'paraguay', 'py'] },
+    { code: 'BO', aliases: ['bolivia', 'bo'] },
+    { code: 'PE', aliases: ['peru', 'pe'] },
+    { code: 'CO', aliases: ['colombia', 'co'] },
+    { code: 'MX', aliases: ['mexico', 'mx'] },
+    { code: 'US', aliases: ['estados unidos', 'eua', 'usa', 'united states', 'us'] },
+    { code: 'CA', aliases: ['canada', 'ca'] },
+    { code: 'GB', aliases: ['reino unido', 'uk', 'inglaterra', 'great britain', 'united kingdom', 'gb'] },
+    { code: 'PT', aliases: ['portugal', 'pt'] },
+    { code: 'ES', aliases: ['espanha', 'spain', 'espana', 'es'] },
+    { code: 'FR', aliases: ['franca', 'france', 'fr'] },
+    { code: 'DE', aliases: ['alemanha', 'germany', 'deutschland', 'de'] },
+    { code: 'IT', aliases: ['italia', 'italy', 'it'] },
+    { code: 'JP', aliases: ['japao', 'japan', 'jp'] },
+    { code: 'CN', aliases: ['china', 'cn'] },
+    { code: 'KR', aliases: ['coreia do sul', 'korea', 'south korea', 'kr'] },
+    { code: 'AU', aliases: ['australia', 'au'] },
+    { code: 'NZ', aliases: ['nova zelandia', 'new zealand', 'nz'] }
+];
+
+const COUNTRY_HINT_ENTRIES = COUNTRY_HINTS
+    .flatMap((item) => item.aliases.map((alias) => ({
+        code: item.code,
+        alias: normalizeSearchText(alias)
+    })))
+    .sort((a, b) => b.alias.length - a.alias.length);
+
 function normalizeSearchText(value) {
     return String(value || '')
         .toLowerCase()
@@ -142,9 +174,44 @@ function isBrazilResult(item) {
     return countryCode === 'BR' || countryName === 'brazil' || countryName === 'brasil';
 }
 
-function scoreSearchResult(item, searchNorm, stateUf = '') {
+function getResultCountryCode(item) {
+    return String(item && (item.country_code || item.countryCode) || '').toUpperCase();
+}
+
+function extractCountryHint(rawTerm) {
+    const original = String(rawTerm || '').trim();
+    if (!original) {
+        return { searchTerm: '', countryCode: '' };
+    }
+
+    let normalized = normalizeSearchText(original);
+    let detectedCode = '';
+
+    for (const entry of COUNTRY_HINT_ENTRIES) {
+        const aliasPattern = new RegExp(
+            `(?:^|[\\s,\\-/])(?:(?:do|da|de|del|of)\\s+)?${escapeRegExp(entry.alias)}$`
+        );
+        if (aliasPattern.test(normalized)) {
+            detectedCode = entry.code;
+            normalized = normalized.replace(aliasPattern, '').trim();
+            break;
+        }
+    }
+
+    return {
+        searchTerm: normalized || original,
+        countryCode: detectedCode
+    };
+}
+
+function scoreSearchResult(item, searchNorm, options = {}) {
+    const stateUf = String(options && options.stateUf || '').toUpperCase();
+    const preferredCountryCode = String(options && options.preferredCountryCode || '').toUpperCase();
+    const preferBrazil = !preferredCountryCode && !!(options && options.preferBrazil);
+
     const nameNorm = normalizeSearchText(item && item.name);
     const adminNorm = normalizeSearchText(item && item.admin1);
+    const countryCode = getResultCountryCode(item);
 
     let score = 0;
 
@@ -152,7 +219,12 @@ function scoreSearchResult(item, searchNorm, stateUf = '') {
     else if (searchNorm && nameNorm.startsWith(searchNorm)) score += 90;
     else if (searchNorm && nameNorm.includes(searchNorm)) score += 45;
 
-    if (isBrazilResult(item)) score += 25;
+    if (preferredCountryCode) {
+        if (countryCode === preferredCountryCode) score += 150;
+        else score -= 35;
+    } else if (preferBrazil && isBrazilResult(item)) {
+        score += 25;
+    }
 
     if (stateUf) {
         const stateNorm = normalizeSearchText(BR_STATE_BY_UF[stateUf] || '');
@@ -168,36 +240,79 @@ function scoreSearchResult(item, searchNorm, stateUf = '') {
     return score;
 }
 
-function dedupeAndSortResults(results, searchNorm, stateUf = '') {
+function buildCityDedupKey(item) {
+    const countryCode = getResultCountryCode(item);
+    const countryName = normalizeSearchText(item && item.country);
+    const regionNorm = normalizeSearchText(item && (item.admin1 || item.admin2 || item.admin3));
+    return [
+        normalizeSearchText(item && item.name),
+        regionNorm,
+        countryCode || countryName || 'na'
+    ].join('|');
+}
+
+function compareSearchResults(a, b, searchNorm, options = {}) {
+    const scoreDiff = scoreSearchResult(b, searchNorm, options) - scoreSearchResult(a, searchNorm, options);
+    if (scoreDiff !== 0) return scoreDiff;
+
+    const popA = Number(a && a.population);
+    const popB = Number(b && b.population);
+    const hasPopA = Number.isFinite(popA);
+    const hasPopB = Number.isFinite(popB);
+    if (hasPopA && hasPopB && popA !== popB) return popB - popA;
+    if (hasPopA !== hasPopB) return hasPopB ? 1 : -1;
+
+    const nameA = normalizeSearchText(a && a.name);
+    const nameB = normalizeSearchText(b && b.name);
+    if (nameA < nameB) return -1;
+    if (nameA > nameB) return 1;
+
+    const regionA = normalizeSearchText(a && (a.admin1 || a.admin2 || a.admin3));
+    const regionB = normalizeSearchText(b && (b.admin1 || b.admin2 || b.admin3));
+    if (regionA < regionB) return -1;
+    if (regionA > regionB) return 1;
+
+    return 0;
+}
+
+function normalizeDisplayCityName(name, countryCode) {
+    const rawName = String(name || '').trim();
+    if (!rawName) return rawName;
+
+    const code = String(countryCode || '').toUpperCase();
+    const nameNorm = normalizeSearchText(rawName);
+    if (code === 'CL' && (nameNorm === 'santiago do chile' || nameNorm === 'santiago de chile')) {
+        return 'Santiago';
+    }
+
+    return rawName;
+}
+
+function sanitizeSearchResult(item) {
+    if (!item || typeof item !== 'object') return item;
+    const countryCode = getResultCountryCode(item);
+    return {
+        ...item,
+        name: normalizeDisplayCityName(item.name, countryCode)
+    };
+}
+
+function dedupeAndSortResults(results, searchNorm, options = {}) {
     const input = Array.isArray(results) ? results : [];
+    const sorted = input.slice().sort((a, b) => compareSearchResults(a, b, searchNorm, options));
     const seen = new Set();
     const deduped = [];
 
-    for (const item of input) {
+    for (const item of sorted) {
         if (!item || typeof item !== 'object') continue;
-        const lat = Number(item.latitude);
-        const lon = Number(item.longitude);
-        const key = [
-            normalizeSearchText(item.name),
-            normalizeSearchText(item.admin1),
-            String(item.country_code || item.countryCode || '').toUpperCase(),
-            Number.isFinite(lat) ? lat.toFixed(3) : 'na',
-            Number.isFinite(lon) ? lon.toFixed(3) : 'na'
-        ].join('|');
+        const normalizedItem = sanitizeSearchResult(item);
+        const key = buildCityDedupKey(normalizedItem);
         if (seen.has(key)) continue;
         seen.add(key);
-        deduped.push(item);
+        deduped.push(normalizedItem);
     }
 
-    return deduped.sort((a, b) => {
-        const scoreDiff = scoreSearchResult(b, searchNorm, stateUf) - scoreSearchResult(a, searchNorm, stateUf);
-        if (scoreDiff !== 0) return scoreDiff;
-        const nameA = normalizeSearchText(a && a.name);
-        const nameB = normalizeSearchText(b && b.name);
-        if (nameA < nameB) return -1;
-        if (nameA > nameB) return 1;
-        return 0;
-    });
+    return deduped;
 }
 
 function toFiniteNumber(value) {
@@ -381,9 +496,12 @@ export async function fetchClimateHistory(lat, lon, opts = {}) {
     const end = new Date();
     const start = new Date();
     start.setFullYear(end.getFullYear() - 6);
+    // ERA5 reanalysis has publication lag (~5 days). Keep a conservative buffer
+    // so most-recent null slices do not bias weekly aggregates.
+    end.setUTCDate(end.getUTCDate() - 7);
 
     const startStr = start.toISOString().split('T')[0];
-    const endStr = new Date().toISOString().split('T')[0];
+    const endStr = end.toISOString().split('T')[0];
     const cacheKey = `climate:${toCoordKey(lat)}:${toCoordKey(lon)}:${startStr}:${endStr}`;
     if (!force) {
         const cached = getCache(cacheKey);
@@ -412,10 +530,11 @@ export async function searchCity(query, opts = {}) {
         count = 10
     } = opts;
     const parsed = parseBrazilSearchQuery(query);
-    const normalized = (parsed.searchTerm || '').trim();
+    const hintParsed = extractCountryHint(parsed.searchTerm || query);
+    const normalized = (hintParsed.searchTerm || parsed.searchTerm || '').trim();
     if (normalized.length < 3) return [];
 
-    const normalizedCountryCode = String(countryCode || '').trim().toUpperCase();
+    const normalizedCountryCode = String(countryCode || hintParsed.countryCode || '').trim().toUpperCase();
     const constrainedCountryCode = /^[A-Z]{2}$/.test(normalizedCountryCode) ? normalizedCountryCode : '';
     const parsedCount = Number(count);
     const safeCount = Number.isFinite(parsedCount)
@@ -440,25 +559,26 @@ export async function searchCity(query, opts = {}) {
     };
 
     try {
-        const shouldUseBrFirst = !constrainedCountryCode || constrainedCountryCode === 'BR';
         const allResults = await fetchResults();
+        const rankingOptions = {
+            stateUf: parsed.stateUf,
+            preferredCountryCode: constrainedCountryCode,
+            preferBrazil: !constrainedCountryCode
+        };
         let ranked = [];
 
-        if (shouldUseBrFirst) {
-            const brResults = allResults.filter((item) => isBrazilResult(item));
-            ranked = dedupeAndSortResults(brResults, searchNorm, parsed.stateUf);
+        if (constrainedCountryCode) {
+            const countryResults = allResults.filter((item) => getResultCountryCode(item) === constrainedCountryCode);
+            ranked = dedupeAndSortResults(countryResults, searchNorm, rankingOptions);
             if (ranked.length === 0) {
-                ranked = dedupeAndSortResults(allResults, searchNorm, parsed.stateUf);
+                ranked = dedupeAndSortResults(allResults, searchNorm, {
+                    stateUf: parsed.stateUf,
+                    preferredCountryCode: '',
+                    preferBrazil: false
+                });
             }
         } else {
-            const countryResults = allResults.filter((item) => {
-                const code = String(item && (item.country_code || item.countryCode) || '').toUpperCase();
-                return code === constrainedCountryCode;
-            });
-            ranked = dedupeAndSortResults(countryResults, searchNorm, parsed.stateUf);
-            if (ranked.length === 0) {
-                ranked = dedupeAndSortResults(allResults, searchNorm, parsed.stateUf);
-            }
+            ranked = dedupeAndSortResults(allResults, searchNorm, rankingOptions);
         }
 
         return setCache(cacheKey, ranked.slice(0, safeCount), CACHE_TTL.search);

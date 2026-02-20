@@ -914,7 +914,7 @@ export function handleChartHover(e, totalW, chartW, padLeft, dataLen) {
             let baseSec = getBasePaceSec();
             const adjPace = AppState.hapCalc ? AppState.hapCalc.calculatePaceInHeat(baseSec, d.temp, d.dew) : baseSec;
             const pct = ((adjPace - baseSec) / baseSec) * 100;
-            const color = getImpactColor(pct);
+            const color = getImpactColor(pct, d.temp);
 
             html = `
                 <div class="tooltip-header">${dayName} ${dateStr} ${hourStr}:00</div>
@@ -942,12 +942,7 @@ export function handleChartClick(e, totalW, chartW, padLeft, dataLen) {
 }
 
 export function showClimateTooltip(e, w, h, impact, temp, dew, count) {
-    // Match impact color logic
-    let impactColor = "#4ade80";
-    if (impact >= 6.0) impactColor = "#c084fc";
-    else if (impact >= 3.5) impactColor = "#f87171";
-    else if (impact >= 2.0) impactColor = "#fb923c";
-    else if (impact >= 0.5) impactColor = "#facc15";
+    const impactColor = getImpactColor(impact, temp);
 
     const dateStr = `${getDateFromWeek(w)}`;
     const timeStr = `${String(h).padStart(2, '0')}:00`;
@@ -1352,7 +1347,7 @@ export function update(els, hapCalc) {
     // Determine Impact Color
     let impactColor = "#fb923c"; // fallback
     if (res.weather.valid) {
-        impactColor = getImpactColor(res.weather.impactPct);
+        impactColor = getImpactColor(res.weather.impactPct, state.temp);
     }
     const view = AppState.paceView || { heat: false, headwind: false, tailwind: false, altitude: false };
 
@@ -1764,19 +1759,19 @@ const blockLoadingTargets = {
     ],
     forecast: [
         {
-            resolve: () => document.getElementById('forecast-grid-container-16'),
+            resolve: () => document.getElementById('forecast-grid-container-16')?.closest('.scroll-x-auto'),
             classes: ['block-skeleton', 'block-skeleton-heatmap']
         },
         {
-            resolve: () => document.getElementById('forecast-chart-container-16'),
+            resolve: () => document.getElementById('forecast-chart-container-16')?.closest('.forecast-card'),
             classes: ['block-skeleton', 'block-skeleton-chart']
         },
         {
-            resolve: () => document.getElementById('forecast-rain-chart-container-16'),
+            resolve: () => document.getElementById('forecast-rain-chart-container-16')?.closest('.forecast-card'),
             classes: ['block-skeleton', 'block-skeleton-chart']
         },
         {
-            resolve: () => document.getElementById('forecast-wind-chart-container-16'),
+            resolve: () => document.getElementById('forecast-wind-chart-container-16')?.closest('.forecast-card'),
             classes: ['block-skeleton', 'block-skeleton-chart']
         },
         {
@@ -1786,12 +1781,12 @@ const blockLoadingTargets = {
     ],
     climate: [
         {
-            // Use the card wrapper so overlay visual is not removed by heatmap re-renders.
-            resolve: () => document.getElementById('climate-heatmap-container')?.closest('.forecast-card'),
+            // Dedicated shell keeps overlay stable while inner SVG is re-rendered.
+            resolve: () => document.getElementById('climate-heatmap-shell'),
             classes: ['block-skeleton', 'block-skeleton-heatmap']
         },
         {
-            resolve: () => document.getElementById('monthly-averages-content'),
+            resolve: () => document.getElementById('monthly-averages-content')?.closest('.forecast-card'),
             classes: ['block-skeleton', 'block-skeleton-list']
         },
         {
@@ -1814,23 +1809,15 @@ function applyBlockLoading(type, visible) {
             if (visible) el.classList.add(cls);
             else el.classList.remove(cls);
         });
-        toggleBlockSkeletonVisual(el, visible);
+        const enableVisual = target.visual !== false;
+        toggleBlockSkeletonVisual(el, visible && enableVisual);
     });
 }
 
 export function setLoading(type, visible) {
     if (visible) {
-        // Debounce to avoid flicker on fast responses.
-        // Climate gets immediate skeleton to avoid transient layout shift on first open.
         if (loadTimers[type]) clearTimeout(loadTimers[type]);
-        const delayMs = type === 'climate' ? 0 : 220;
-        if (delayMs <= 0) {
-            applyBlockLoading(type, true);
-            return;
-        }
-        loadTimers[type] = setTimeout(() => {
-            applyBlockLoading(type, true);
-        }, delayMs);
+        applyBlockLoading(type, true);
         return;
     }
 

@@ -38,6 +38,24 @@ describe('impact categories', () => {
         expect(getImpactColor(4)).toBe('#f87171');
         expect(getImpactColor(6.5)).toBe('#c084fc');
     });
+
+    it('uses temperature shades for ideal impact', () => {
+        const warm = getImpactColor(0.2, 9);
+        const cool = getImpactColor(0.2, 5);
+        const cold = getImpactColor(0.2, 1);
+
+        expect(warm).toMatch(/^#[0-9a-f]{6}$/i);
+        expect(cool).toMatch(/^#[0-9a-f]{6}$/i);
+        expect(cold).toMatch(/^#[0-9a-f]{6}$/i);
+        expect(warm).not.toBe(cool);
+        expect(cool).not.toBe(cold);
+
+        const warmRgb = hexToRgb(warm);
+        const coolRgb = hexToRgb(cool);
+        const coldRgb = hexToRgb(cold);
+        expect(coolRgb.b).toBeGreaterThanOrEqual(warmRgb.b);
+        expect(coldRgb.b).toBeGreaterThan(coolRgb.b);
+    });
 });
 
 describe('heatmap gradient', () => {
@@ -53,5 +71,23 @@ describe('heatmap gradient', () => {
 
         expect(lowFair).not.toBe(highFair);
         expect(luminance(highFair)).toBeLessThan(luminance(lowFair));
+    });
+
+    it('uses temperature shades for ideal heatmap cells', () => {
+        const warm = getImpactHeatmapColor(0.2, 8);
+        const cool = getImpactHeatmapColor(0.2, 5);
+        const cold = getImpactHeatmapColor(0.2, 1);
+        expect(warm).not.toBe(cool);
+        expect(cool).not.toBe(cold);
+    });
+
+    it('darkens inside ideal subcategories as impact rises', () => {
+        const lowCool = getImpactHeatmapColor(0.05, 5);
+        const highCool = getImpactHeatmapColor(0.45, 5);
+        expect(luminance(highCool)).toBeLessThan(luminance(lowCool));
+
+        const lowCold = getImpactHeatmapColor(0.05, 1);
+        const highCold = getImpactHeatmapColor(0.45, 1);
+        expect(luminance(highCold)).toBeLessThan(luminance(lowCold));
     });
 });

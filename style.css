@@ -1684,6 +1684,8 @@ select.modern-input {
     overflow: hidden;
     border-radius: 12px;
     min-height: var(--skeleton-min-height, 120px);
+    --skeleton-icon-size: clamp(56px, 18vw, 88px);
+    --skeleton-visual-pad: 10px;
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.015));
 }
 
@@ -1696,13 +1698,16 @@ select.modern-input {
     position: absolute;
     inset: 0;
     z-index: 4;
-    display: grid;
-    place-items: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--skeleton-visual-pad);
     pointer-events: none;
 }
 
 .weather-skeleton-svg {
-    width: clamp(56px, 18vw, 88px);
+    width: var(--skeleton-icon-size);
+    max-width: 100%;
     height: auto;
     filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.35));
 }
@@ -1741,26 +1746,33 @@ select.modern-input {
 
 .block-skeleton-grid {
     --skeleton-min-height: 360px;
+    --skeleton-icon-size: clamp(62px, 20vw, 92px);
 }
 
 .block-skeleton-chart {
     --skeleton-min-height: 180px;
+    --skeleton-icon-size: clamp(54px, 16vw, 78px);
 }
 
 .block-skeleton-heatmap {
     --skeleton-min-height: 150px;
+    --skeleton-icon-size: clamp(56px, 16vw, 82px);
 }
 
 .block-skeleton-list {
     --skeleton-min-height: 180px;
+    --skeleton-icon-size: clamp(52px, 15vw, 76px);
 }
 
 .block-skeleton-strip {
     --skeleton-min-height: 44px;
+    --skeleton-icon-size: 28px;
+    --skeleton-visual-pad: 4px;
 }
 
 .block-skeleton-table {
     --skeleton-min-height: 300px;
+    --skeleton-icon-size: clamp(58px, 16vw, 84px);
 }
 
 @keyframes blockSkeletonSweep {
@@ -4714,13 +4726,60 @@ h1 {
 }
 
 .table-loading-cell {
+    position: relative;
+    overflow: hidden;
     text-align: center;
     padding: 20px;
     color: var(--text-secondary);
+    opacity: 0.9;
+}
+
+.table-loading-cell::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(100deg,
+            transparent 0%,
+            rgba(255, 255, 255, 0.08) 45%,
+            rgba(255, 255, 255, 0.18) 50%,
+            rgba(255, 255, 255, 0.08) 55%,
+            transparent 100%);
+    transform: translateX(-100%);
+    animation: tableLoadingSweep 1.15s linear infinite;
+    pointer-events: none;
+}
+
+.table-loading-cell::after {
+    content: "";
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    margin-left: 8px;
+    border-radius: 50%;
+    border: 2px solid rgba(148, 163, 184, 0.35);
+    border-top-color: rgba(219, 234, 254, 0.95);
+    animation: tableLoadingSpin 0.9s linear infinite;
+    vertical-align: middle;
+}
+
+@keyframes tableLoadingSweep {
+    to {
+        transform: translateX(100%);
+    }
+}
+
+@keyframes tableLoadingSpin {
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 .climate-overflow-card {
     overflow-x: auto;
+}
+
+.climate-heatmap-shell {
+    position: relative;
 }
 
 .climate-heatmap-grid {
@@ -4811,6 +4870,14 @@ h1 {
     color: var(--text-secondary);
     font-size: 0.8rem;
     margin: 5px 0;
+}
+
+/* Keep header subtitles aligned consistently with the left title edge. */
+#tab-calculator .header-left .subtitle,
+#tab-climate .header-left .subtitle {
+    justify-content: flex-start;
+    text-align: left;
+    padding-left: 3px;
 }
 
 .settings-grid-two {

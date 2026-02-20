@@ -2,6 +2,29 @@ import { getCachedClimate, cacheClimate } from './storage.js';
 import { fetchClimateHistory } from './api.js';
 import { AppState } from './appState.js';
 import { RequestKeys, beginRequest, endRequest, isRequestCurrent } from './store.js';
+import { getISOWeekFromYmd } from './time.js';
+
+const CLIMATE_SCHEMA_VERSION = 3;
+
+function parseLocalIsoParts(isoLike) {
+    if (typeof isoLike !== 'string') return null;
+    const match = isoLike.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2})/);
+    if (!match) return null;
+
+    const year = Number(match[1]);
+    const month = Number(match[2]);
+    const day = Number(match[3]);
+    const hour = Number(match[4]);
+
+    if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day) || !Number.isFinite(hour)) {
+        return null;
+    }
+    if (month < 1 || month > 12 || day < 1 || day > 31 || hour < 0 || hour > 23) {
+        return null;
+    }
+
+    return { year, month, day, hour };
+}
 
 export class ClimateManager {
     constructor(locManager, onUpdateUI) {
@@ -31,8 +54,13 @@ export class ClimateManager {
         const runLoad = async () => {
             // 1. Check Cache
             const cached = await getCachedClimate(loc.lat, loc.lon);
-            // Check if cache fits schema (has mean_temp)
-            if (cached && cached.length > 0 && cached[0].mean_temp !== undefined) {
+            // Accept cache only when it matches the latest climate schema.
+            if (
+                cached
+                && cached.length > 0
+                && cached[0].mean_temp !== undefined
+                && Number(cached[0].schema_version) === CLIMATE_SCHEMA_VERSION
+            ) {
                 console.log("Loaded Climate from Cache");
                 this.data = cached;
                 if (isRequestCurrent(RequestKeys.CLIMATE, request.seq) && this.onUpdateUI) this.onUpdateUI(cached);
@@ -97,32 +125,45 @@ export class ClimateManager {
     processHistory(raw) {
         if (!raw || !raw.hourly) return [];
         const h = raw.hourly;
-        const len = h.time.length;
+        const len = Array.isArray(h.time) ? h.time.length : 0;
+        const climateTimeZone = (typeof raw.timezone === 'string' && raw.timezone) ? raw.timezone : '';
+        const climateUtcOffset = Number.isFinite(Number(raw.utc_offset_seconds))
+            ? Number(raw.utc_offset_seconds)
+            : null;
 
         const buckets = {};
 
         for (let i = 0; i < len; i++) {
-            const t = new Date(h.time[i]);
-            // Week number logic needed...
-            const d = new Date(Date.UTC(t.getFullYear(), t.getMonth(), t.getDate()));
-            const dayNum = d.getUTCDay() || 7;
-            d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-            const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-            const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-            const week = weekNo;
+            const parts = parseLocalIsoParts(h.time[i]);
+            if (!parts) continue;
 
-            const hour = t.getHours();
+            // Archive API with timezone=auto returns local-time stamps for the location.
+            // Parse components directly to avoid browser timezone shifts.
+            const week = getISOWeekFromYmd(parts.year, parts.month, parts.day);
+            const hour = parts.hour;
             const key = `${week}-${hour}`;
 
             if (!buckets[key]) buckets[key] = {
-                temps: [], dews: [], winds: [], precips: 0, count: 0
+                temps: [], dews: [], winds: [], precips: 0, count: 0, precipCount: 0
             };
 
-            if (h.temperature_2m[i] !== null) buckets[key].temps.push(h.temperature_2m[i]);
-            if (h.dew_point_2m[i] !== null) buckets[key].dews.push(h.dew_point_2m[i]);
-            if (h.wind_speed_10m[i] !== null) buckets[key].winds.push(h.wind_speed_10m[i]);
-            if (h.precipitation[i] !== null) buckets[key].precips += h.precipitation[i];
-            buckets[key].count++;
+            const tempVal = h.temperature_2m[i];
+            const dewVal = h.dew_point_2m[i];
+            const windVal = h.wind_speed_10m[i];
+            const precipVal = h.precipitation[i];
+
+            if (tempVal !== null) {
+                buckets[key].temps.push(tempVal);
+                // Sample count should follow temperature availability, since heat-impact
+                // computation is anchored in temperature/dew data.
+                buckets[key].count++;
+            }
+            if (dewVal !== null) buckets[key].dews.push(dewVal);
+            if (windVal !== null) buckets[key].winds.push(windVal);
+            if (precipVal !== null) {
+                buckets[key].precips += precipVal;
+                buckets[key].precipCount++;
+            }
         }
 
         const result = [];
@@ -130,9 +171,16 @@ export class ClimateManager {
             const b = buckets[key];
             if (b.count === 0) continue;
 
-            const avgTemp = b.temps.reduce((a, c) => a + c, 0) / (b.temps.length || 1);
-            const avgDew = b.dews.reduce((a, c) => a + c, 0) / (b.dews.length || 1);
-            const avgWind = b.winds.reduce((a, c) => a + c, 0) / (b.winds.length || 1);
+            const avgTemp = b.temps.length > 0
+                ? b.temps.reduce((a, c) => a + c, 0) / b.temps.length
+                : null;
+            const avgDew = b.dews.length > 0
+                ? b.dews.reduce((a, c) => a + c, 0) / b.dews.length
+                : null;
+            const avgWind = b.winds.length > 0
+                ? b.winds.reduce((a, c) => a + c, 0) / b.winds.length
+                : 0;
+            if (avgTemp == null || avgDew == null) continue;
 
             // Impact Calculation
             let impact = 0;
@@ -151,9 +199,12 @@ export class ClimateManager {
                 mean_temp: avgTemp,
                 mean_dew: avgDew,
                 mean_wind: avgWind,
-                mean_precip: b.precips / (b.count || 1),
+                mean_precip: b.precipCount > 0 ? (b.precips / b.precipCount) : 0,
                 mean_impact: impact,
-                samples: b.count
+                samples: b.count,
+                timezone: climateTimeZone,
+                utc_offset_seconds: climateUtcOffset,
+                schema_version: CLIMATE_SCHEMA_VERSION
             });
         }
         return result;

@@ -20,7 +20,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <!-- Cache Busting: increment v=ID on deploy -->
-    <script type="module" src="src/main.js?v=1.0.19"></script>
+    <script type="module" src="src/main.js?v=1.0.25"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
@@ -656,8 +656,10 @@
                     <span>Jul</span><span>Aug</span><span>Sep</span><span>Oct</span><span>Nov</span><span>Dec</span>
                 </div> -->
 
-                    <div id="climate-heatmap-container" class="climate-heatmap-grid">
-                        <!-- JS Injected -->
+                    <div id="climate-heatmap-shell" class="climate-heatmap-shell">
+                        <div id="climate-heatmap-container" class="climate-heatmap-grid">
+                            <!-- JS Injected -->
+                        </div>
                     </div>
 
                     <div id="climate-legend-container" class="heatmap-legend">

@@ -11,8 +11,15 @@ export function infoIcon(title, text, className = '') {
     return `<span class="info-tooltip-trigger info-tooltip-trigger--inline${extraClass}" data-action="info-tooltip" data-title="${tSafe}" data-text="${txtSafe}" role="button" tabindex="0" aria-label="Info"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></span>`;
 }
 
-export function getImpactColor(pct) {
-    if (pct < 0.5) return "#4ade80"; // Green
+const IDEAL_IMPACT_COLORS = {
+    warm: '#4ade80',
+    bridge: '#49d6a7',
+    cool: '#49c6c8',
+    cold: '#5a9ecf'
+};
+
+export function getImpactColor(pct, tempC = null) {
+    if (pct < 0.5) return getIdealImpactColorByTemp(tempC);
     if (pct < 2.0) return "#facc15"; // Yellow
     if (pct < 3.5) return "#fb923c"; // Orange
     if (pct < 6.0) return "#f87171"; // Red
@@ -44,6 +51,39 @@ function hexToRgb(hex) {
 function rgbToHex({ r, g, b }) {
     const toHex = (n) => clamp(Math.round(n), 0, 255).toString(16).padStart(2, '0');
     return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+}
+
+function mixHexColors(a, b, t) {
+    const ca = hexToRgb(a);
+    const cb = hexToRgb(b);
+    const ratio = clamp(Number.isFinite(t) ? t : 0, 0, 1);
+    return rgbToHex({
+        r: ca.r + ((cb.r - ca.r) * ratio),
+        g: ca.g + ((cb.g - ca.g) * ratio),
+        b: ca.b + ((cb.b - ca.b) * ratio)
+    });
+}
+
+function getIdealBaseColorByTemp(tempC) {
+    if (!Number.isFinite(tempC)) return IDEAL_IMPACT_COLORS.warm;
+
+    // > 7C: keep green dominant, slightly toward cyan near the threshold.
+    if (tempC > 7) {
+        const tWarm = clamp((tempC - 7) / 8, 0, 1);
+        return mixHexColors(IDEAL_IMPACT_COLORS.bridge, IDEAL_IMPACT_COLORS.warm, tWarm);
+    }
+    // 4C-7C: smooth bridge between green-ish and soft cyan.
+    if (tempC >= 4) {
+        const tCool = clamp((tempC - 4) / 3, 0, 1);
+        return mixHexColors(IDEAL_IMPACT_COLORS.cool, IDEAL_IMPACT_COLORS.bridge, tCool);
+    }
+    // < 4C: move gradually to a muted blue, avoiding abrupt saturation.
+    const tCold = clamp((tempC + 2) / 6, 0, 1);
+    return mixHexColors(IDEAL_IMPACT_COLORS.cold, IDEAL_IMPACT_COLORS.cool, tCold);
+}
+
+function getIdealImpactColorByTemp(tempC) {
+    return getIdealBaseColorByTemp(tempC);
 }
 
 function rgbToHsl({ r, g, b }) {
@@ -100,7 +140,18 @@ function getImpactBand(pct) {
     return IMPACT_BANDS[IMPACT_BANDS.length - 1];
 }
 
-export function getImpactHeatmapColor(pct) {
+export function getImpactHeatmapColor(pct, tempC = null) {
+    if (pct < 0.5) {
+        const baseIdeal = getIdealBaseColorByTemp(tempC);
+        const tIdeal = clamp((Number.isFinite(pct) ? pct : 0) / 0.5, 0, 1);
+        const baseHsl = rgbToHsl(hexToRgb(baseIdeal));
+        const s = clamp(baseHsl.s + 0.03, 0, 1);
+        const lightStart = clamp(baseHsl.l + 0.05, 0, 1);
+        const lightEnd = clamp(baseHsl.l - 0.09, 0, 1);
+        const l = lightStart + ((lightEnd - lightStart) * tIdeal);
+        return rgbToHex(hslToRgb({ h: baseHsl.h, s, l }));
+    }
+
     const band = getImpactBand(pct);
     const min = Number.isFinite(band.min) ? band.min : 0;
     const max = Number.isFinite(band.max) ? band.max : (band.cap ?? (min + 4));

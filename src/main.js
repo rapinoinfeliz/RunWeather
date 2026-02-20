@@ -13,7 +13,7 @@ import { formatTimeInput, handleTimeInput, setupFineTuning, saveCalcState } from
 import { initSettings, loadSavedSettings } from './modules/settings.js';
 import { formatEditableValue, toDisplayTemperature, toDisplayWind, updateUnitLabels } from './modules/units.js';
 
-const APP_VERSION = '1.0.19';
+const APP_VERSION = '1.0.25';
 console.log(`Main JS Starting... v${APP_VERSION}`);
 
 function isNativeInteractiveElement(el) {

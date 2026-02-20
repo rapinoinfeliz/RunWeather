@@ -633,7 +633,7 @@ export function renderForecastTable(tableBodyId, dayLimit, isAppend = false) {
         if (h.temp != null && h.dew != null && AppState.hapCalc) {
             adjPace = AppState.hapCalc.calculatePaceInHeat(baseSec, h.temp, h.dew);
             pct = ((adjPace - baseSec) / baseSec) * 100;
-            impactColor = getImpactColor(pct);
+            impactColor = getImpactColor(pct, h.temp);
         }
         const impactCategoryClass = `impact-badge--${getImpactCategory(pct).toLowerCase()}`;
 
@@ -780,11 +780,7 @@ export function renderClimateTable(isAppend = false) {
         // Match Forecast Table Logic
         const timeStr = `${String(d.hour).padStart(2, '0')}:00`;
 
-        let impactColor = "#4ade80";
-        if (d.mean_impact >= 6.0) impactColor = "#c084fc";
-        else if (d.mean_impact >= 3.5) impactColor = "#f87171";
-        else if (d.mean_impact >= 2.0) impactColor = "#fb923c";
-        else if (d.mean_impact >= 0.5) impactColor = "#facc15";
+        const impactColor = getImpactColor(d.mean_impact || 0, d.mean_temp);
         const impactCategoryClass = `impact-badge--${getImpactCategory(d.mean_impact || 0).toLowerCase()}`;
 
         // Rain/Wind logic similar to Forecast
