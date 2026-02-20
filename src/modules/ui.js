@@ -93,20 +93,61 @@ function getLocationSubtext(loc) {
 let locationSearchDebounceTimer = null;
 let locationSearchSeq = 0;
 let lastLocationFocus = null;
-let leafletLoaderPromise = null;
+let mapLibreLoaderPromise = null;
 let locationPickerMap = null;
 let locationPickerMarker = null;
 let locationPickerMapClickHandler = null;
+let locationPickerMapMoveHandler = null;
+let locationPickerMapLeaveHandler = null;
 let locationPickerReverseSeq = 0;
 let pendingLocationSelection = null;
 let activeLocationSearchItem = null;
 let locationElevationSeq = 0;
 const locationElevationCache = new Map();
+const locationMapLayerState = { altitude: true, temperature: true };
 
-const LEAFLET_CSS_ID = 'rw-leaflet-css';
-const LEAFLET_SCRIPT_ID = 'rw-leaflet-script';
-const LEAFLET_CSS_URL = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-const LEAFLET_SCRIPT_URL = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+const MAPLIBRE_CSS_ID = 'rw-maplibre-css';
+const MAPLIBRE_SCRIPT_ID = 'rw-maplibre-script';
+const MAPLIBRE_CSS_URL = 'https://unpkg.com/maplibre-gl@5.3.1/dist/maplibre-gl.css';
+const MAPLIBRE_SCRIPT_URL = 'https://unpkg.com/maplibre-gl@5.3.1/dist/maplibre-gl.js';
+const LOCATION_MAP_TERRAIN_SOURCE_ID = 'rw-terrain-dem';
+const LOCATION_MAP_HILLSHADE_LAYER_ID = 'rw-terrain-hillshade';
+const LOCATION_MAP_TEMPERATURE_SOURCE_ID = 'rw-temp-overlay';
+const LOCATION_MAP_TEMPERATURE_LAYER_ID = 'rw-temp-overlay-layer';
+const LOCATION_MAP_BASE_LAYER_ID = 'rw-osm-base-layer';
+const LOCATION_MAP_TEMPERATURE_OPACITY = 0.6;
+const LOCATION_MAP_TEMPERATURE_TILES = [
+    'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_Land_Surface_Temp_Day/default/default/GoogleMapsCompatible_Level7/{z}/{y}/{x}.png'
+];
+
+const LOCATION_MAP_BASE_STYLE = {
+    version: 8,
+    sources: {
+        'rw-osm': {
+            type: 'raster',
+            tiles: [
+                'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                'https://b.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                'https://c.tile.openstreetmap.org/{z}/{x}/{y}.png'
+            ],
+            tileSize: 256,
+            attribution: '&copy; OpenStreetMap contributors'
+        }
+    },
+    layers: [
+        {
+            id: LOCATION_MAP_BASE_LAYER_ID,
+            type: 'raster',
+            source: 'rw-osm',
+            paint: {
+                'raster-saturation': -0.15,
+                'raster-contrast': 0.08,
+                'raster-brightness-min': 0.09,
+                'raster-brightness-max': 0.9
+            }
+        }
+    ]
+};
 
 function isDesktopMapPickerViewport() {
     return typeof window !== 'undefined'
@@ -121,6 +162,38 @@ function setLocationMapStatus(text, tone = '') {
     statusEl.classList.remove('loc-map-status--ready', 'loc-map-status--error');
     if (tone === 'ready') statusEl.classList.add('loc-map-status--ready');
     if (tone === 'error') statusEl.classList.add('loc-map-status--error');
+}
+
+function setLocationMapReadout(text) {
+    const readoutEl = document.getElementById('loc-map-readout');
+    if (!readoutEl) return;
+    readoutEl.textContent = text || 'Lat -- | Lon -- | Alt --';
+}
+
+function setLocationMapLayerState(layerKey, enabled) {
+    if (layerKey !== 'altitude' && layerKey !== 'temperature') return;
+    locationMapLayerState[layerKey] = !!enabled;
+
+    const btn = document.querySelector(`.loc-map-layer-btn[data-layer="${layerKey}"]`);
+    if (btn) {
+        btn.classList.toggle('is-active', locationMapLayerState[layerKey]);
+        btn.setAttribute('aria-pressed', locationMapLayerState[layerKey] ? 'true' : 'false');
+    }
+}
+
+function syncLocationMapLayerButtons() {
+    setLocationMapLayerState('altitude', locationMapLayerState.altitude);
+    setLocationMapLayerState('temperature', locationMapLayerState.temperature);
+}
+
+function applyLocationMapLayerState() {
+    if (!locationPickerMap) return;
+    const setVisibility = (layerId, visible) => {
+        if (!locationPickerMap.getLayer(layerId)) return;
+        locationPickerMap.setLayoutProperty(layerId, 'visibility', visible ? 'visible' : 'none');
+    };
+    setVisibility(LOCATION_MAP_HILLSHADE_LAYER_ID, locationMapLayerState.altitude);
+    setVisibility(LOCATION_MAP_TEMPERATURE_LAYER_ID, locationMapLayerState.temperature);
 }
 
 function getLocationCoordKey(lat, lon) {
@@ -184,15 +257,22 @@ function setActiveLocationSearchItem(el) {
 function syncMapMarkerToSelection(selection, options = {}) {
     if (!selection || !locationPickerMap) return;
     const { recenter = true } = options;
-    const latLng = [selection.lat, selection.lon];
-    if (!locationPickerMarker && window.L && typeof window.L.marker === 'function') {
-        locationPickerMarker = window.L.marker(latLng).addTo(locationPickerMap);
+    const lngLat = [selection.lon, selection.lat];
+    if (!locationPickerMarker && window.maplibregl && typeof window.maplibregl.Marker === 'function') {
+        locationPickerMarker = new window.maplibregl.Marker({ color: '#60a5fa' })
+            .setLngLat(lngLat)
+            .addTo(locationPickerMap);
     } else if (locationPickerMarker) {
-        locationPickerMarker.setLatLng(latLng);
+        locationPickerMarker.setLngLat(lngLat);
     }
     if (recenter) {
-        const zoom = locationPickerMap.getZoom() >= 4 ? locationPickerMap.getZoom() : 7;
-        locationPickerMap.setView(latLng, zoom);
+        const currentZoom = Number(locationPickerMap.getZoom());
+        const zoom = Number.isFinite(currentZoom) && currentZoom >= 4 ? currentZoom : 7;
+        locationPickerMap.easeTo({
+            center: lngLat,
+            zoom,
+            duration: 320
+        });
     }
 }
 
@@ -284,48 +364,131 @@ function resetLocationSelectionState() {
     renderPendingLocationSelection();
 }
 
-async function ensureLeafletLoaded() {
-    if (window.L && typeof window.L.map === 'function') return window.L;
-    if (leafletLoaderPromise) return leafletLoaderPromise;
+async function ensureMapLibreLoaded() {
+    if (window.maplibregl && typeof window.maplibregl.Map === 'function') return window.maplibregl;
+    if (mapLibreLoaderPromise) return mapLibreLoaderPromise;
 
-    leafletLoaderPromise = new Promise((resolve, reject) => {
-        let cssEl = document.getElementById(LEAFLET_CSS_ID);
+    mapLibreLoaderPromise = new Promise((resolve, reject) => {
+        let cssEl = document.getElementById(MAPLIBRE_CSS_ID);
         if (!cssEl) {
             cssEl = document.createElement('link');
-            cssEl.id = LEAFLET_CSS_ID;
+            cssEl.id = MAPLIBRE_CSS_ID;
             cssEl.rel = 'stylesheet';
-            cssEl.href = LEAFLET_CSS_URL;
+            cssEl.href = MAPLIBRE_CSS_URL;
             document.head.appendChild(cssEl);
         }
 
-        const existingScript = document.getElementById(LEAFLET_SCRIPT_ID);
-        if (existingScript && window.L && typeof window.L.map === 'function') {
-            resolve(window.L);
+        const existingScript = document.getElementById(MAPLIBRE_SCRIPT_ID);
+        if (existingScript && window.maplibregl && typeof window.maplibregl.Map === 'function') {
+            resolve(window.maplibregl);
             return;
         }
 
         const script = existingScript || document.createElement('script');
-        script.id = LEAFLET_SCRIPT_ID;
-        script.src = LEAFLET_SCRIPT_URL;
+        script.id = MAPLIBRE_SCRIPT_ID;
+        script.src = MAPLIBRE_SCRIPT_URL;
         script.async = true;
         script.onload = () => {
-            if (window.L && typeof window.L.map === 'function') resolve(window.L);
-            else reject(new Error('Leaflet loaded without map API'));
+            if (window.maplibregl && typeof window.maplibregl.Map === 'function') resolve(window.maplibregl);
+            else reject(new Error('MapLibre loaded without map API'));
         };
-        script.onerror = () => reject(new Error('Failed to load Leaflet assets'));
+        script.onerror = () => reject(new Error('Failed to load MapLibre assets'));
         if (!existingScript) document.head.appendChild(script);
     }).catch((err) => {
-        leafletLoaderPromise = null;
+        mapLibreLoaderPromise = null;
         throw err;
     });
 
-    return leafletLoaderPromise;
+    return mapLibreLoaderPromise;
+}
+
+function ensureLocationMapLayers() {
+    if (!locationPickerMap || typeof locationPickerMap.getStyle !== 'function') return;
+    if (!locationPickerMap.getSource(LOCATION_MAP_TERRAIN_SOURCE_ID)) {
+        locationPickerMap.addSource(LOCATION_MAP_TERRAIN_SOURCE_ID, {
+            type: 'raster-dem',
+            url: 'https://demotiles.maplibre.org/terrain-tiles/tiles.json',
+            tileSize: 256,
+            encoding: 'mapbox'
+        });
+    }
+
+    if (!locationPickerMap.getLayer(LOCATION_MAP_HILLSHADE_LAYER_ID)) {
+        locationPickerMap.addLayer({
+            id: LOCATION_MAP_HILLSHADE_LAYER_ID,
+            type: 'hillshade',
+            source: LOCATION_MAP_TERRAIN_SOURCE_ID,
+            layout: { visibility: 'visible' },
+            paint: {
+                'hillshade-exaggeration': 0.34,
+                'hillshade-accent-color': '#7aa2d6',
+                'hillshade-shadow-color': '#0b1220',
+                'hillshade-highlight-color': '#dbeafe'
+            }
+        });
+    }
+
+    if (!locationPickerMap.getSource(LOCATION_MAP_TEMPERATURE_SOURCE_ID)) {
+        locationPickerMap.addSource(LOCATION_MAP_TEMPERATURE_SOURCE_ID, {
+            type: 'raster',
+            tiles: LOCATION_MAP_TEMPERATURE_TILES,
+            tileSize: 256,
+            minzoom: 0,
+            maxzoom: 7,
+            attribution: 'Temperature overlay: NASA GIBS (MODIS LST Day)'
+        });
+    }
+
+    if (!locationPickerMap.getLayer(LOCATION_MAP_TEMPERATURE_LAYER_ID)) {
+        locationPickerMap.addLayer({
+            id: LOCATION_MAP_TEMPERATURE_LAYER_ID,
+            type: 'raster',
+            source: LOCATION_MAP_TEMPERATURE_SOURCE_ID,
+            layout: { visibility: 'visible' },
+            paint: {
+                'raster-opacity': LOCATION_MAP_TEMPERATURE_OPACITY,
+                'raster-resampling': 'linear'
+            }
+        });
+    }
+
+    if (typeof locationPickerMap.setTerrain === 'function') {
+        locationPickerMap.setTerrain({
+            source: LOCATION_MAP_TERRAIN_SOURCE_ID,
+            exaggeration: 1
+        });
+    }
+
+    applyLocationMapLayerState();
+}
+
+function updateMapReadout(lngLat) {
+    if (!lngLat) {
+        setLocationMapReadout('Lat -- | Lon -- | Alt --');
+        return;
+    }
+    const lat = Number(lngLat.lat);
+    const lon = Number(lngLat.lng);
+    const latText = Number.isFinite(lat) ? lat.toFixed(4) : '--';
+    const lonText = Number.isFinite(lon) ? lon.toFixed(4) : '--';
+    let altitudeText = '--';
+
+    if (locationMapLayerState.altitude && locationPickerMap && typeof locationPickerMap.queryTerrainElevation === 'function') {
+        const terrainMeters = Number(locationPickerMap.queryTerrainElevation(lngLat));
+        if (Number.isFinite(terrainMeters)) {
+            altitudeText = `${Math.round(terrainMeters)}m`;
+        }
+    }
+
+    setLocationMapReadout(`Lat ${latText} | Lon ${lonText} | Alt ${altitudeText}`);
 }
 
 async function ensureLocationMapPicker() {
     const panel = document.getElementById('loc-map-panel');
     const canvas = document.getElementById('loc-map');
     if (!panel || !canvas) return;
+
+    syncLocationMapLayerButtons();
 
     if (!isDesktopMapPickerViewport()) {
         panel.setAttribute('aria-hidden', 'true');
@@ -335,26 +498,33 @@ async function ensureLocationMapPicker() {
     panel.setAttribute('aria-hidden', 'false');
     setLocationMapStatus('Loading map...');
 
-    let Leaflet = null;
+    let maplibregl = null;
     try {
-        Leaflet = await ensureLeafletLoaded();
+        maplibregl = await ensureMapLibreLoaded();
     } catch (err) {
-        console.error('Location map init failed (Leaflet load):', err);
+        console.error('Location map init failed (MapLibre load):', err);
         setLocationMapStatus('Map unavailable right now. Please use text search.', 'error');
         return;
     }
 
     if (!locationPickerMap) {
-        locationPickerMap = Leaflet.map(canvas, {
-            zoomControl: true,
-            worldCopyJump: true,
-            minZoom: 2
+        locationPickerMap = new maplibregl.Map({
+            container: canvas,
+            style: LOCATION_MAP_BASE_STYLE,
+            center: [-48.5495, -27.5969],
+            zoom: 4,
+            minZoom: 2,
+            maxZoom: 13,
+            attributionControl: true
         });
 
-        Leaflet.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '&copy; OpenStreetMap'
-        }).addTo(locationPickerMap);
+        locationPickerMap.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
+        locationPickerMap.on('load', () => {
+            ensureLocationMapLayers();
+            setLocationMapStatus('Click on the map to pick a city.', 'ready');
+        });
+    } else if (locationPickerMap.isStyleLoaded()) {
+        ensureLocationMapLayers();
     }
 
     const currentLoc = AppState.locManager && AppState.locManager.current
@@ -364,19 +534,28 @@ async function ensureLocationMapPicker() {
     const curLon = Number(currentLoc.lon);
 
     if (Number.isFinite(curLat) && Number.isFinite(curLon)) {
-        const zoom = locationPickerMap.getZoom() >= 4 ? locationPickerMap.getZoom() : 6;
-        locationPickerMap.setView([curLat, curLon], zoom);
+        const currentZoom = Number(locationPickerMap.getZoom());
+        const zoom = Number.isFinite(currentZoom) && currentZoom >= 4 ? currentZoom : 6;
+        locationPickerMap.jumpTo({ center: [curLon, curLat], zoom });
         if (!locationPickerMarker) {
-            locationPickerMarker = Leaflet.marker([curLat, curLon]).addTo(locationPickerMap);
+            locationPickerMarker = new maplibregl.Marker({ color: '#60a5fa' })
+                .setLngLat([curLon, curLat])
+                .addTo(locationPickerMap);
         } else {
-            locationPickerMarker.setLatLng([curLat, curLon]);
+            locationPickerMarker.setLngLat([curLon, curLat]);
         }
+        updateMapReadout({ lat: curLat, lng: curLon });
+    }
+
+    if (pendingLocationSelection) {
+        syncMapMarkerToSelection(pendingLocationSelection, { recenter: true });
+        updateMapReadout({ lat: pendingLocationSelection.lat, lng: pendingLocationSelection.lon });
     }
 
     if (!locationPickerMapClickHandler) {
         locationPickerMapClickHandler = async (evt) => {
-            const mapLat = Number(evt.latlng.lat);
-            const mapLon = Number(evt.latlng.lng);
+            const mapLat = Number(evt.lngLat.lat);
+            const mapLon = Number(evt.lngLat.lng);
             if (!Number.isFinite(mapLat) || !Number.isFinite(mapLon)) return;
 
             stageLocationSelection(
@@ -385,6 +564,7 @@ async function ensureLocationMapPicker() {
             );
 
             setLocationMapStatus('Resolving city from clicked point...');
+            updateMapReadout(evt.lngLat);
 
             const seq = ++locationPickerReverseSeq;
             const request = beginRequest(RequestKeys.REVERSE_GEOCODE, {
@@ -423,10 +603,41 @@ async function ensureLocationMapPicker() {
         locationPickerMap.on('click', locationPickerMapClickHandler);
     }
 
-    setTimeout(() => {
-        if (locationPickerMap) locationPickerMap.invalidateSize();
-    }, 0);
+    if (!locationPickerMapMoveHandler) {
+        locationPickerMapMoveHandler = (evt) => updateMapReadout(evt.lngLat);
+        locationPickerMap.on('mousemove', locationPickerMapMoveHandler);
+    }
+
+    if (!locationPickerMapLeaveHandler) {
+        locationPickerMapLeaveHandler = () => {
+            if (pendingLocationSelection) {
+                updateMapReadout({ lat: pendingLocationSelection.lat, lng: pendingLocationSelection.lon });
+            } else {
+                setLocationMapReadout('Lat -- | Lon -- | Alt --');
+            }
+        };
+        locationPickerMap.on('mouseleave', locationPickerMapLeaveHandler);
+    }
+
+    locationPickerMap.resize();
     setLocationMapStatus('Click on the map to pick a city.', 'ready');
+}
+
+export function toggleLocationMapLayer(layerKey) {
+    if (layerKey !== 'altitude' && layerKey !== 'temperature') return;
+    setLocationMapLayerState(layerKey, !locationMapLayerState[layerKey]);
+    applyLocationMapLayerState();
+
+    const statusText = layerKey === 'altitude'
+        ? (locationMapLayerState.altitude ? 'Altitude layer enabled.' : 'Altitude layer disabled.')
+        : (locationMapLayerState.temperature ? 'Temperature overlay enabled.' : 'Temperature overlay disabled.');
+    setLocationMapStatus(statusText, 'ready');
+
+    if (pendingLocationSelection) {
+        updateMapReadout({ lat: pendingLocationSelection.lat, lng: pendingLocationSelection.lon });
+    } else {
+        setLocationMapReadout('Lat -- | Lon -- | Alt --');
+    }
 }
 
 function restoreFocusOutsideModal(modal, preferredTarget) {
