@@ -104,21 +104,12 @@ let pendingLocationSelection = null;
 let activeLocationSearchItem = null;
 let locationElevationSeq = 0;
 const locationElevationCache = new Map();
-const locationMapLayerState = { altitude: true, temperature: true };
 
 const MAPLIBRE_CSS_ID = 'rw-maplibre-css';
 const MAPLIBRE_SCRIPT_ID = 'rw-maplibre-script';
 const MAPLIBRE_CSS_URL = 'https://unpkg.com/maplibre-gl@5.3.1/dist/maplibre-gl.css';
 const MAPLIBRE_SCRIPT_URL = 'https://unpkg.com/maplibre-gl@5.3.1/dist/maplibre-gl.js';
-const LOCATION_MAP_TERRAIN_SOURCE_ID = 'rw-terrain-dem';
-const LOCATION_MAP_HILLSHADE_LAYER_ID = 'rw-terrain-hillshade';
-const LOCATION_MAP_TEMPERATURE_SOURCE_ID = 'rw-temp-overlay';
-const LOCATION_MAP_TEMPERATURE_LAYER_ID = 'rw-temp-overlay-layer';
 const LOCATION_MAP_BASE_LAYER_ID = 'rw-osm-base-layer';
-const LOCATION_MAP_TEMPERATURE_OPACITY = 0.6;
-const LOCATION_MAP_TEMPERATURE_TILES = [
-    'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_Land_Surface_Temp_Day/default/default/GoogleMapsCompatible_Level7/{z}/{y}/{x}.png'
-];
 
 const LOCATION_MAP_BASE_STYLE = {
     version: 8,
@@ -167,33 +158,7 @@ function setLocationMapStatus(text, tone = '') {
 function setLocationMapReadout(text) {
     const readoutEl = document.getElementById('loc-map-readout');
     if (!readoutEl) return;
-    readoutEl.textContent = text || 'Lat -- | Lon -- | Alt --';
-}
-
-function setLocationMapLayerState(layerKey, enabled) {
-    if (layerKey !== 'altitude' && layerKey !== 'temperature') return;
-    locationMapLayerState[layerKey] = !!enabled;
-
-    const btn = document.querySelector(`.loc-map-layer-btn[data-layer="${layerKey}"]`);
-    if (btn) {
-        btn.classList.toggle('is-active', locationMapLayerState[layerKey]);
-        btn.setAttribute('aria-pressed', locationMapLayerState[layerKey] ? 'true' : 'false');
-    }
-}
-
-function syncLocationMapLayerButtons() {
-    setLocationMapLayerState('altitude', locationMapLayerState.altitude);
-    setLocationMapLayerState('temperature', locationMapLayerState.temperature);
-}
-
-function applyLocationMapLayerState() {
-    if (!locationPickerMap) return;
-    const setVisibility = (layerId, visible) => {
-        if (!locationPickerMap.getLayer(layerId)) return;
-        locationPickerMap.setLayoutProperty(layerId, 'visibility', visible ? 'visible' : 'none');
-    };
-    setVisibility(LOCATION_MAP_HILLSHADE_LAYER_ID, locationMapLayerState.altitude);
-    setVisibility(LOCATION_MAP_TEMPERATURE_LAYER_ID, locationMapLayerState.temperature);
+    readoutEl.textContent = text || 'Lat -- | Lon --';
 }
 
 function getLocationCoordKey(lat, lon) {
@@ -402,93 +367,22 @@ async function ensureMapLibreLoaded() {
     return mapLibreLoaderPromise;
 }
 
-function ensureLocationMapLayers() {
-    if (!locationPickerMap || typeof locationPickerMap.getStyle !== 'function') return;
-    if (!locationPickerMap.getSource(LOCATION_MAP_TERRAIN_SOURCE_ID)) {
-        locationPickerMap.addSource(LOCATION_MAP_TERRAIN_SOURCE_ID, {
-            type: 'raster-dem',
-            url: 'https://demotiles.maplibre.org/terrain-tiles/tiles.json',
-            tileSize: 256,
-            encoding: 'mapbox'
-        });
-    }
-
-    if (!locationPickerMap.getLayer(LOCATION_MAP_HILLSHADE_LAYER_ID)) {
-        locationPickerMap.addLayer({
-            id: LOCATION_MAP_HILLSHADE_LAYER_ID,
-            type: 'hillshade',
-            source: LOCATION_MAP_TERRAIN_SOURCE_ID,
-            layout: { visibility: 'visible' },
-            paint: {
-                'hillshade-exaggeration': 0.34,
-                'hillshade-accent-color': '#7aa2d6',
-                'hillshade-shadow-color': '#0b1220',
-                'hillshade-highlight-color': '#dbeafe'
-            }
-        });
-    }
-
-    if (!locationPickerMap.getSource(LOCATION_MAP_TEMPERATURE_SOURCE_ID)) {
-        locationPickerMap.addSource(LOCATION_MAP_TEMPERATURE_SOURCE_ID, {
-            type: 'raster',
-            tiles: LOCATION_MAP_TEMPERATURE_TILES,
-            tileSize: 256,
-            minzoom: 0,
-            maxzoom: 7,
-            attribution: 'Temperature overlay: NASA GIBS (MODIS LST Day)'
-        });
-    }
-
-    if (!locationPickerMap.getLayer(LOCATION_MAP_TEMPERATURE_LAYER_ID)) {
-        locationPickerMap.addLayer({
-            id: LOCATION_MAP_TEMPERATURE_LAYER_ID,
-            type: 'raster',
-            source: LOCATION_MAP_TEMPERATURE_SOURCE_ID,
-            layout: { visibility: 'visible' },
-            paint: {
-                'raster-opacity': LOCATION_MAP_TEMPERATURE_OPACITY,
-                'raster-resampling': 'linear'
-            }
-        });
-    }
-
-    if (typeof locationPickerMap.setTerrain === 'function') {
-        locationPickerMap.setTerrain({
-            source: LOCATION_MAP_TERRAIN_SOURCE_ID,
-            exaggeration: 1
-        });
-    }
-
-    applyLocationMapLayerState();
-}
-
 function updateMapReadout(lngLat) {
     if (!lngLat) {
-        setLocationMapReadout('Lat -- | Lon -- | Alt --');
+        setLocationMapReadout('Lat -- | Lon --');
         return;
     }
     const lat = Number(lngLat.lat);
     const lon = Number(lngLat.lng);
     const latText = Number.isFinite(lat) ? lat.toFixed(4) : '--';
     const lonText = Number.isFinite(lon) ? lon.toFixed(4) : '--';
-    let altitudeText = '--';
-
-    if (locationMapLayerState.altitude && locationPickerMap && typeof locationPickerMap.queryTerrainElevation === 'function') {
-        const terrainMeters = Number(locationPickerMap.queryTerrainElevation(lngLat));
-        if (Number.isFinite(terrainMeters)) {
-            altitudeText = `${Math.round(terrainMeters)}m`;
-        }
-    }
-
-    setLocationMapReadout(`Lat ${latText} | Lon ${lonText} | Alt ${altitudeText}`);
+    setLocationMapReadout(`Lat ${latText} | Lon ${lonText}`);
 }
 
 async function ensureLocationMapPicker() {
     const panel = document.getElementById('loc-map-panel');
     const canvas = document.getElementById('loc-map');
     if (!panel || !canvas) return;
-
-    syncLocationMapLayerButtons();
 
     if (!isDesktopMapPickerViewport()) {
         panel.setAttribute('aria-hidden', 'true');
@@ -515,16 +409,17 @@ async function ensureLocationMapPicker() {
             zoom: 4,
             minZoom: 2,
             maxZoom: 13,
-            attributionControl: true
+            attributionControl: false
         });
 
         locationPickerMap.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
-        locationPickerMap.on('load', () => {
-            ensureLocationMapLayers();
+        const onMapReady = () => {
             setLocationMapStatus('Click on the map to pick a city.', 'ready');
-        });
-    } else if (locationPickerMap.isStyleLoaded()) {
-        ensureLocationMapLayers();
+        };
+        locationPickerMap.once('load', onMapReady);
+        if (typeof locationPickerMap.isStyleLoaded === 'function' && locationPickerMap.isStyleLoaded()) {
+            onMapReady();
+        }
     }
 
     const currentLoc = AppState.locManager && AppState.locManager.current
@@ -613,7 +508,7 @@ async function ensureLocationMapPicker() {
             if (pendingLocationSelection) {
                 updateMapReadout({ lat: pendingLocationSelection.lat, lng: pendingLocationSelection.lon });
             } else {
-                setLocationMapReadout('Lat -- | Lon -- | Alt --');
+                setLocationMapReadout('Lat -- | Lon --');
             }
         };
         locationPickerMap.on('mouseleave', locationPickerMapLeaveHandler);
@@ -621,23 +516,6 @@ async function ensureLocationMapPicker() {
 
     locationPickerMap.resize();
     setLocationMapStatus('Click on the map to pick a city.', 'ready');
-}
-
-export function toggleLocationMapLayer(layerKey) {
-    if (layerKey !== 'altitude' && layerKey !== 'temperature') return;
-    setLocationMapLayerState(layerKey, !locationMapLayerState[layerKey]);
-    applyLocationMapLayerState();
-
-    const statusText = layerKey === 'altitude'
-        ? (locationMapLayerState.altitude ? 'Altitude layer enabled.' : 'Altitude layer disabled.')
-        : (locationMapLayerState.temperature ? 'Temperature overlay enabled.' : 'Temperature overlay disabled.');
-    setLocationMapStatus(statusText, 'ready');
-
-    if (pendingLocationSelection) {
-        updateMapReadout({ lat: pendingLocationSelection.lat, lng: pendingLocationSelection.lon });
-    } else {
-        setLocationMapReadout('Lat -- | Lon -- | Alt --');
-    }
 }
 
 function restoreFocusOutsideModal(modal, preferredTarget) {

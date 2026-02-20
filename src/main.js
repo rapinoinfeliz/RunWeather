@@ -598,9 +598,6 @@ function setupGlobalEvents() {
             case 'gps':
                 UI.useGPS();
                 break;
-            case 'location-map-layer':
-                UI.toggleLocationMapLayer(target.dataset.layer);
-                break;
             case 'vdot-details':
                 UI.toggleVDOTDetails(e);
                 break;

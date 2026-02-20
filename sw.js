@@ -1,4 +1,4 @@
-const CACHE_NAME = 'runweather-v62-sw-response-fix';
+const CACHE_NAME = 'runweather-v63-map-overlay-refresh';
 const ASSETS = [
     './',
     './index.html',

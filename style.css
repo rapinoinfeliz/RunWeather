@@ -1727,13 +1727,23 @@ select.modern-input {
     width: min(96vw, 980px);
     max-width: 980px;
     max-height: min(88vh, 900px);
+    padding: 14px 16px 16px;
+    gap: 10px;
     overflow-y: auto;
+}
+
+#loc-modal .modal-header-row {
+    margin-bottom: 2px;
+}
+
+#loc-modal .modal-title {
+    line-height: 1.1;
 }
 
 .loc-modal-split {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
 }
 
 .loc-search-panel {
@@ -1749,89 +1759,17 @@ select.modern-input {
     border-radius: 10px;
     background: rgba(13, 17, 23, 0.72);
     padding: 10px;
-}
-
-.loc-map-head {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    margin-bottom: 8px;
-}
-
-.loc-map-title {
-    font-size: 0.82rem;
-    color: #dbeafe;
-    font-weight: 600;
-    letter-spacing: 0.02em;
-}
-
-.loc-map-hint-inline {
-    font-size: 0.74rem;
-    color: var(--text-secondary);
-}
-
-.loc-map-layer-controls {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.loc-map-layer-btn {
-    appearance: none;
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    background: rgba(13, 17, 23, 0.62);
-    color: #9ca3af;
-    font-size: 0.72rem;
-    line-height: 1;
-    font-weight: 600;
-    letter-spacing: 0.02em;
-    border-radius: 999px;
-    padding: 6px 10px;
-    cursor: pointer;
-    transition: border-color 0.14s ease, color 0.14s ease, background 0.14s ease;
-}
-
-.loc-map-layer-btn:hover {
-    border-color: rgba(147, 197, 253, 0.6);
-    color: #dbeafe;
-}
-
-.loc-map-layer-btn.is-active {
-    border-color: rgba(96, 165, 250, 0.65);
-    background: rgba(37, 99, 235, 0.24);
-    color: #dbeafe;
+    flex-direction: column;
 }
 
 .loc-map-canvas {
     width: 100%;
-    height: 320px;
+    height: clamp(420px, 58vh, 560px);
     border-radius: 8px;
     border: 1px solid rgba(255, 255, 255, 0.08);
     overflow: hidden;
     background: radial-gradient(circle at 30% 30%, rgba(56, 189, 248, 0.13), rgba(15, 23, 42, 0.9));
-}
-
-.loc-map-readout {
-    margin-top: 8px;
-    font-size: 0.73rem;
-    color: #9ca3af;
-    font-variant-numeric: tabular-nums;
-}
-
-.loc-map-status {
-    margin-top: 4px;
-    min-height: 18px;
-    font-size: 0.75rem;
-    color: var(--text-secondary);
-}
-
-.loc-map-status--ready {
-    color: #93c5fd;
-}
-
-.loc-map-status--error {
-    color: #fca5a5;
 }
 
 .loc-selection-card {
@@ -1887,10 +1825,6 @@ select.modern-input {
         grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
         align-items: start;
         column-gap: 12px;
-    }
-
-    .loc-map-panel {
-        display: block;
     }
 
     #loc-modal .loc-search-panel #loc-results {
@@ -2822,14 +2756,54 @@ select.settings-input {
     font-family: var(--font-main) !important;
 }
 
-.maplibregl-ctrl-group {
-    background: rgba(17, 24, 39, 0.88) !important;
-    border: 1px solid rgba(55, 65, 81, 0.75) !important;
-    box-shadow: none !important;
+.loc-map-panel .maplibregl-ctrl-top-right {
+    top: 10px;
+    right: 10px;
 }
 
-.maplibregl-ctrl-group button {
-    color: #d1d5db !important;
+.loc-map-panel .maplibregl-ctrl-group {
+    border-radius: 12px !important;
+    overflow: hidden;
+    background: linear-gradient(160deg, rgba(15, 23, 42, 0.88), rgba(30, 41, 59, 0.78)) !important;
+    border: 1px solid rgba(148, 163, 184, 0.35) !important;
+    box-shadow: 0 8px 22px rgba(2, 8, 23, 0.48), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+    backdrop-filter: blur(8px);
+}
+
+.loc-map-panel .maplibregl-ctrl-group button {
+    width: 36px;
+    height: 36px;
+    background: transparent !important;
+    border: 0 !important;
+    color: #dbeafe !important;
+    transition: background 0.14s ease, color 0.14s ease, transform 0.14s ease;
+}
+
+.loc-map-panel .maplibregl-ctrl-group button+button {
+    border-top: 1px solid rgba(148, 163, 184, 0.2) !important;
+}
+
+.loc-map-panel .maplibregl-ctrl-group button .maplibregl-ctrl-icon {
+    filter: brightness(0) invert(1) opacity(0.88);
+    transition: filter 0.14s ease;
+}
+
+.loc-map-panel .maplibregl-ctrl-group button:hover {
+    background: rgba(96, 165, 250, 0.22) !important;
+    color: #ffffff !important;
+}
+
+.loc-map-panel .maplibregl-ctrl-group button:hover .maplibregl-ctrl-icon {
+    filter: brightness(0) invert(1) opacity(1);
+}
+
+.loc-map-panel .maplibregl-ctrl-group button:active {
+    transform: scale(0.96);
+}
+
+.loc-map-panel .maplibregl-ctrl-group button:focus-visible {
+    outline: 2px solid rgba(96, 165, 250, 0.9);
+    outline-offset: -2px;
 }
 
 .maplibregl-ctrl-attrib {

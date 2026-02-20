@@ -20,7 +20,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <!-- Cache Busting: increment v=ID on deploy -->
-    <script type="module" src="src/main.js?v=1.0.26"></script>
+    <script type="module" src="src/main.js?v=1.0.33"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
@@ -750,22 +750,7 @@
 
             <div class="loc-modal-split">
                 <div id="loc-map-panel" class="loc-map-panel" aria-hidden="true">
-                    <div class="loc-map-head">
-                        <span class="loc-map-title">Map Picker (Desktop)</span>
-                        <div class="loc-map-layer-controls" role="group" aria-label="Map overlays">
-                            <button type="button" class="loc-map-layer-btn is-active" data-action="location-map-layer"
-                                data-layer="altitude">
-                                Altitude
-                            </button>
-                            <button type="button" class="loc-map-layer-btn is-active" data-action="location-map-layer"
-                                data-layer="temperature">
-                                Temperature
-                            </button>
-                        </div>
-                    </div>
                     <div id="loc-map" class="loc-map-canvas" role="application" aria-label="Select location on map"></div>
-                    <div id="loc-map-readout" class="loc-map-readout">Lat -- | Lon -- | Alt --</div>
-                    <div id="loc-map-status" class="loc-map-status">Loading map...</div>
                 </div>
 
                 <div class="loc-search-panel">
