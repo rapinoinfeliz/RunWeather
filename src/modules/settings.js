@@ -93,6 +93,8 @@ export function initSettings(els, updateFn) {
     const heightInput = document.getElementById('runner-height');
     const ageInput = document.getElementById('runner-age');
     const genderInput = document.getElementById('runner-gender');
+    const hrMaxInput = document.getElementById('runner-hr-max');
+    const restingHrInput = document.getElementById('runner-resting-hr');
     const altitudeInput = document.getElementById('base-altitude');
     const weightUnitEl = document.getElementById('settings-weight-unit');
     const heightUnitEl = document.getElementById('settings-height-unit');
@@ -149,6 +151,8 @@ export function initSettings(els, updateFn) {
 
         if (ageInput) ageInput.value = AppState.runner.age || '';
         if (genderInput) genderInput.value = AppState.runner.gender || '';
+        if (hrMaxInput) hrMaxInput.value = AppState.runner.hrMax || '';
+        if (restingHrInput) restingHrInput.value = AppState.runner.restingHr || '';
 
         if (altitudeInput) {
             const val = toDisplayElevation(AppState.altitude.base || 0, modalUnitSystem);
@@ -209,6 +213,32 @@ export function initSettings(els, updateFn) {
                 runnerPatch.gender = null;
                 saveToStorage('runner_gender', null);
             }
+        }
+
+        const parsedHrMax = hrMaxInput ? parseInt(hrMaxInput.value, 10) : NaN;
+        const parsedRestingHr = restingHrInput ? parseInt(restingHrInput.value, 10) : NaN;
+        const hasHrMax = Number.isFinite(parsedHrMax) && parsedHrMax > 0;
+        const hasRestingHr = Number.isFinite(parsedRestingHr) && parsedRestingHr > 0;
+
+        if (hasHrMax && hasRestingHr && parsedRestingHr >= parsedHrMax) {
+            alert('Resting HR must be lower than HR Max.');
+            return;
+        }
+
+        if (hasHrMax) {
+            runnerPatch.hrMax = parsedHrMax;
+            saveToStorage('runner_hr_max', parsedHrMax);
+        } else {
+            runnerPatch.hrMax = null;
+            saveToStorage('runner_hr_max', null);
+        }
+
+        if (hasRestingHr) {
+            runnerPatch.restingHr = parsedRestingHr;
+            saveToStorage('runner_resting_hr', parsedRestingHr);
+        } else {
+            runnerPatch.restingHr = null;
+            saveToStorage('runner_resting_hr', null);
         }
 
         AppStore.dispatch(StoreActions.patchRunner(runnerPatch));
@@ -275,7 +305,7 @@ export function initSettings(els, updateFn) {
 }
 
 /**
- * Load saved user settings (weight, age, gender, altitude, units) from storage
+ * Load saved user settings (weight, age, gender, HR, altitude, units) from storage
  * and assign to AppState.
  */
 export function loadSavedSettings() {
@@ -288,12 +318,16 @@ export function loadSavedSettings() {
     const savedHeight = loadFromStorage('runner_height');
     const savedAge = loadFromStorage('runner_age');
     const savedGender = loadFromStorage('runner_gender');
+    const savedHrMax = loadFromStorage('runner_hr_max');
+    const savedRestingHr = loadFromStorage('runner_resting_hr');
 
     AppStore.dispatch(StoreActions.patchRunner({
         weight: savedWeight ? parseFloat(savedWeight) : 65,
         height: savedHeight ? parseInt(savedHeight) : null,
         age: savedAge ? parseInt(savedAge) : null,
-        gender: savedGender || null
+        gender: savedGender || null,
+        hrMax: savedHrMax ? parseInt(savedHrMax, 10) : null,
+        restingHr: savedRestingHr ? parseInt(savedRestingHr, 10) : null
     }));
 
     const savedAltitude = loadFromStorage('base_altitude');

@@ -345,6 +345,11 @@ h1 {
     font-weight: 700;
 }
 
+.vdot-threshold-range-enabled {
+    cursor: inherit;
+    text-decoration: none;
+}
+
 .vdot-right {
     text-align: right;
 }
@@ -1668,9 +1673,24 @@ select.modern-input {
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.015));
 }
 
-.block-skeleton>* {
+.block-skeleton>*:not(.block-skeleton-visual) {
     opacity: 0 !important;
     transition: opacity 0.15s ease;
+}
+
+.block-skeleton-visual {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    display: grid;
+    place-items: center;
+    pointer-events: none;
+}
+
+.weather-skeleton-svg {
+    width: clamp(56px, 18vw, 88px);
+    height: auto;
+    filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.35));
 }
 
 .block-skeleton::before,
@@ -4390,6 +4410,55 @@ h1 {
 
 .tooltip-val--impact {
     color: var(--tooltip-impact-color, var(--accent-color));
+}
+
+.forecast-tooltip--training-model {
+    width: auto;
+    min-width: 360px;
+    max-width: min(92vw, 520px);
+}
+
+.threshold-tooltip-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.74rem;
+    line-height: 1.35;
+}
+
+.threshold-tooltip-table th,
+.threshold-tooltip-table td {
+    padding: 2px 4px;
+    white-space: nowrap;
+}
+
+.threshold-tooltip-table thead th {
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-size: 0.64rem;
+    font-weight: 600;
+    text-align: right;
+}
+
+.threshold-tooltip-table thead th:first-child,
+.threshold-tooltip-table tbody th {
+    text-align: left;
+}
+
+.threshold-tooltip-table tbody th {
+    color: #e5e7eb;
+    font-weight: 600;
+    padding-right: 8px;
+}
+
+.threshold-tooltip-table tbody td {
+    text-align: right;
+    color: #dbe2f0;
+    font-weight: 600;
+}
+
+.threshold-tooltip-table tbody td:last-child {
+    color: #94a3b8;
 }
 
 .forecast-table td.forecast-cell-color {

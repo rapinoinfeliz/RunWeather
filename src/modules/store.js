@@ -16,7 +16,9 @@ const INITIAL_STATE = {
             weight: 65,
             height: null,
             age: null,
-            gender: null
+            gender: null,
+            hrMax: null,
+            restingHr: null
         },
 
         // Altitude

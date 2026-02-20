@@ -28,6 +28,7 @@ import {
     toMetricWind,
     windUnit
 } from './units.js';
+import { estimateCvTrainingPaces } from './cvThresholdRange.js';
 
 function appendLocationLabel(container, name, subText, subClass) {
     const label = document.createElement('div');
@@ -122,6 +123,122 @@ function bindPaceHoverInteractions(root) {
 
         el.dataset.hoverBound = '1';
     });
+}
+
+function buildThresholdRangeTooltipHtml(el) {
+    const thresholdSafe = el?.getAttribute('data-threshold-safe') || '';
+    const thresholdMedian = el?.getAttribute('data-threshold-median') || '';
+    const thresholdRange = el?.getAttribute('data-threshold-range') || '';
+    const cvSafe = el?.getAttribute('data-cv-safe') || '';
+    const cvMedian = el?.getAttribute('data-cv-median') || '';
+    const cvRange = el?.getAttribute('data-cv-range') || '';
+    const vo2Safe = el?.getAttribute('data-vo2-safe') || '';
+    const vo2Median = el?.getAttribute('data-vo2-median') || '';
+    const vo2Range = el?.getAttribute('data-vo2-range') || '';
+
+    if (!thresholdSafe || !thresholdMedian || !thresholdRange || !cvSafe || !cvMedian || !cvRange || !vo2Safe || !vo2Median || !vo2Range) {
+        return '';
+    }
+
+    return `
+        <table class="threshold-tooltip-table" role="presentation">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>Safe</th>
+                    <th>Median</th>
+                    <th>Range</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <th>Threshold</th>
+                    <td>${thresholdSafe}</td>
+                    <td>${thresholdMedian}</td>
+                    <td>${thresholdRange}</td>
+                </tr>
+                <tr>
+                    <th>CV</th>
+                    <td>${cvSafe}</td>
+                    <td>${cvMedian}</td>
+                    <td>${cvRange}</td>
+                </tr>
+                <tr>
+                    <th>VO2max</th>
+                    <td>${vo2Safe}</td>
+                    <td>${vo2Median}</td>
+                    <td>${vo2Range}</td>
+                </tr>
+            </tbody>
+        </table>
+    `;
+}
+
+function setThresholdRangeTooltipState(el, trainingPaces, system) {
+    if (!el) return;
+    const clearKeys = [
+        'data-threshold-safe',
+        'data-threshold-median',
+        'data-threshold-range',
+        'data-cv-safe',
+        'data-cv-median',
+        'data-cv-range',
+        'data-vo2-safe',
+        'data-vo2-median',
+        'data-vo2-range'
+    ];
+
+    if (!trainingPaces) {
+        clearKeys.forEach((key) => el.removeAttribute(key));
+        el.classList.remove('vdot-threshold-range-enabled');
+        return;
+    }
+
+    const formatRangePaceOnly = (secPerKm) => formatPace(secPerKm, formatTime, system).split('/')[0];
+    const formatRange = (fastSecPerKm, slowSecPerKm) => `${formatRangePaceOnly(fastSecPerKm)} - ${formatRangePaceOnly(slowSecPerKm)}`;
+
+    el.setAttribute('data-threshold-safe', formatPace(trainingPaces.threshold.safeSecPerKm, formatTime, system));
+    el.setAttribute('data-threshold-median', formatPace(trainingPaces.threshold.medianSecPerKm, formatTime, system));
+    el.setAttribute('data-threshold-range', formatRange(trainingPaces.threshold.rangeFastSecPerKm, trainingPaces.threshold.rangeSlowSecPerKm));
+
+    el.setAttribute('data-cv-safe', formatPace(trainingPaces.cv.safeSecPerKm, formatTime, system));
+    el.setAttribute('data-cv-median', formatPace(trainingPaces.cv.medianSecPerKm, formatTime, system));
+    el.setAttribute('data-cv-range', formatRange(trainingPaces.cv.rangeFastSecPerKm, trainingPaces.cv.rangeSlowSecPerKm));
+
+    el.setAttribute('data-vo2-safe', formatPace(trainingPaces.vo2max.safeSecPerKm, formatTime, system));
+    el.setAttribute('data-vo2-median', formatPace(trainingPaces.vo2max.medianSecPerKm, formatTime, system));
+    el.setAttribute('data-vo2-range', formatRange(trainingPaces.vo2max.rangeFastSecPerKm, trainingPaces.vo2max.rangeSlowSecPerKm));
+
+    if (supportsHoverPointer()) el.classList.add('vdot-threshold-range-enabled');
+    else el.classList.remove('vdot-threshold-range-enabled');
+}
+
+function bindThresholdRangeTooltip(el) {
+    if (!el || el.dataset.thresholdRangeBound === '1') return;
+
+    const onEnter = (evt) => {
+        if (!supportsHoverPointer()) return;
+        const html = buildThresholdRangeTooltipHtml(el);
+        if (!html) return;
+        showForeTooltip(evt, html);
+        const active = document.getElementById('forecast-tooltip');
+        if (active) active.classList.add('forecast-tooltip--training-model');
+    };
+    const onMove = (evt) => {
+        if (!supportsHoverPointer()) return;
+        if (!el.hasAttribute('data-threshold-safe')) return;
+        moveForeTooltip(evt);
+    };
+    const onLeave = () => {
+        const active = document.getElementById('forecast-tooltip');
+        if (active) active.classList.remove('forecast-tooltip--training-model');
+        hideForeTooltip();
+    };
+
+    el.addEventListener('mouseenter', onEnter);
+    el.addEventListener('mousemove', onMove);
+    el.addEventListener('mouseleave', onLeave);
+    el.dataset.thresholdRangeBound = '1';
 }
 
 function bindPaceCarousel(root) {
@@ -429,6 +546,7 @@ export function setClimateData(d) {
 
 // --- VDOT Gauge ---
 function getAgeGradeColor(score) {
+    if (score >= 100) return '#f59e0b'; // Gold - World Record
     if (score >= 90) return '#7c3aed'; // Purple - World Class
     if (score >= 80) return '#3b82f6'; // Blue - National Class
     if (score >= 70) return '#22c55e'; // Green - Regional Class
@@ -1083,7 +1201,10 @@ export function update(els, hapCalc) {
         if (els.pred5k) els.pred5k.textContent = "--:--";
         if (els.vdot) els.vdot.textContent = "--";
         const elThreshold = document.getElementById('vdot-threshold');
-        if (elThreshold) elThreshold.textContent = `--/${paceUnit(system)}`;
+        if (elThreshold) {
+            elThreshold.textContent = `--/${paceUnit(system)}`;
+            setThresholdRangeTooltipState(elThreshold, null, system);
+        }
         return;
     }
     // b) Valid Output Rendering
@@ -1096,9 +1217,13 @@ export function update(els, hapCalc) {
         const current = parseFloat(els.vdot.textContent) || 0;
         animateValue('vdot-val', current, res.vdot, 800);
     }
+    // Keep this exactly aligned with cv-threshold-calculator defaults (AGE_DEFAULT = 25).
+    const trainingPaces = estimateCvTrainingPaces(state.distance, state.timeSec, 25);
     const elThreshold = document.getElementById('vdot-threshold');
     if (elThreshold) {
         elThreshold.textContent = formatPace(res.paces.threshold, formatTime, system);
+        bindThresholdRangeTooltip(elThreshold);
+        setThresholdRangeTooltipState(elThreshold, trainingPaces, system);
     }
 
     // Update VDOT Gauge with Age Grade
@@ -1449,6 +1574,77 @@ export function useGPS() {
 
 // Block-level loading skeletons (non-blocking for whole app)
 const loadTimers = {};
+let skeletonVisualSeq = 0;
+
+function getWeatherSkeletonSvgMarkup(seed) {
+    const cloudId = `cloudGradDark-${seed}`;
+    const sunId = `sunGradVibrant-${seed}`;
+    return `
+<svg class="weather-skeleton-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="80" height="80" aria-hidden="true" focusable="false">
+  <defs>
+    <linearGradient id="${cloudId}" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#475569" />
+      <stop offset="100%" stop-color="#334155" />
+    </linearGradient>
+    <linearGradient id="${sunId}" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF7B54" />
+      <stop offset="100%" stop-color="#FFB26B" />
+    </linearGradient>
+    <style>
+      .skel-sun-dark {
+        transform-origin: center;
+        animation: skelPulseAndSpinDark 3s linear infinite;
+        fill: url(#${sunId});
+      }
+      .skel-cloud-dark {
+        fill: url(#${cloudId});
+        animation: skelFloatCloudDark 2.5s ease-in-out infinite;
+      }
+      .skel-shimmer-dark {
+        animation: skelShimmerDark 1.5s infinite;
+        opacity: 0.6;
+      }
+      @keyframes skelPulseAndSpinDark {
+        0% { transform: scale(1) rotate(0deg); opacity: 0.7; }
+        50% { transform: scale(1.15) rotate(180deg); opacity: 1; }
+        100% { transform: scale(1) rotate(360deg); opacity: 0.7; }
+      }
+      @keyframes skelFloatCloudDark {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-3px); }
+      }
+      @keyframes skelShimmerDark {
+        0%, 100% { opacity: 0.3; }
+        50% { opacity: 0.8; }
+      }
+    </style>
+  </defs>
+
+  <g class="skel-shimmer-dark">
+    <path class="skel-sun-dark" d="M50 20 A 15 15 0 1 1 49.9 20 Z" />
+    <path class="skel-sun-dark" opacity="0.6" d="M50 0 L50 12 M50 88 L50 100 M0 50 L12 50 M88 50 L100 50 M14.6 14.6 L23.1 23.1 M76.9 76.9 L85.4 85.4 M14.6 85.4 L23.1 76.9 M76.9 14.6 L85.4 23.1" stroke="url(#${sunId})" stroke-width="4" stroke-linecap="round"/>
+  </g>
+
+  <path class="skel-cloud-dark" d="M 33 60 C 24 60 20 54 20 46 C 20 38 27 33 35 33 C 40 23 55 22 62 31 C 69 31 75 36 75 44 C 75 53 69 58 60 58 L 33 60 Z"/>
+</svg>`;
+}
+
+function toggleBlockSkeletonVisual(el, visible) {
+    if (!el) return;
+    const existing = el.querySelector('.block-skeleton-visual');
+    if (visible) {
+        if (existing) return;
+        const visual = document.createElement('div');
+        visual.className = 'block-skeleton-visual';
+        visual.setAttribute('aria-hidden', 'true');
+        skeletonVisualSeq += 1;
+        const seed = `${Date.now().toString(36)}-${skeletonVisualSeq}`;
+        visual.innerHTML = getWeatherSkeletonSvgMarkup(seed);
+        el.appendChild(visual);
+        return;
+    }
+    if (existing) existing.remove();
+}
 
 const blockLoadingTargets = {
     current: [
@@ -1504,6 +1700,7 @@ function applyBlockLoading(type, visible) {
             if (visible) el.classList.add(cls);
             else el.classList.remove(cls);
         });
+        toggleBlockSkeletonVisual(el, visible);
     });
 }
 

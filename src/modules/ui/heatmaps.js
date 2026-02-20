@@ -25,7 +25,8 @@ export function renderForecastHeatmap(contId, legSelector, dayLimit) {
     const cellW = 18;
     const cellH = 18;
     const gap = 2;
-    const labelW = 48;
+    // Keep enough horizontal room for "Today dd/mm" so the first letters are never clipped.
+    const labelW = 62;
     const headerH = 14;
 
     const totalW = labelW + (24 * (cellW + gap));
@@ -65,7 +66,7 @@ export function renderForecastHeatmap(contId, legSelector, dayLimit) {
         const yBase = headerH + (i * (cellH + gap));
 
         // Day Label (Left)
-        svgInner += `<text x="${labelW - 6}" y="${yBase + (cellH / 2) + 3}" text-anchor="end" class="${isCurrentDay ? 'heatmap-day-label heatmap-day-label--now' : 'heatmap-day-label'}">
+        svgInner += `<text x="${labelW - 5}" y="${yBase + (cellH / 2) + 3}" text-anchor="end" class="${isCurrentDay ? 'heatmap-day-label heatmap-day-label--now' : 'heatmap-day-label'}">
             ${dayName} <tspan class="heatmap-day-label-date">${dateStr}</tspan>
         </text>`;
 

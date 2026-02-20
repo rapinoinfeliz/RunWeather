@@ -121,6 +121,7 @@ export function showForeTooltip(e, htmlContent, options = {}) {
         el.style.zIndex = '10000';
         document.body.appendChild(el);
     }
+    el.classList.remove('forecast-tooltip--training-model');
     el.innerHTML = htmlContent;
     el.style.display = 'block'; // Make sure it's visible if it was hidden
     el.style.opacity = '1';

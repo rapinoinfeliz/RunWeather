@@ -22,6 +22,24 @@ const FORECAST_VIEW_MEMO = {
     data: []
 };
 
+function getAgeGradeGaugeColor(score) {
+    if (score >= 100) return '#f59e0b'; // World Record
+    if (score >= 90) return '#7c3aed'; // World Class
+    if (score >= 80) return '#3b82f6'; // National Class
+    if (score >= 70) return '#22c55e'; // Regional Class
+    if (score >= 60) return '#f97316'; // Local Class
+    return '#ef4444';
+}
+
+function getAgeGradeGaugeLabel(score) {
+    if (score >= 100) return 'World Record';
+    if (score >= 90) return 'World Class';
+    if (score >= 80) return 'National Class';
+    if (score >= 70) return 'Regional Class';
+    if (score >= 60) return 'Local Class';
+    return '';
+}
+
 export function renderVDOTDetails() {
     const els = AppState.els;
     if (!els) return;
@@ -96,10 +114,10 @@ export function renderVDOTDetails() {
 
             const levels = [
                 { score: 100, label: 'World Record' },
-                { score: 90, label: 'World Class' },
-                { score: 80, label: 'National Class' },
-                { score: 70, label: 'Regional Class' },
-                { score: 60, label: 'Local Class' }
+                { score: 90, label: 'World' },
+                { score: 80, label: 'National' },
+                { score: 70, label: 'Regional' },
+                { score: 60, label: 'Local' }
             ];
 
             if (ag5k) {
@@ -120,19 +138,21 @@ export function renderVDOTDetails() {
                 };
 
                 rowsHtml = levels.map(aaa => {
+                    const classColor = getAgeGradeGaugeColor(aaa.score);
                     return `<tr>
                         <td style="padding:2px 0; white-space:nowrap;">${aaa.score}%${aaa.score === 100 ? '' : '+'}</td>
                         <td style="padding:2px 0; text-align:center; color:var(--text-secondary); white-space:nowrap;">${getTargetTime5k(aaa.score)}</td>
-                        <td style="text-align:right; color:#e2e8f0; white-space:nowrap;">${aaa.label}</td>
+                        <td style="text-align:right; color:${classColor}; white-space:nowrap; font-weight:700;">${aaa.label}</td>
                     </tr>`;
                 }).join('');
 
             } else {
                 // Fallback if 5k calculation fails (unlikely)
                 rowsHtml = levels.map(aaa => {
+                    const classColor = getAgeGradeGaugeColor(aaa.score);
                     return `<tr>
                         <td style="padding:2px 0; white-space:nowrap;">${aaa.score}%${aaa.score === 100 ? '' : '+'}</td>
-                        <td style="text-align:right; color:#e2e8f0; white-space:nowrap;">${aaa.label}</td>
+                        <td style="text-align:right; color:${classColor}; white-space:nowrap; font-weight:700;">${aaa.label}</td>
                     </tr>`;
                 }).join('');
             }
@@ -308,7 +328,7 @@ export function renderVDOTDetails() {
         if (arc && adjAgRes) {
             const ARC_LEN = 157;
             const s = adjAgRes.score;
-            const c = s >= 90 ? '#7c3aed' : s >= 80 ? '#3b82f6' : s >= 70 ? '#22c55e' : s >= 60 ? '#f97316' : '#ef4444';
+            const c = getAgeGradeGaugeColor(s);
             arc.style.strokeDashoffset = ARC_LEN * (1 - Math.min(s / 100, 1));
             arc.style.stroke = c;
             arc.style.filter = `drop-shadow(0 0 6px ${c})`;
@@ -328,8 +348,8 @@ export function renderVDOTDetails() {
             const agRes = calculateAgeGrade(dInput, tInput, age, gender);
             if (agRes) {
                 const s = agRes.score;
-                const c = s >= 90 ? '#7c3aed' : s >= 80 ? '#3b82f6' : s >= 70 ? '#22c55e' : s >= 60 ? '#f97316' : '#ef4444';
-                const lbl = s >= 100 ? 'World Record' : s >= 90 ? 'World Class' : s >= 80 ? 'National Class' : s >= 70 ? 'Regional Class' : s >= 60 ? 'Local Class' : '';
+                const c = getAgeGradeGaugeColor(s);
+                const lbl = getAgeGradeGaugeLabel(s);
                 gaugeLabel.textContent = lbl;
                 gaugeLabel.style.color = c;
 
