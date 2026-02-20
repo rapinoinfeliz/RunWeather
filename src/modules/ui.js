@@ -16,6 +16,8 @@ import { openTab, setPaceMode, toggleForeSort, setBestRunRange, toggleImpactFilt
 export { openTab, setPaceMode, toggleForeSort, setBestRunRange, toggleImpactFilter, copyConditions, sortForecastTable, handleCellHover, showForeTooltip, moveForeTooltip, hideForeTooltip };
 import { initRipple } from './ui/effects.js';
 import {
+    elevationUnit,
+    formatDisplayElevation,
     formatDisplayPrecip,
     formatDisplayTemperature,
     formatDisplayWind,
@@ -91,6 +93,341 @@ function getLocationSubtext(loc) {
 let locationSearchDebounceTimer = null;
 let locationSearchSeq = 0;
 let lastLocationFocus = null;
+let leafletLoaderPromise = null;
+let locationPickerMap = null;
+let locationPickerMarker = null;
+let locationPickerMapClickHandler = null;
+let locationPickerReverseSeq = 0;
+let pendingLocationSelection = null;
+let activeLocationSearchItem = null;
+let locationElevationSeq = 0;
+const locationElevationCache = new Map();
+
+const LEAFLET_CSS_ID = 'rw-leaflet-css';
+const LEAFLET_SCRIPT_ID = 'rw-leaflet-script';
+const LEAFLET_CSS_URL = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+const LEAFLET_SCRIPT_URL = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+
+function isDesktopMapPickerViewport() {
+    return typeof window !== 'undefined'
+        && typeof window.matchMedia === 'function'
+        && window.matchMedia('(min-width: 861px) and (hover: hover)').matches;
+}
+
+function setLocationMapStatus(text, tone = '') {
+    const statusEl = document.getElementById('loc-map-status');
+    if (!statusEl) return;
+    statusEl.textContent = text || '';
+    statusEl.classList.remove('loc-map-status--ready', 'loc-map-status--error');
+    if (tone === 'ready') statusEl.classList.add('loc-map-status--ready');
+    if (tone === 'error') statusEl.classList.add('loc-map-status--error');
+}
+
+function getLocationCoordKey(lat, lon) {
+    const nLat = Number(lat);
+    const nLon = Number(lon);
+    if (!Number.isFinite(nLat) || !Number.isFinite(nLon)) return '';
+    return `${nLat.toFixed(4)}:${nLon.toFixed(4)}`;
+}
+
+function parseElevationPayload(payload) {
+    if (!payload || typeof payload !== 'object') return null;
+    if (Array.isArray(payload.elevation) && payload.elevation.length > 0) {
+        const first = Number(payload.elevation[0]);
+        return Number.isFinite(first) ? first : null;
+    }
+    const raw = Number(payload.elevation);
+    return Number.isFinite(raw) ? raw : null;
+}
+
+function setInlineGpsButtonLoading(isLoading, title = '') {
+    const btn = document.getElementById('loc-gps-btn');
+    if (!btn) return;
+    btn.disabled = !!isLoading;
+    btn.classList.toggle('is-loading', !!isLoading);
+    btn.setAttribute('aria-busy', isLoading ? 'true' : 'false');
+    btn.title = title || (isLoading ? 'Locating...' : 'Use my location');
+}
+
+function toLocationSelection(input) {
+    if (!input || typeof input !== 'object') return null;
+    const lat = Number(input.lat);
+    const lon = Number(input.lon);
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+    const elevationRaw = Number(input.elevation ?? input.altitude);
+    const elevation = Number.isFinite(elevationRaw) ? elevationRaw : null;
+    return {
+        lat,
+        lon,
+        name: String(input.name || 'Pinned Location').trim() || 'Pinned Location',
+        country: String(input.country || '').trim(),
+        region: String(input.region || input.admin1 || input.state || '').trim(),
+        elevation
+    };
+}
+
+function clearActiveLocationSearchItem() {
+    if (activeLocationSearchItem && activeLocationSearchItem.classList) {
+        activeLocationSearchItem.classList.remove('active');
+    }
+    activeLocationSearchItem = null;
+}
+
+function setActiveLocationSearchItem(el) {
+    clearActiveLocationSearchItem();
+    if (el && el.classList) {
+        el.classList.add('active');
+        activeLocationSearchItem = el;
+    }
+}
+
+function syncMapMarkerToSelection(selection, options = {}) {
+    if (!selection || !locationPickerMap) return;
+    const { recenter = true } = options;
+    const latLng = [selection.lat, selection.lon];
+    if (!locationPickerMarker && window.L && typeof window.L.marker === 'function') {
+        locationPickerMarker = window.L.marker(latLng).addTo(locationPickerMap);
+    } else if (locationPickerMarker) {
+        locationPickerMarker.setLatLng(latLng);
+    }
+    if (recenter) {
+        const zoom = locationPickerMap.getZoom() >= 4 ? locationPickerMap.getZoom() : 7;
+        locationPickerMap.setView(latLng, zoom);
+    }
+}
+
+function renderPendingLocationSelection() {
+    const nameEl = document.getElementById('loc-selected-name');
+    const subEl = document.getElementById('loc-selected-sub');
+    const altitudeEl = document.getElementById('loc-selected-altitude');
+    const coordsEl = document.getElementById('loc-selected-coords');
+    const confirmBtn = document.getElementById('loc-confirm-btn');
+
+    if (!nameEl || !subEl || !altitudeEl || !coordsEl || !confirmBtn) return;
+
+    if (!pendingLocationSelection) {
+        nameEl.textContent = 'None selected';
+        subEl.textContent = 'Click on the map or choose a city below.';
+        altitudeEl.textContent = 'Altitude: --';
+        coordsEl.textContent = '--';
+        confirmBtn.disabled = true;
+        return;
+    }
+
+    const system = getUnitSystem();
+    const altitudeText = Number.isFinite(pendingLocationSelection.elevation)
+        ? `${formatDisplayElevation(pendingLocationSelection.elevation, system)} ${elevationUnit(system)}`
+        : '--';
+
+    nameEl.textContent = pendingLocationSelection.name;
+    subEl.textContent = getLocationSubtext(pendingLocationSelection);
+    altitudeEl.textContent = `Altitude: ${altitudeText}`;
+    coordsEl.textContent = `${pendingLocationSelection.lat.toFixed(4)}, ${pendingLocationSelection.lon.toFixed(4)}`;
+    confirmBtn.disabled = false;
+}
+
+async function resolvePendingSelectionElevation(selection) {
+    if (!selection || Number.isFinite(selection.elevation)) return;
+    const lat = Number(selection.lat);
+    const lon = Number(selection.lon);
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
+
+    const coordKey = getLocationCoordKey(lat, lon);
+    if (!coordKey) return;
+
+    if (locationElevationCache.has(coordKey)) {
+        const cachedElevation = Number(locationElevationCache.get(coordKey));
+        if (!Number.isFinite(cachedElevation)) return;
+        if (!pendingLocationSelection) return;
+        if (getLocationCoordKey(pendingLocationSelection.lat, pendingLocationSelection.lon) !== coordKey) return;
+        pendingLocationSelection.elevation = cachedElevation;
+        renderPendingLocationSelection();
+        return;
+    }
+
+    const seq = ++locationElevationSeq;
+    try {
+        const url = `https://api.open-meteo.com/v1/elevation?latitude=${lat}&longitude=${lon}`;
+        const res = await fetch(url);
+        if (!res.ok) return;
+        const data = await res.json();
+        const elevation = parseElevationPayload(data);
+        if (!Number.isFinite(elevation)) return;
+        locationElevationCache.set(coordKey, elevation);
+        if (seq !== locationElevationSeq) return;
+        if (!pendingLocationSelection) return;
+        if (getLocationCoordKey(pendingLocationSelection.lat, pendingLocationSelection.lon) !== coordKey) return;
+        pendingLocationSelection.elevation = elevation;
+        renderPendingLocationSelection();
+    } catch (err) {
+        console.warn('Elevation lookup failed for pending location:', err);
+    }
+}
+
+function stageLocationSelection(input, options = {}) {
+    const selection = toLocationSelection(input);
+    if (!selection) return;
+
+    pendingLocationSelection = selection;
+    if (options.activeItem) setActiveLocationSearchItem(options.activeItem);
+    else if (options.clearActiveItem) clearActiveLocationSearchItem();
+
+    renderPendingLocationSelection();
+    syncMapMarkerToSelection(selection, { recenter: options.recenterMap !== false });
+    resolvePendingSelectionElevation(selection);
+}
+
+function resetLocationSelectionState() {
+    locationElevationSeq++;
+    pendingLocationSelection = null;
+    clearActiveLocationSearchItem();
+    renderPendingLocationSelection();
+}
+
+async function ensureLeafletLoaded() {
+    if (window.L && typeof window.L.map === 'function') return window.L;
+    if (leafletLoaderPromise) return leafletLoaderPromise;
+
+    leafletLoaderPromise = new Promise((resolve, reject) => {
+        let cssEl = document.getElementById(LEAFLET_CSS_ID);
+        if (!cssEl) {
+            cssEl = document.createElement('link');
+            cssEl.id = LEAFLET_CSS_ID;
+            cssEl.rel = 'stylesheet';
+            cssEl.href = LEAFLET_CSS_URL;
+            document.head.appendChild(cssEl);
+        }
+
+        const existingScript = document.getElementById(LEAFLET_SCRIPT_ID);
+        if (existingScript && window.L && typeof window.L.map === 'function') {
+            resolve(window.L);
+            return;
+        }
+
+        const script = existingScript || document.createElement('script');
+        script.id = LEAFLET_SCRIPT_ID;
+        script.src = LEAFLET_SCRIPT_URL;
+        script.async = true;
+        script.onload = () => {
+            if (window.L && typeof window.L.map === 'function') resolve(window.L);
+            else reject(new Error('Leaflet loaded without map API'));
+        };
+        script.onerror = () => reject(new Error('Failed to load Leaflet assets'));
+        if (!existingScript) document.head.appendChild(script);
+    }).catch((err) => {
+        leafletLoaderPromise = null;
+        throw err;
+    });
+
+    return leafletLoaderPromise;
+}
+
+async function ensureLocationMapPicker() {
+    const panel = document.getElementById('loc-map-panel');
+    const canvas = document.getElementById('loc-map');
+    if (!panel || !canvas) return;
+
+    if (!isDesktopMapPickerViewport()) {
+        panel.setAttribute('aria-hidden', 'true');
+        return;
+    }
+
+    panel.setAttribute('aria-hidden', 'false');
+    setLocationMapStatus('Loading map...');
+
+    let Leaflet = null;
+    try {
+        Leaflet = await ensureLeafletLoaded();
+    } catch (err) {
+        console.error('Location map init failed (Leaflet load):', err);
+        setLocationMapStatus('Map unavailable right now. Please use text search.', 'error');
+        return;
+    }
+
+    if (!locationPickerMap) {
+        locationPickerMap = Leaflet.map(canvas, {
+            zoomControl: true,
+            worldCopyJump: true,
+            minZoom: 2
+        });
+
+        Leaflet.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; OpenStreetMap'
+        }).addTo(locationPickerMap);
+    }
+
+    const currentLoc = AppState.locManager && AppState.locManager.current
+        ? AppState.locManager.current
+        : { lat: -27.5969, lon: -48.5495 };
+    const curLat = Number(currentLoc.lat);
+    const curLon = Number(currentLoc.lon);
+
+    if (Number.isFinite(curLat) && Number.isFinite(curLon)) {
+        const zoom = locationPickerMap.getZoom() >= 4 ? locationPickerMap.getZoom() : 6;
+        locationPickerMap.setView([curLat, curLon], zoom);
+        if (!locationPickerMarker) {
+            locationPickerMarker = Leaflet.marker([curLat, curLon]).addTo(locationPickerMap);
+        } else {
+            locationPickerMarker.setLatLng([curLat, curLon]);
+        }
+    }
+
+    if (!locationPickerMapClickHandler) {
+        locationPickerMapClickHandler = async (evt) => {
+            const mapLat = Number(evt.latlng.lat);
+            const mapLon = Number(evt.latlng.lng);
+            if (!Number.isFinite(mapLat) || !Number.isFinite(mapLon)) return;
+
+            stageLocationSelection(
+                { lat: mapLat, lon: mapLon, name: 'Pinned Location', country: '', region: '' },
+                { clearActiveItem: true, recenterMap: true }
+            );
+
+            setLocationMapStatus('Resolving city from clicked point...');
+
+            const seq = ++locationPickerReverseSeq;
+            const request = beginRequest(RequestKeys.REVERSE_GEOCODE, {
+                abortPrevious: true,
+                meta: { source: 'location_map', lat: mapLat, lon: mapLon }
+            });
+            try {
+                const geo = await reverseGeocode(mapLat, mapLon, { signal: request.signal });
+                if (seq !== locationPickerReverseSeq || !isRequestCurrent(RequestKeys.REVERSE_GEOCODE, request.seq)) return;
+
+                const name = (geo && geo.name) ? geo.name : 'Pinned Location';
+                const country = (geo && geo.country) ? geo.country : '';
+                const region = (geo && geo.region) ? geo.region : '';
+
+                endRequest(RequestKeys.REVERSE_GEOCODE, request.seq, 'success');
+                setLocationMapStatus(`Selected: ${name}${region ? `, ${region}` : ''}`, 'ready');
+                stageLocationSelection(
+                    { lat: mapLat, lon: mapLon, name, country, region },
+                    { clearActiveItem: true, recenterMap: false }
+                );
+            } catch (err) {
+                if (err && err.name === 'AbortError') {
+                    endRequest(RequestKeys.REVERSE_GEOCODE, request.seq, 'aborted');
+                    return;
+                }
+                endRequest(
+                    RequestKeys.REVERSE_GEOCODE,
+                    request.seq,
+                    'error',
+                    err && err.message ? err.message : 'Map reverse geocode failed'
+                );
+                console.error('Location map reverse geocode failed:', err);
+                setLocationMapStatus('Could not resolve this point. Try another click.', 'error');
+            }
+        };
+        locationPickerMap.on('click', locationPickerMapClickHandler);
+    }
+
+    setTimeout(() => {
+        if (locationPickerMap) locationPickerMap.invalidateSize();
+    }, 0);
+    setLocationMapStatus('Click on the map to pick a city.', 'ready');
+}
 
 function restoreFocusOutsideModal(modal, preferredTarget) {
     if (!modal || !modal.contains(document.activeElement)) return;
@@ -1024,9 +1361,7 @@ export function toggleClimateFilter(w, h, e) {
 }
 
 export async function fetchIPLocation(originalError) {
-    const btn = document.getElementById('gps-btn');
-    const originalText = 'Use My Location'; // Hardcoded fallback for text
-    if (btn) btn.innerHTML = 'Trying IP Location...';
+    setInlineGpsButtonLoading(true, 'Trying IP location...');
     console.log("Attempting IP Fallback...");
 
     const request = beginRequest(RequestKeys.IP_LOCATION, { abortPrevious: true });
@@ -1035,18 +1370,27 @@ export async function fetchIPLocation(originalError) {
         if (!isRequestCurrent(RequestKeys.IP_LOCATION, request.seq)) return;
         if (!data) throw new Error("IP Location failed");
         console.log("IP Location Success:", data);
-        AppState.locManager.setLocation(data.lat, data.lon, data.name, data.country);
+        stageLocationSelection({
+            lat: data.lat,
+            lon: data.lon,
+            name: data.name || 'My Location',
+            country: data.country || '',
+            region: '',
+            elevation: null
+        }, { clearActiveItem: true, recenterMap: true });
+        setLocationMapStatus('GPS suggestion ready. Click Confirm location.', 'ready');
         endRequest(RequestKeys.IP_LOCATION, request.seq, 'success');
-        if (btn) btn.innerHTML = originalText;
     } catch (e) {
         if (e && e.name === 'AbortError') {
             endRequest(RequestKeys.IP_LOCATION, request.seq, 'aborted');
+            setInlineGpsButtonLoading(false);
             return;
         }
         endRequest(RequestKeys.IP_LOCATION, request.seq, 'error', e && e.message ? e.message : 'IP location failed');
         console.error("IP Fallback failed", e);
         alert(`GPS Failed (${originalError.message}) and IP Location failed. Please search manually.`);
-        if (btn) btn.innerHTML = originalText;
+    } finally {
+        setInlineGpsButtonLoading(false);
     }
 }
 export function openLocationModal() {
@@ -1067,7 +1411,12 @@ export function openLocationModal() {
             locationSearchDebounceTimer = null;
         }
         cancelRequest(RequestKeys.LOCATION_SEARCH, 'modal reopened');
+        cancelRequest(RequestKeys.REVERSE_GEOCODE, 'modal reopened');
         locationSearchSeq++;
+        locationPickerReverseSeq++;
+        resetLocationSelectionState();
+        setInlineGpsButtonLoading(false);
+        setLocationMapStatus('Click on the map to pick a city.', 'ready');
         // Render Recents if available and search is empty
         var list = document.getElementById('loc-results');
         var searchIn = document.getElementById('loc-search');
@@ -1082,9 +1431,23 @@ export function openLocationModal() {
                 AppState.locManager.recents.forEach(function (item) {
                     var div = document.createElement('div');
                     div.className = 'loc-item';
-                    var country = item.country || '';
                     appendLocationLabel(div, item.name, getLocationSubtext(item), 'loc-sub');
-                    div.onclick = function () { AppState.locManager.setLocation(item.lat, item.lon, item.name, country, { region: item.region || '' }); };
+                    div.onclick = function () {
+                        locationPickerReverseSeq++;
+                        cancelRequest(RequestKeys.REVERSE_GEOCODE, 'list selection');
+                        stageLocationSelection(
+                            {
+                                lat: item.lat,
+                                lon: item.lon,
+                                name: item.name,
+                                country: item.country || '',
+                                region: item.region || '',
+                                elevation: item.elevation
+                            },
+                            { activeItem: div, recenterMap: true }
+                        );
+                        setLocationMapStatus(`Selected: ${item.name}`, 'ready');
+                    };
                     list.appendChild(div);
                 });
             }
@@ -1100,7 +1463,22 @@ export function openLocationModal() {
                     var state = item.admin1 || '';
                     var country = item.country || '';
                     appendLocationLabel(div, item.name, getLocationSubtext({ region: state, country }), 'loc-sub');
-                    div.onclick = function () { AppState.locManager.setLocation(item.latitude, item.longitude, item.name, country, { region: state }); };
+                    div.onclick = function () {
+                        locationPickerReverseSeq++;
+                        cancelRequest(RequestKeys.REVERSE_GEOCODE, 'list selection');
+                        stageLocationSelection(
+                            {
+                                lat: item.latitude,
+                                lon: item.longitude,
+                                name: item.name,
+                                country,
+                                region: state,
+                                elevation: item.elevation
+                            },
+                            { activeItem: div, recenterMap: true }
+                        );
+                        setLocationMapStatus(`Selected: ${item.name}`, 'ready');
+                    };
                     list.appendChild(div);
                 });
             }
@@ -1110,6 +1488,10 @@ export function openLocationModal() {
             searchIn.value = ''; // Clear search
             renderRecents();
         }
+        ensureLocationMapPicker().catch((err) => {
+            console.error('Desktop location map setup failed:', err);
+            setLocationMapStatus('Map unavailable right now. Please use text search.', 'error');
+        });
         setTimeout(function () {
             var i = document.getElementById('loc-search');
             if (i) {
@@ -1157,6 +1539,31 @@ export function openLocationModal() {
         }, 100);
     } else {
         console.error("Location Modal not found in DOM");
+    }
+}
+export async function confirmLocationSelection() {
+    if (!pendingLocationSelection || !AppState.locManager) return;
+    const btn = document.getElementById('loc-confirm-btn');
+    const originalLabel = btn ? btn.textContent : '';
+    if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Confirming...';
+    }
+
+    try {
+        await AppState.locManager.setLocation(
+            pendingLocationSelection.lat,
+            pendingLocationSelection.lon,
+            pendingLocationSelection.name,
+            pendingLocationSelection.country,
+            {
+                region: pendingLocationSelection.region || '',
+                elevation: pendingLocationSelection.elevation
+            }
+        );
+    } finally {
+        if (btn) btn.textContent = originalLabel || 'Confirm location';
+        renderPendingLocationSelection();
     }
 }
 export function closeLocationModal(e) {
@@ -1630,9 +2037,7 @@ export function useGPS() {
         fetchIPLocation({ message: "Geolocation not supported" });
         return;
     }
-    const btn = document.getElementById('gps-btn');
-    const originalText = btn ? btn.innerHTML : '';
-    if (btn) btn.innerHTML = 'Locating... (Please Wait)';
+    setInlineGpsButtonLoading(true, 'Locating...');
 
     const options = {
         enableHighAccuracy: true,
@@ -1652,11 +2057,23 @@ export function useGPS() {
             const name = city ? city.name : "My Location";
             const country = city ? city.country : "";
             const region = city ? city.region : '';
-            if (AppState.locManager) AppState.locManager.setLocation(lat, lon, name, country, { region });
+            stageLocationSelection(
+                {
+                    lat,
+                    lon,
+                    name,
+                    country,
+                    region,
+                    elevation: null
+                },
+                { clearActiveItem: true, recenterMap: true }
+            );
+            setLocationMapStatus('GPS suggestion ready. Click Confirm location.', 'ready');
             endRequest(RequestKeys.REVERSE_GEOCODE, request.seq, 'success');
         } catch (e) {
             if (e && e.name === 'AbortError') {
                 endRequest(RequestKeys.REVERSE_GEOCODE, request.seq, 'aborted');
+                setInlineGpsButtonLoading(false);
                 return;
             }
             endRequest(
@@ -1666,9 +2083,20 @@ export function useGPS() {
                 e && e.message ? e.message : 'Reverse geocode failed'
             );
             console.error("GPS Reverse Geocode Error", e);
-            if (AppState.locManager) AppState.locManager.setLocation(lat, lon, "My Location", "");
+            stageLocationSelection(
+                {
+                    lat,
+                    lon,
+                    name: "My Location",
+                    country: "",
+                    region: "",
+                    elevation: null
+                },
+                { clearActiveItem: true, recenterMap: true }
+            );
+            setLocationMapStatus('GPS position ready. Click Confirm location.', 'ready');
         }
-        if (btn) btn.innerHTML = originalText;
+        setInlineGpsButtonLoading(false);
     }, (err) => {
         console.warn("Native GPS Error:", err);
         // Fallback to IP location if GPS fails (e.g., kCLErrorLocationUnknown)

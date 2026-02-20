@@ -748,30 +748,53 @@
                 </button>
             </div>
 
-            <button data-action="gps" class="modern-button modal-gps-btn" id="gps-btn">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <line x1="22" y1="12" x2="18" y2="12"></line>
-                    <line x1="6" y1="12" x2="2" y2="12"></line>
-                    <line x1="12" y1="6" x2="12" y2="2"></line>
-                    <line x1="12" y1="22" x2="12" y2="18"></line>
-                </svg>
-                Find my Location
-            </button>
+            <div class="loc-modal-split">
+                <div id="loc-map-panel" class="loc-map-panel" aria-hidden="true">
+                    <div class="loc-map-head">
+                        <span class="loc-map-title">Map Picker (Desktop)</span>
+                        <span class="loc-map-hint-inline">Click to choose a city</span>
+                    </div>
+                    <div id="loc-map" class="loc-map-canvas" role="application" aria-label="Select location on map"></div>
+                    <div id="loc-map-status" class="loc-map-status">Loading map...</div>
+                </div>
 
-            <div class="modal-or">OR</div>
+                <div class="loc-search-panel">
+                    <div class="search-box">
+                        <svg class="search-icon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
+                            viewBox="0 0 24 24">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                        <input type="text" id="loc-search" class="search-input" placeholder="Search city..."
+                            autocomplete="off">
+                        <button id="loc-gps-btn" type="button" class="search-gps-btn" data-action="gps"
+                            aria-label="Use my location" title="Use my location">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="22" y1="12" x2="18" y2="12"></line>
+                                <line x1="6" y1="12" x2="2" y2="12"></line>
+                                <line x1="12" y1="6" x2="12" y2="2"></line>
+                                <line x1="12" y1="22" x2="12" y2="18"></line>
+                            </svg>
+                        </button>
+                    </div>
 
-            <div class="search-box">
-                <svg class="search-icon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
-                    viewBox="0 0 24 24">
-                    <circle cx="11" cy="11" r="8"></circle>
-                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                </svg>
-                <input type="text" id="loc-search" class="search-input" placeholder="Search city..." autocomplete="off">
+                    <div class="loc-selection-card" id="loc-selection-card" aria-live="polite">
+                        <div class="loc-selection-label">Selected location</div>
+                        <div class="loc-selection-name" id="loc-selected-name">None selected</div>
+                        <div class="loc-selection-sub" id="loc-selected-sub">Click on the map or choose a city below.</div>
+                        <div class="loc-selection-altitude" id="loc-selected-altitude">Altitude: --</div>
+                        <div class="loc-selection-coords" id="loc-selected-coords">--</div>
+                        <button id="loc-confirm-btn" class="modern-button loc-confirm-btn" data-action="location-confirm"
+                            disabled>
+                            Confirm location
+                        </button>
+                    </div>
+
+                    <div id="loc-results" class="loc-results"></div>
+                </div>
             </div>
-
-            <div id="loc-results" class="loc-results"></div>
         </div>
     </div>
 

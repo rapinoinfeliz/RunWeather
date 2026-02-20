@@ -134,7 +134,8 @@ export class LocationManager {
                 lon: Number(loc.lon),
                 name: loc.name,
                 country: loc.country,
-                region: loc.region || ''
+                region: loc.region || '',
+                elevation: Number.isFinite(Number(loc.elevation)) ? Number(loc.elevation) : null
             });
         }
         this.saveFavorites();
@@ -147,15 +148,21 @@ export class LocationManager {
         const region = typeof options === 'string'
             ? options
             : (options.region || options.admin1 || options.state || '');
+        const elevation = (typeof options === 'object' && Number.isFinite(Number(options.elevation)))
+            ? Number(options.elevation)
+            : null;
         // 1. Snap to existing recent location to stabilize coordinates (and cache keys)
         // If we are "at" a known recent location, use its saved lat/lon.
-        let newLoc = { lat, lon, name, country, region, isDefault: false };
+        let newLoc = { lat, lon, name, country, region, elevation, isDefault: false };
 
         // Find match in recents (using our robust check)
         const match = this.recents.find(r => this._isSameLocation(r, newLoc));
         if (match) {
             console.log("Snapping location to recent match:", match.name);
-            newLoc = { ...match }; // Use the stable coordinates
+            newLoc = {
+                ...match,
+                elevation: Number.isFinite(elevation) ? elevation : (Number.isFinite(Number(match.elevation)) ? Number(match.elevation) : null)
+            }; // Use stable coordinates while preserving freshest elevation when available.
             // Ensure we keep the isDefault false unless logic dictates
             newLoc.isDefault = false;
         }

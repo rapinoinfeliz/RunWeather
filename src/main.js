@@ -433,6 +433,11 @@ async function refreshWeather(force = false) {
             weather.elevation
         );
 
+        if (AppState.locManager && AppState.locManager.current) {
+            const elevation = Number.isFinite(Number(weather.elevation)) ? Number(weather.elevation) : null;
+            AppState.locManager.current.elevation = elevation;
+        }
+
         UI.renderAllForecasts({ data: true, range: true, selection: true });
         reportEvent('weather_render', {
             seq: request.seq,
@@ -579,6 +584,9 @@ function setupGlobalEvents() {
                 break;
             case 'location-close':
                 UI.closeLocationModal();
+                break;
+            case 'location-confirm':
+                UI.confirmLocationSelection();
                 break;
             case 'location-search-clear': {
                 // Reset search logic if needed

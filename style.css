@@ -1655,7 +1655,7 @@ select.modern-input {
 
 .search-input {
     width: 100%;
-    padding: 12px 12px 12px 40px;
+    padding: 12px 42px 12px 40px;
     background: #0d1117;
     border: 1px solid #30363d;
     border-radius: 8px;
@@ -1676,7 +1676,199 @@ select.modern-input {
     pointer-events: none;
 }
 
+.search-gps-btn {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(88, 166, 255, 0.35);
+    border-radius: 7px;
+    background: rgba(88, 166, 255, 0.12);
+    color: #bfdbfe;
+    cursor: pointer;
+    transition: background 120ms ease, border-color 120ms ease, color 120ms ease, transform 120ms ease;
+}
+
+.search-gps-btn:hover {
+    background: rgba(88, 166, 255, 0.2);
+    border-color: rgba(88, 166, 255, 0.55);
+    color: #e0ecff;
+}
+
+.search-gps-btn:disabled {
+    opacity: 0.55;
+    cursor: wait;
+}
+
+.search-gps-btn.is-loading svg {
+    animation: gpsPulseSpin 0.95s linear infinite;
+}
+
+@keyframes gpsPulseSpin {
+    from {
+        transform: scale(0.92) rotate(0deg);
+        opacity: 0.72;
+    }
+
+    to {
+        transform: scale(1) rotate(360deg);
+        opacity: 1;
+    }
+}
+
 /* Legacy aliases above already cover loc-results/loc-item/loc-sub */
+
+#loc-modal .modal-content {
+    width: min(96vw, 980px);
+    max-width: 980px;
+    max-height: min(88vh, 900px);
+    overflow-y: auto;
+}
+
+.loc-modal-split {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.loc-search-panel {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    gap: 10px;
+}
+
+.loc-map-panel {
+    display: none;
+    border: 1px solid rgba(88, 166, 255, 0.22);
+    border-radius: 10px;
+    background: rgba(13, 17, 23, 0.72);
+    padding: 10px;
+}
+
+.loc-map-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.loc-map-title {
+    font-size: 0.82rem;
+    color: #dbeafe;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+.loc-map-hint-inline {
+    font-size: 0.74rem;
+    color: var(--text-secondary);
+}
+
+.loc-map-canvas {
+    width: 100%;
+    height: 320px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    overflow: hidden;
+    background: radial-gradient(circle at 30% 30%, rgba(56, 189, 248, 0.13), rgba(15, 23, 42, 0.9));
+}
+
+.loc-map-status {
+    margin-top: 8px;
+    min-height: 18px;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.loc-map-status--ready {
+    color: #93c5fd;
+}
+
+.loc-map-status--error {
+    color: #fca5a5;
+}
+
+.loc-selection-card {
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 10px;
+    background: rgba(13, 17, 23, 0.62);
+    padding: 10px;
+    display: grid;
+    gap: 4px;
+}
+
+.loc-selection-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    font-weight: 700;
+}
+
+.loc-selection-name {
+    font-size: 0.95rem;
+    color: #e2e8f0;
+    font-weight: 600;
+}
+
+.loc-selection-sub,
+.loc-selection-altitude,
+.loc-selection-coords {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+}
+
+.loc-confirm-btn {
+    width: 100%;
+    margin-top: 6px;
+    justify-content: center;
+}
+
+.loc-confirm-btn[disabled] {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+#loc-modal .loc-search-panel #loc-results {
+    margin-top: 0;
+}
+
+@media (min-width: 861px) {
+    .loc-modal-split {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        align-items: start;
+        column-gap: 12px;
+    }
+
+    .loc-map-panel {
+        display: block;
+    }
+
+    #loc-modal .loc-search-panel #loc-results {
+        max-height: 320px;
+    }
+}
+
+@media (max-width: 860px) {
+    #loc-modal .modal-content {
+        width: min(94vw, 620px);
+        max-width: 620px;
+    }
+
+    .loc-map-panel {
+        display: none !important;
+    }
+}
 
 /* Block-level loading skeletons (replaces fullscreen overlays) */
 .block-skeleton {
