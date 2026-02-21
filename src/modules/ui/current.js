@@ -126,11 +126,11 @@ export function renderCurrentTab(w, a, prob2h = 0, precip2h = 0, daily, elevatio
 
 
     // 1. Temperature Section (WBGT Integrated)
-    html += `<div style="${sectionStyle}">
+    html += `<div class="anim-card" style="${sectionStyle}">
                         <div style="${headStyle}">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z" stroke="var(--text-secondary)"/>
-                                <path class="anim-temp-fill" d="M14 14.76V6.5" stroke="currentColor" stroke-width="2"/>
+                                <path class="anim-temp-fill" d="M11.5 14.76V6.5" stroke="currentColor" stroke-width="2"/>
                                 <circle cx="11.5" cy="17.5" r="2.5" fill="currentColor" stroke="none" />
                             </svg> Temperature
                         </div>
@@ -158,7 +158,7 @@ export function renderCurrentTab(w, a, prob2h = 0, precip2h = 0, daily, elevatio
 
     // 2. Wind & Precip
     // 2. Wind
-    html += `<div style="${sectionStyle}">
+    html += `<div class="anim-card" style="${sectionStyle}">
                         <div style="${headStyle}">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                                 <circle class="anim-wind-ring" cx="12" cy="12" r="9" stroke-dasharray="4 4" stroke-opacity="0.5"/>
@@ -185,7 +185,7 @@ export function renderCurrentTab(w, a, prob2h = 0, precip2h = 0, daily, elevatio
                         </div>
                     </div>`;
 
-    html += `<div style="${sectionStyle}">
+    html += `<div class="anim-card" style="${sectionStyle}">
                         <div style="${headStyle}">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M7 16a4 4 0 0 1-.88-7.903A5 5 0 1 1 15.9 6L16 6a5 5 0 0 1 1 9.9M15 13l-3-3m0 0l-3 3m3-3v12" stroke-opacity="0.3"/>
@@ -214,7 +214,7 @@ export function renderCurrentTab(w, a, prob2h = 0, precip2h = 0, daily, elevatio
     // 4. Radiation & Air
     // Remove local aqiColor logic in favor of getCondColor helper
 
-    html += `<div style="${sectionStyle}">
+    html += `<div class="anim-card" style="${sectionStyle}">
                         <div style="${headStyle}">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <circle class="anim-rad-spin" cx="12" cy="12" r="10" stroke-dasharray="4 4 12 4" stroke-opacity="0.4"/>
