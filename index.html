@@ -20,7 +20,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <!-- Cache Busting: increment v=ID on deploy -->
-    <script type="module" src="src/main.js?v=1.0.33"></script>
+    <script type="module" src="src/main.js?v=1.0.46"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
@@ -35,6 +35,7 @@
     </noscript>
 
     <!-- CSS (Blocking to prevent FOUC / White Screen) -->
+    <link rel="stylesheet" href="conditions-animation.css">
     <link rel="stylesheet" href="style.css">
 </head>
 
@@ -391,8 +392,8 @@
             </div>
             <div id="current-content" class="current-grid">
                 <div class="loading-state loading-state--card">
-                    <svg class="animate-spin loading-spinner"
-                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <svg class="animate-spin loading-spinner" xmlns="http://www.w3.org/2000/svg" fill="none"
+                        viewBox="0 0 24 24">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
                         </circle>
                         <path class="opacity-75" fill="currentColor"
@@ -519,7 +520,8 @@
                     </div>
                     <div class="chart-legend">
                         <div class="chart-legend-item chart-legend-item--rain"><span
-                                class="chart-legend-dot chart-legend-dot--rain"></span> <span id="legend-rain-label">Rain (mm)</span></div>
+                                class="chart-legend-dot chart-legend-dot--rain"></span> <span
+                                id="legend-rain-label">Rain (mm)</span></div>
                         <div class="chart-legend-item chart-legend-item--prob"><span
                                 class="chart-legend-line chart-legend-line--prob"></span> Probability (%)</div>
                     </div>
@@ -543,7 +545,8 @@
                     </div>
                     <div class="chart-legend">
                         <div class="chart-legend-item chart-legend-item--wind"><span
-                                class="chart-legend-line chart-legend-line--wind"></span> <span id="legend-wind-label">Wind (km/h)</span></div>
+                                class="chart-legend-line chart-legend-line--wind"></span> <span
+                                id="legend-wind-label">Wind (km/h)</span></div>
                     </div>
                 </div>
             </div>
@@ -691,8 +694,8 @@
                     Data</span>
                 <div class="start-center gap-2">
                     <span id="climate-filter-label" class="filter-pill" style="display:none;"></span>
-                    <button id="climate-clear-filter" data-action="filter-climate" class="link-button link-button--small"
-                        style="display:none;">Clear</button>
+                    <button id="climate-clear-filter" data-action="filter-climate"
+                        class="link-button link-button--small" style="display:none;">Clear</button>
                 </div>
             </div>
 
@@ -750,13 +753,14 @@
 
             <div class="loc-modal-split">
                 <div id="loc-map-panel" class="loc-map-panel" aria-hidden="true">
-                    <div id="loc-map" class="loc-map-canvas" role="application" aria-label="Select location on map"></div>
+                    <div id="loc-map" class="loc-map-canvas" role="application" aria-label="Select location on map">
+                    </div>
                 </div>
 
                 <div class="loc-search-panel">
                     <div class="search-box">
-                        <svg class="search-icon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
-                            viewBox="0 0 24 24">
+                        <svg class="search-icon" width="16" height="16" fill="none" stroke="currentColor"
+                            stroke-width="2" viewBox="0 0 24 24">
                             <circle cx="11" cy="11" r="8"></circle>
                             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                         </svg>
@@ -776,13 +780,19 @@
                     </div>
 
                     <div class="loc-selection-card" id="loc-selection-card" aria-live="polite">
-                        <div class="loc-selection-label">Selected location</div>
-                        <div class="loc-selection-name" id="loc-selected-name">None selected</div>
-                        <div class="loc-selection-sub" id="loc-selected-sub">Click on the map or choose a city below.</div>
-                        <div class="loc-selection-altitude" id="loc-selected-altitude">Altitude: --</div>
-                        <div class="loc-selection-coords" id="loc-selected-coords">--</div>
-                        <button id="loc-confirm-btn" class="modern-button loc-confirm-btn" data-action="location-confirm"
-                            disabled>
+                        <div class="loc-selection-main">
+                            <div class="loc-selection-name" id="loc-selected-name">None selected</div>
+                            <div class="loc-selection-details">
+                                <div class="loc-selection-sub" id="loc-selected-sub">Click on the map or choose a city
+                                    below.</div>
+                                <div class="loc-selection-altitude" id="loc-selected-altitude">Altitude: --</div>
+                                <div class="loc-selection-coords" id="loc-selected-coords">--</div>
+                            </div>
+                            <div class="loc-selection-metrics" id="loc-selected-metrics">
+                            </div>
+                        </div>
+                        <button id="loc-confirm-btn" class="modern-button loc-confirm-btn"
+                            data-action="location-confirm" disabled>
                             Confirm location
                         </button>
                     </div>
@@ -824,8 +834,8 @@
             <div class="settings-grid-two">
                 <div class="settings-col">
                     <label for="runner-weight" class="settings-label">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round" stroke-linejoin="round">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"></path>
                             <line x1="16" y1="8" x2="2" y2="22"></line>
                             <line x1="17.5" y1="15" x2="9" y2="15"></line>
@@ -849,8 +859,8 @@
 
                 <div class="settings-col">
                     <label for="runner-height" class="settings-label">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round" stroke-linejoin="round">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M12 2v20"></path>
                             <path d="M2 12h4"></path>
                             <path d="M18 12h4"></path>
@@ -877,8 +887,8 @@
             <div class="settings-grid-two">
                 <div class="settings-col">
                     <label for="runner-gender" class="settings-label">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round" stroke-linejoin="round">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="12" cy="12" r="10"></circle>
                             <path d="M12 16v-4"></path>
                             <path d="M12 8h.01"></path>
@@ -904,8 +914,8 @@
 
                 <div class="settings-col">
                     <label for="runner-age" class="settings-label">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round" stroke-linejoin="round">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="12" cy="12" r="10"></circle>
                             <polyline points="12 6 12 12 16 14"></polyline>
                         </svg>

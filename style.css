@@ -1778,21 +1778,39 @@ select.modern-input {
     background: rgba(13, 17, 23, 0.62);
     padding: 10px;
     display: grid;
-    gap: 4px;
+    gap: 5px;
 }
 
-.loc-selection-label {
-    font-size: 0.7rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--text-secondary);
-    font-weight: 700;
+.loc-selection-main {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(220px, 0.98fr);
+    grid-template-areas:
+        "name name"
+        "details metrics";
+    column-gap: 12px;
+    row-gap: 4px;
+    align-items: end;
+}
+
+.loc-selection-details {
+    grid-area: details;
+    display: grid;
+    gap: 4px;
+    align-self: end;
 }
 
 .loc-selection-name {
-    font-size: 0.95rem;
+    grid-area: name;
+    font-size: clamp(1.22rem, 1.95vw, 1.62rem);
     color: #e2e8f0;
-    font-weight: 600;
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    margin-bottom: 4px;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: clip;
 }
 
 .loc-selection-sub,
@@ -1800,6 +1818,62 @@ select.modern-input {
 .loc-selection-coords {
     font-size: 0.78rem;
     color: var(--text-secondary);
+}
+
+.loc-selection-metrics {
+    grid-area: metrics;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+    width: min(236px, 100%);
+    justify-content: flex-end;
+    margin-left: auto;
+    margin-top: 0;
+    padding-bottom: 1px;
+    padding-left: 0;
+    border-left: 0;
+    align-self: end;
+}
+
+.loc-metric-inline {
+    display: grid;
+    grid-template-columns: max-content max-content;
+    align-items: baseline;
+    gap: 6px;
+    justify-content: end;
+    width: 100%;
+    margin-left: 0;
+    min-width: 0;
+    border-bottom: none;
+    padding-bottom: 0;
+    white-space: normal;
+}
+
+.loc-metric-inline-label {
+    font-size: 0.71rem;
+    letter-spacing: 0.015em;
+    text-transform: none;
+    color: var(--text-secondary);
+    font-weight: 510;
+    line-height: 1.1;
+    white-space: nowrap;
+    text-align: right;
+    justify-self: end;
+}
+
+.loc-metric-inline-value {
+    --metric-color: #9ca3af;
+    font-size: 0.75rem;
+    font-weight: 610;
+    color: color-mix(in srgb, var(--metric-color) 72%, #cbd5e1);
+    line-height: 1.1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: visible;
+    text-overflow: clip;
+    text-align: right;
+    justify-self: end;
 }
 
 .loc-confirm-btn {
@@ -1820,9 +1894,14 @@ select.modern-input {
 }
 
 @media (min-width: 861px) {
+    #loc-modal .modal-content {
+        width: min(96vw, 890px);
+        max-width: 890px;
+    }
+
     .loc-modal-split {
         display: grid;
-        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        grid-template-columns: minmax(0, 1fr) minmax(0, 0.8fr);
         align-items: start;
         column-gap: 12px;
     }
@@ -1836,6 +1915,29 @@ select.modern-input {
     #loc-modal .modal-content {
         width: min(94vw, 620px);
         max-width: 620px;
+    }
+
+    .loc-selection-main {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            "name"
+            "details"
+            "metrics";
+        row-gap: 8px;
+    }
+
+    .loc-selection-metrics {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 4px;
+        width: min(236px, 100%);
+        justify-content: initial;
+        margin-left: auto;
+        margin-top: 0;
+        padding-bottom: 0;
+        padding-left: 0;
+        border-left: 0;
     }
 
     .loc-map-panel {

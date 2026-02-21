@@ -2,7 +2,7 @@
 // UI Module - Reconstructed
 import { HAPCalculator, VDOT_MATH, parseTime, formatTime, getEasyPace, getISOWeek } from './core.js';
 import { calculatePacingState, calculateWBGT, calculateAgeGrade } from './engine.js';
-import { fetchWeatherData, searchCity, fetchIpLocation, reverseGeocode } from './api.js';
+import { fetchWeatherData, searchCity, fetchIpLocation, reverseGeocode, fetchLocationPreview } from './api.js';
 import { saveToStorage, loadFromStorage } from './storage.js';
 import { AppState } from './appState.js';
 import { AppStore, StoreActions, RequestKeys, beginRequest, endRequest, isRequestCurrent, cancelRequest } from './store.js';
@@ -103,7 +103,14 @@ let locationPickerReverseSeq = 0;
 let pendingLocationSelection = null;
 let activeLocationSearchItem = null;
 let locationElevationSeq = 0;
+let locationPreviewSeq = 0;
+let locationNameFitRaf = 0;
 const locationElevationCache = new Map();
+let pendingLocationPreview = {
+    status: 'idle',
+    data: null,
+    error: null
+};
 
 const MAPLIBRE_CSS_ID = 'rw-maplibre-css';
 const MAPLIBRE_SCRIPT_ID = 'rw-maplibre-script';
@@ -219,6 +226,54 @@ function setActiveLocationSearchItem(el) {
     }
 }
 
+function fitLocationNameToSingleLine() {
+    const nameEl = document.getElementById('loc-selected-name');
+    if (!nameEl) return;
+    const width = Number(nameEl.clientWidth);
+    if (!Number.isFinite(width) || width <= 0) return;
+
+    // Reset to CSS baseline before fitting so short names can grow back.
+    nameEl.style.fontSize = '';
+    const computed = parseFloat(window.getComputedStyle(nameEl).fontSize);
+    const maxFont = Number.isFinite(computed) ? computed : 26;
+    const minFont = 8;
+    nameEl.style.fontSize = `${maxFont}px`;
+
+    if (nameEl.scrollWidth <= nameEl.clientWidth + 1) return;
+
+    let low = minFont;
+    let high = maxFont;
+    for (let i = 0; i < 11; i++) {
+        const mid = (low + high) / 2;
+        nameEl.style.fontSize = `${mid}px`;
+        if (nameEl.scrollWidth <= nameEl.clientWidth + 1) {
+            low = mid;
+        } else {
+            high = mid;
+        }
+    }
+
+    let fitted = Math.max(minFont, Math.min(low, maxFont));
+    nameEl.style.fontSize = `${fitted.toFixed(2)}px`;
+
+    // Safety fallback for extreme names: scale once more so it always fits.
+    if (nameEl.scrollWidth > nameEl.clientWidth + 1) {
+        const ratio = nameEl.clientWidth / nameEl.scrollWidth;
+        const forceFit = Math.max(6.5, fitted * ratio * 0.995);
+        fitted = Math.min(fitted, forceFit);
+        nameEl.style.fontSize = `${fitted.toFixed(2)}px`;
+    }
+}
+
+function scheduleLocationNameFit() {
+    if (typeof window === 'undefined') return;
+    if (locationNameFitRaf) window.cancelAnimationFrame(locationNameFitRaf);
+    locationNameFitRaf = window.requestAnimationFrame(() => {
+        locationNameFitRaf = 0;
+        fitLocationNameToSingleLine();
+    });
+}
+
 function syncMapMarkerToSelection(selection, options = {}) {
     if (!selection || !locationPickerMap) return;
     const { recenter = true } = options;
@@ -246,16 +301,21 @@ function renderPendingLocationSelection() {
     const subEl = document.getElementById('loc-selected-sub');
     const altitudeEl = document.getElementById('loc-selected-altitude');
     const coordsEl = document.getElementById('loc-selected-coords');
+    const metricsEl = document.getElementById('loc-selected-metrics');
     const confirmBtn = document.getElementById('loc-confirm-btn');
 
-    if (!nameEl || !subEl || !altitudeEl || !coordsEl || !confirmBtn) return;
+    if (!nameEl || !subEl || !altitudeEl || !coordsEl || !confirmBtn || !metricsEl) return;
+
+    const clearMetrics = () => { metricsEl.innerHTML = ''; };
 
     if (!pendingLocationSelection) {
         nameEl.textContent = 'None selected';
         subEl.textContent = 'Click on the map or choose a city below.';
         altitudeEl.textContent = 'Altitude: --';
         coordsEl.textContent = '--';
+        clearMetrics();
         confirmBtn.disabled = true;
+        scheduleLocationNameFit();
         return;
     }
 
@@ -269,6 +329,136 @@ function renderPendingLocationSelection() {
     altitudeEl.textContent = `Altitude: ${altitudeText}`;
     coordsEl.textContent = `${pendingLocationSelection.lat.toFixed(4)}, ${pendingLocationSelection.lon.toFixed(4)}`;
     confirmBtn.disabled = false;
+
+    if (pendingLocationPreview.status === 'loading') {
+        clearMetrics();
+        scheduleLocationNameFit();
+        return;
+    }
+
+    if (pendingLocationPreview.status === 'error') {
+        clearMetrics();
+        scheduleLocationNameFit();
+        return;
+    }
+
+    const preview = pendingLocationPreview && pendingLocationPreview.data
+        ? pendingLocationPreview.data
+        : null;
+    if (!preview) {
+        clearMetrics();
+        scheduleLocationNameFit();
+        return;
+    }
+
+    const tempMetric = Number(preview.temperature_2m);
+    const dewMetric = Number(preview.dew_point_2m);
+    const windMetric = Number(preview.wind_speed_10m);
+
+    let impactPct = null;
+    if (Number.isFinite(tempMetric) && Number.isFinite(dewMetric) && AppState.hapCalc) {
+        const adj = AppState.hapCalc.getAdjustment(tempMetric, dewMetric);
+        const impact = ((1.0 / Math.exp(adj)) - 1.0) * 100.0;
+        impactPct = Number.isFinite(impact) ? Math.max(0, impact) : null;
+    }
+
+    const tempColor = Number.isFinite(tempMetric) ? getCondColor('air', tempMetric) : '#9ca3af';
+    const dewColor = Number.isFinite(dewMetric) ? getDewColor(dewMetric) : '#9ca3af';
+    const windColor = Number.isFinite(windMetric) ? getCondColor('wind', windMetric) : '#9ca3af';
+    const impactColor = Number.isFinite(impactPct) ? getImpactColor(impactPct, tempMetric) : '#9ca3af';
+
+    const tempText = Number.isFinite(tempMetric)
+        ? `${formatDisplayTemperature(tempMetric, 1, system)}${temperatureUnit(system)}`
+        : '--';
+    const dewText = Number.isFinite(dewMetric)
+        ? `${formatDisplayTemperature(dewMetric, 1, system)}${temperatureUnit(system)}`
+        : '--';
+    const windText = Number.isFinite(windMetric)
+        ? `${formatDisplayWind(windMetric, 1, system)} ${windUnit(system)}`
+        : '--';
+    const impactText = Number.isFinite(impactPct)
+        ? `${impactPct.toFixed(1)}%`
+        : '--';
+
+    const metricInline = (label, value, color) => `
+        <div class="loc-metric-inline">
+            <div class="loc-metric-inline-label">${label}</div>
+            <div class="loc-metric-inline-value" style="--metric-color:${color}">${value}</div>
+        </div>
+    `;
+
+    metricsEl.innerHTML = [
+        metricInline('Temperature', tempText, tempColor),
+        metricInline('Dew Point', dewText, dewColor),
+        metricInline('Wind', windText, windColor),
+        metricInline('Heat Impact', impactText, impactColor)
+    ].join('');
+    scheduleLocationNameFit();
+}
+
+function resetPendingLocationPreview() {
+    locationPreviewSeq++;
+    pendingLocationPreview = {
+        status: 'idle',
+        data: null,
+        error: null
+    };
+}
+
+async function resolvePendingSelectionPreview(selection) {
+    if (!selection) return;
+    const lat = Number(selection.lat);
+    const lon = Number(selection.lon);
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
+
+    const coordKey = getLocationCoordKey(lat, lon);
+    if (!coordKey) return;
+
+    const seq = ++locationPreviewSeq;
+    pendingLocationPreview = {
+        status: 'loading',
+        data: null,
+        error: null
+    };
+    renderPendingLocationSelection();
+
+    const request = beginRequest(RequestKeys.LOCATION_PREVIEW, {
+        abortPrevious: true,
+        meta: { lat, lon }
+    });
+    try {
+        const preview = await fetchLocationPreview(lat, lon, { signal: request.signal });
+        if (seq !== locationPreviewSeq) return;
+        if (!isRequestCurrent(RequestKeys.LOCATION_PREVIEW, request.seq)) return;
+        if (!pendingLocationSelection) return;
+        if (getLocationCoordKey(pendingLocationSelection.lat, pendingLocationSelection.lon) !== coordKey) return;
+        pendingLocationPreview = {
+            status: 'ready',
+            data: preview,
+            error: null
+        };
+        endRequest(RequestKeys.LOCATION_PREVIEW, request.seq, 'success');
+        renderPendingLocationSelection();
+    } catch (err) {
+        if (err && err.name === 'AbortError') {
+            endRequest(RequestKeys.LOCATION_PREVIEW, request.seq, 'aborted');
+            return;
+        }
+        endRequest(
+            RequestKeys.LOCATION_PREVIEW,
+            request.seq,
+            'error',
+            err && err.message ? err.message : 'Location preview failed'
+        );
+        console.error('Location preview fetch failed:', err);
+        if (seq !== locationPreviewSeq) return;
+        pendingLocationPreview = {
+            status: 'error',
+            data: null,
+            error: err && err.message ? err.message : 'Location preview failed'
+        };
+        renderPendingLocationSelection();
+    }
 }
 
 async function resolvePendingSelectionElevation(selection) {
@@ -320,12 +510,15 @@ function stageLocationSelection(input, options = {}) {
     renderPendingLocationSelection();
     syncMapMarkerToSelection(selection, { recenter: options.recenterMap !== false });
     resolvePendingSelectionElevation(selection);
+    resolvePendingSelectionPreview(selection);
 }
 
 function resetLocationSelectionState() {
     locationElevationSeq++;
+    cancelRequest(RequestKeys.LOCATION_PREVIEW, 'location selection reset');
     pendingLocationSelection = null;
     clearActiveLocationSearchItem();
+    resetPendingLocationPreview();
     renderPendingLocationSelection();
 }
 
@@ -1495,6 +1688,7 @@ export function openLocationModal() {
         m.removeAttribute('inert');
         if (titleEl) m.setAttribute('aria-labelledby', titleEl.id);
         m.classList.add('open');
+        scheduleLocationNameFit();
         if (locationSearchDebounceTimer) {
             clearTimeout(locationSearchDebounceTimer);
             locationSearchDebounceTimer = null;
@@ -1625,6 +1819,7 @@ export function openLocationModal() {
                     }, 220);
                 };
             }
+            scheduleLocationNameFit();
         }, 100);
     } else {
         console.error("Location Modal not found in DOM");
@@ -1664,6 +1859,11 @@ export function closeLocationModal(e) {
     if (e && e.target !== m && !closeBtnTarget) return;
 
     restoreFocusOutsideModal(m, lastLocationFocus);
+    cancelRequest(RequestKeys.LOCATION_PREVIEW, 'modal closed');
+    if (locationNameFitRaf) {
+        window.cancelAnimationFrame(locationNameFitRaf);
+        locationNameFitRaf = 0;
+    }
     m.classList.remove('open');
     m.setAttribute('aria-hidden', 'true');
     m.setAttribute('inert', '');
@@ -1762,6 +1962,7 @@ export function setupWindowHelpers() {
         resizeTimeout = setTimeout(() => {
             renderAllForecasts({ layout: true });
             renderClimateHeatmap();
+            scheduleLocationNameFit();
         }, 150); // Debounce
     });
 }

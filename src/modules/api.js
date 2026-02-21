@@ -455,6 +455,72 @@ function setCache(key, value, ttlMs) {
     return value;
 }
 
+function isRetriableFetchError(err) {
+    if (!err || err.name === 'AbortError') return false;
+    const msg = String(err && err.message ? err.message : '').toLowerCase();
+    return msg.includes('failed to fetch')
+        || msg.includes('network')
+        || msg.includes('network changed')
+        || msg.includes('load failed');
+}
+
+function isRetriableHttpStatus(status) {
+    const n = Number(status);
+    return n === 408 || n === 425 || n === 429 || n >= 500;
+}
+
+function sleepWithAbort(ms, signal) {
+    if (!Number.isFinite(ms) || ms <= 0) return Promise.resolve();
+    return new Promise((resolve, reject) => {
+        const timer = setTimeout(() => {
+            if (signal) signal.removeEventListener('abort', onAbort);
+            resolve();
+        }, ms);
+
+        const onAbort = () => {
+            clearTimeout(timer);
+            if (signal) signal.removeEventListener('abort', onAbort);
+            reject(new DOMException('Aborted', 'AbortError'));
+        };
+
+        if (signal) {
+            if (signal.aborted) {
+                onAbort();
+                return;
+            }
+            signal.addEventListener('abort', onAbort, { once: true });
+        }
+    });
+}
+
+async function fetchWithRetry(url, opts = {}) {
+    const {
+        signal,
+        retries = 1,
+        retryDelayMs = 350
+    } = opts;
+
+    let delayMs = retryDelayMs;
+    for (let attempt = 0; attempt <= retries; attempt += 1) {
+        try {
+            const res = await fetch(url, { signal });
+            if (res.ok) return res;
+            const canRetry = attempt < retries && isRetriableHttpStatus(res.status);
+            if (!canRetry) return res;
+        } catch (err) {
+            if (err && err.name === 'AbortError') throw err;
+            const canRetry = attempt < retries && isRetriableFetchError(err);
+            if (!canRetry) throw err;
+        }
+
+        await sleepWithAbort(delayMs, signal);
+        delayMs = Math.min(delayMs * 2, 1400);
+    }
+
+    // Defensive fallback (loop should always return or throw).
+    return fetch(url, { signal });
+}
+
 export async function fetchWeatherData(lat, lon, opts = {}) {
     const { signal, force = false } = opts;
     const cacheKey = `weather:${toCoordKey(lat)}:${toCoordKey(lon)}`;
@@ -467,18 +533,31 @@ export async function fetchWeatherData(lat, lon, opts = {}) {
     const aUrl = `${AIR_QUALITY_BASE}/air-quality?latitude=${lat}&longitude=${lon}&current=us_aqi,pm2_5&cell_selection=land&domains=auto&timezone=auto`;
 
     try {
-        const [wRes, aRes] = await Promise.all([
-            fetch(wUrl, { signal }),
-            fetch(aUrl, { signal })
+        const [wResult, aResult] = await Promise.allSettled([
+            fetchWithRetry(wUrl, { signal, retries: 2, retryDelayMs: 300 }),
+            fetchWithRetry(aUrl, { signal, retries: 1, retryDelayMs: 300 })
         ]);
 
-        let weather = null;
-        if (wRes.ok) weather = await wRes.json();
+        if (wResult.status === 'rejected') throw wResult.reason;
+        const wRes = wResult.value;
+        if (!wRes || !wRes.ok) {
+            throw new Error(`Weather API failed${wRes ? ` (${wRes.status})` : ''}`);
+        }
 
+        const weather = await wRes.json();
         let air = {};
-        if (aRes.ok) air = await aRes.json();
 
-        if (!weather) throw new Error("Weather API failed");
+        if (aResult.status === 'fulfilled') {
+            const aRes = aResult.value;
+            if (aRes && aRes.ok) {
+                air = await aRes.json();
+            } else {
+                console.warn('Air quality request returned non-OK status, continuing without AQI.', aRes && aRes.status);
+            }
+        } else if (aResult.reason && aResult.reason.name !== 'AbortError') {
+            // Air quality is auxiliary; do not fail weather render for transient errors.
+            console.warn('Air quality request failed, continuing without AQI.', aResult.reason);
+        }
 
         return setCache(cacheKey, {
             weather: normalizeWeatherPayload(weather),
@@ -487,6 +566,35 @@ export async function fetchWeatherData(lat, lon, opts = {}) {
     } catch (e) {
         if (e && e.name === 'AbortError') throw e;
         console.error("fetchWeatherData error:", e);
+        throw e;
+    }
+}
+
+export async function fetchLocationPreview(lat, lon, opts = {}) {
+    const { signal, force = false } = opts;
+    const cacheKey = `loc_preview:${toCoordKey(lat)}:${toCoordKey(lon)}`;
+    if (!force) {
+        const cached = getCache(cacheKey);
+        if (cached) return cached;
+    }
+
+    const url = `${OPEN_METEO_BASE}/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,dew_point_2m,wind_speed_10m&timezone=auto&forecast_days=1&temperature_unit=celsius&wind_speed_unit=kmh`;
+
+    try {
+        const res = await fetchWithRetry(url, { signal, retries: 1, retryDelayMs: 250 });
+        if (!res.ok) throw new Error('Location preview API failed');
+        const raw = await res.json();
+        const normalized = normalizeWeatherPayload(raw);
+        const current = normalized && normalized.current ? normalized.current : {};
+        const payload = {
+            temperature_2m: toFiniteNumber(current.temperature_2m),
+            dew_point_2m: toFiniteNumber(current.dew_point_2m),
+            wind_speed_10m: toFiniteNumber(current.wind_speed_10m)
+        };
+        return setCache(cacheKey, payload, CACHE_TTL.weather);
+    } catch (e) {
+        if (e && e.name === 'AbortError') throw e;
+        console.error('fetchLocationPreview error:', e);
         throw e;
     }
 }

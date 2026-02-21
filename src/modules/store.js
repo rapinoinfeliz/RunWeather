@@ -119,7 +119,8 @@ export const RequestKeys = {
     CLIMATE: 'climate',
     LOCATION_SEARCH: 'location_search',
     REVERSE_GEOCODE: 'reverse_geocode',
-    IP_LOCATION: 'ip_location'
+    IP_LOCATION: 'ip_location',
+    LOCATION_PREVIEW: 'location_preview'
 };
 
 export const StoreActions = {

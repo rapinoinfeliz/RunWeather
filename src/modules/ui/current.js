@@ -127,7 +127,13 @@ export function renderCurrentTab(w, a, prob2h = 0, precip2h = 0, daily, elevatio
 
     // 1. Temperature Section (WBGT Integrated)
     html += `<div style="${sectionStyle}">
-                        <div style="${headStyle}"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 9a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"></path><path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707"></path></svg> Temperature</div>
+                        <div style="${headStyle}">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z" stroke="var(--text-secondary)"/>
+                                <path class="anim-temp-fill" d="M14 14.76V6.5" stroke="currentColor" stroke-width="2"/>
+                                <circle cx="11.5" cy="17.5" r="2.5" fill="currentColor" stroke="none" />
+                            </svg> Temperature
+                        </div>
                         <div style="${gridStyle}">
                             <div style="${itemStyle}">
                                 <div style="${labelStyle}">Air ${infoIcon('Air Temperature', 'The dry-bulb temperature. Does not account for humidity or wind.<br><br><span style=&quot;color:#60a5fa&quot;><b>< 10°C (Cold):</b></span> Cool for running.<br><span style=&quot;color:#4ade80&quot;><b>10-28°C (Ideal):</b></span> Optimal range.<br><span style=&quot;color:#fb923c&quot;><b>28-32°C (Hot):</b></span> Pace impact.<br><span style=&quot;color:#f87171&quot;><b>32-35°C (Very Hot):</b></span> High risk.<br><span style=&quot;color:#c084fc&quot;><b>> 35°C (Extreme):</b></span> Dangerous.')}</div>
@@ -153,7 +159,16 @@ export function renderCurrentTab(w, a, prob2h = 0, precip2h = 0, daily, elevatio
     // 2. Wind & Precip
     // 2. Wind
     html += `<div style="${sectionStyle}">
-                        <div style="${headStyle}"><svg class="icon-float" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"></path></svg> Wind</div>
+                        <div style="${headStyle}">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <circle class="anim-wind-ring" cx="12" cy="12" r="9" stroke-dasharray="4 4" stroke-opacity="0.5"/>
+                                <g class="anim-wind-needle">
+                                    <polygon points="12 4 15 12 12 10 9 12" fill="currentColor" stroke="none"/>
+                                    <polygon points="12 20 15 12 12 10 9 12" fill="rgba(255,255,255,0.2)" stroke="none"/>
+                                </g>
+                                <circle cx="12" cy="11.5" r="1.5" fill="var(--bg-color)" stroke="none"/>
+                            </svg> Wind
+                        </div>
                         <div style="${gridStyle}">
                             <div style="${itemStyle}">
                                 <div style="${labelStyle}">Speed ${infoIcon('Wind Speed', 'Sustained wind speed at 10m height.<br><br><span style=&quot;color:#4ade80&quot;><b>< 10 km/h (Calm):</b></span> No impact.<br><span style=&quot;color:#facc15&quot;><b>10-20 km/h (Light):</b></span> Barely noticeable.<br><span style=&quot;color:#fb923c&quot;><b>20-30 km/h (Moderate):</b></span> Effort increases.<br><span style=&quot;color:#f87171&quot;><b>30-40 km/h (Strong):</b></span> Pace unreliable.<br><span style=&quot;color:#c084fc&quot;><b>> 40 km/h (Severe):</b></span> Running compromised.')}</div>
@@ -171,7 +186,15 @@ export function renderCurrentTab(w, a, prob2h = 0, precip2h = 0, daily, elevatio
                     </div>`;
 
     html += `<div style="${sectionStyle}">
-                        <div style="${headStyle}"><svg class="icon-pulse" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="16" y1="13" x2="16" y2="21"></line><line x1="8" y1="13" x2="8" y2="21"></line><line x1="12" y1="15" x2="12" y2="23"></line><path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"></path></svg> Precipitation</div>
+                        <div style="${headStyle}">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M7 16a4 4 0 0 1-.88-7.903A5 5 0 1 1 15.9 6L16 6a5 5 0 0 1 1 9.9M15 13l-3-3m0 0l-3 3m3-3v12" stroke-opacity="0.3"/>
+                                <line class="anim-rain-drop-1" x1="8" y1="12" x2="8" y2="12" stroke-width="3" />
+                                <line class="anim-rain-drop-2" x1="12" y1="14" x2="12" y2="14" stroke-width="3" />
+                                <line class="anim-rain-drop-3" x1="16" y1="12" x2="16" y2="12" stroke-width="3" />
+                                <path d="M7 16a4 4 0 0 1-.88-7.903A5 5 0 1 1 15.9 6L16 6a5 5 0 0 1 1 9.9" />
+                            </svg> Precipitation
+                        </div>
                         <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:8px; row-gap:16px; align-items: stretch;">
                             <div style="${itemStyle}">
                                 <div style="${labelStyle}">Rain (2h) ${infoIcon('Rain Forecast', 'Estimated total precipitation currently expected for the next 2 hours.')}</div>
@@ -192,7 +215,12 @@ export function renderCurrentTab(w, a, prob2h = 0, precip2h = 0, daily, elevatio
     // Remove local aqiColor logic in favor of getCondColor helper
 
     html += `<div style="${sectionStyle}">
-                        <div style="${headStyle}"><svg class="icon-spin" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="4"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg> Radiation & Air</div>
+                        <div style="${headStyle}">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle class="anim-rad-spin" cx="12" cy="12" r="10" stroke-dasharray="4 4 12 4" stroke-opacity="0.4"/>
+                                <circle class="anim-rad-pulse" cx="12" cy="12" r="5" fill="currentColor"/>
+                            </svg> Radiation & Air
+                        </div>
                         <div style="${gridStyle} grid-template-columns: 1fr 1fr 1fr;">
                             <div style="${itemStyle}">
                                 <div style="${labelStyle}">UV Index ${infoIcon('UV Index (WHO)', 'Strength of sunburn-producing UV radiation.<br><br><span style=&quot;color:#4ade80&quot;><b>0-2 (Low):</b></span> Safe.<br><span style=&quot;color:#facc15&quot;><b>3-5 (Mod):</b></span> Sunscreen.<br><span style=&quot;color:#fb923c&quot;><b>6-7 (High):</b></span> Cover up.<br><span style=&quot;color:#f87171&quot;><b>8-10 (Very High):</b></span> Shade.<br><span style=&quot;color:#c084fc&quot;><b>11+ (Extreme):</b></span> Stay inside.')}</div>
@@ -278,9 +306,13 @@ export function renderCurrentTab(w, a, prob2h = 0, precip2h = 0, daily, elevatio
             const xNoon = scaleX(solarNoonMin);
             const xNow = scaleX(nowMin);
 
-            html += `<div class="solar-card" style="${sectionStyle}">
+            html += `<div class="solar-card anim-card" style="${sectionStyle}">
                             <div style="${headStyle}">
-                                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path class="anim-solar-sun" d="M3 17 A9 9 0 0 1 21 17" stroke-dasharray="24" stroke-dashoffset="24" />
+                                    <line x1="2" y1="17" x2="22" y2="17" stroke-opacity="0.3"/>
+                                    <circle cx="12" cy="8" r="1" fill="currentColor"/>
+                                </svg>
                                 Solar Cycle
                                 <span style="margin-left:auto; font-size:0.75em; font-weight:normal; color:var(--text-secondary);">${daylightStr}</span>
                             </div>
