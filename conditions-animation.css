@@ -1,0 +1,198 @@
+/* =========================================
+   ANIMATED CONDITION CARDS (SVG + CSS)
+   ========================================= */
+
+/* Add a class to cards we want to trigger on hover */
+.anim-card {
+    transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.anim-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+/* 1. Temperature (Thermometer fill) */
+.anim-temp-fill {
+    stroke-dasharray: 20;
+    stroke-dashoffset: 20;
+    transition: stroke-dashoffset 1.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.anim-card:hover .anim-temp-fill,
+.anim-card:active .anim-temp-fill {
+    stroke-dashoffset: 8;
+}
+
+
+/* 2. Wind (Compass Rotating & Ring) */
+.anim-wind-ring {
+    transform-origin: center;
+    /* Paused by default */
+    animation: dashSpin 8s linear infinite paused;
+}
+
+.anim-card:hover .anim-wind-ring,
+.anim-card:active .anim-wind-ring {
+    animation-play-state: running;
+}
+
+.anim-wind-needle {
+    transform-origin: center;
+    transition: transform 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.anim-card:hover .anim-wind-needle,
+.anim-card:active .anim-wind-needle {
+    transform: rotate(135deg);
+}
+
+@keyframes dashSpin {
+    0% {
+        transform: rotate(0deg);
+        stroke-dashoffset: 0;
+    }
+
+    100% {
+        transform: rotate(360deg);
+        stroke-dashoffset: 16;
+    }
+}
+
+/* 3. Precipitation (Pulse + Droplets) */
+.anim-rain-drop-1,
+.anim-rain-drop-2,
+.anim-rain-drop-3 {
+    transform-origin: top;
+    opacity: 0;
+    /* Hidden by default */
+}
+
+.anim-card:hover .anim-rain-drop-1,
+.anim-card:active .anim-rain-drop-1 {
+    animation: rainDrop 1.5s ease-in infinite forwards;
+}
+
+.anim-card:hover .anim-rain-drop-2,
+.anim-card:active .anim-rain-drop-2 {
+    animation: rainDrop 1.5s ease-in infinite 0.5s forwards;
+}
+
+.anim-card:hover .anim-rain-drop-3,
+.anim-card:active .anim-rain-drop-3 {
+    animation: rainDrop 1.5s ease-in infinite 1s forwards;
+}
+
+@keyframes rainDrop {
+    0% {
+        transform: translateY(-2px) scale(0);
+        opacity: 0;
+    }
+
+    30% {
+        transform: translateY(0px) scale(1);
+        opacity: 1;
+    }
+
+    80% {
+        transform: translateY(8px) scale(1.2);
+        opacity: 1;
+    }
+
+    100% {
+        transform: translateY(10px) scale(1.5);
+        opacity: 0;
+    }
+}
+
+/* 4. Radiation & Air (Sun Core Pulse + Spinning Border) */
+.anim-rad-spin {
+    transform-origin: center;
+    animation: spin 6s linear infinite paused;
+}
+
+.anim-card:hover .anim-rad-spin,
+.anim-card:active .anim-rad-spin {
+    animation-play-state: running;
+}
+
+.anim-rad-pulse {
+    animation: radPulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite paused;
+    opacity: 0.4;
+}
+
+.anim-card:hover .anim-rad-pulse,
+.anim-card:active .anim-rad-pulse {
+    animation-play-state: running;
+}
+
+@keyframes radPulse {
+
+    0%,
+    100% {
+        opacity: 0.4;
+    }
+
+    50% {
+        opacity: 1;
+    }
+}
+
+@keyframes spin {
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* 5. Solar Cycle (Sun Arc Tracking) */
+.anim-solar-sun {
+    stroke-dasharray: 24;
+    stroke-dashoffset: 24;
+    transition: stroke-dashoffset 2.5s ease-out;
+}
+
+.anim-card:hover .anim-solar-sun,
+.anim-card:active .anim-solar-sun {
+    stroke-dashoffset: 6;
+    /* stops mid arc */
+}
+
+/* Fallback for mobile (always animate when hover not supported) */
+@media (hover: none) {
+    .anim-temp-fill {
+        stroke-dashoffset: 8;
+    }
+
+    .anim-wind-ring {
+        animation-play-state: running;
+    }
+
+    .anim-wind-needle {
+        transform: rotate(135deg);
+    }
+
+    .anim-rain-drop-1 {
+        animation: rainDrop 1.5s ease-in infinite forwards;
+    }
+
+    .anim-rain-drop-2 {
+        animation: rainDrop 1.5s ease-in infinite 0.5s forwards;
+    }
+
+    .anim-rain-drop-3 {
+        animation: rainDrop 1.5s infinite 1s forwards;
+    }
+
+    .anim-rad-spin {
+        animation-play-state: running;
+    }
+
+    .anim-rad-pulse {
+        animation-play-state: running;
+    }
+
+    .anim-solar-sun {
+        stroke-dashoffset: 6;
+    }
+}
