@@ -604,6 +604,9 @@ function setupGlobalEvents() {
             case 'gps':
                 UI.useGPS();
                 break;
+            case 'location-map-toggle':
+                UI.toggleLocationMapPanel();
+                break;
             case 'vdot-details':
                 UI.toggleVDOTDetails(e);
                 break;

@@ -153,6 +153,12 @@ function isDesktopMapPickerViewport() {
         && window.matchMedia('(min-width: 861px) and (hover: hover)').matches;
 }
 
+function isLocationMapMobileViewport() {
+    return typeof window !== 'undefined'
+        && typeof window.matchMedia === 'function'
+        && window.matchMedia('(max-width: 860px)').matches;
+}
+
 function setLocationMapStatus(text, tone = '') {
     const statusEl = document.getElementById('loc-map-status');
     if (!statusEl) return;
@@ -580,12 +586,6 @@ async function ensureLocationMapPicker() {
     const panel = document.getElementById('loc-map-panel');
     const canvas = document.getElementById('loc-map');
     if (!panel || !canvas) return;
-
-    if (!isDesktopMapPickerViewport()) {
-        panel.setAttribute('aria-hidden', 'true');
-        return;
-    }
-
     panel.setAttribute('aria-hidden', 'false');
     setLocationMapStatus('Loading map...');
 
@@ -713,6 +713,45 @@ async function ensureLocationMapPicker() {
 
     locationPickerMap.resize();
     setLocationMapStatus('Click on the map to pick a city.', 'ready');
+}
+
+function setLocationMapPanelState(expanded) {
+    const modal = document.getElementById('loc-modal');
+    const toggleBtn = document.getElementById('loc-map-toggle');
+    if (!modal || !toggleBtn) return;
+
+    if (!isLocationMapMobileViewport()) {
+        modal.classList.remove('loc-map-expanded');
+        toggleBtn.hidden = true;
+        toggleBtn.setAttribute('aria-expanded', 'false');
+        toggleBtn.textContent = 'Expand map';
+        if (locationPickerMap) {
+            window.setTimeout(() => locationPickerMap.resize(), 80);
+        }
+        return;
+    }
+
+    toggleBtn.hidden = false;
+    const isExpanded = !!expanded;
+    modal.classList.toggle('loc-map-expanded', isExpanded);
+    toggleBtn.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
+    toggleBtn.textContent = isExpanded ? 'Collapse map' : 'Expand map';
+    if (locationPickerMap) {
+        window.setTimeout(() => locationPickerMap.resize(), isExpanded ? 210 : 130);
+    }
+}
+
+export function toggleLocationMapPanel() {
+    const modal = document.getElementById('loc-modal');
+    if (!modal) return;
+    const nextExpanded = !modal.classList.contains('loc-map-expanded');
+    setLocationMapPanelState(nextExpanded);
+    if (nextExpanded) {
+        ensureLocationMapPicker().catch((err) => {
+            console.error('Location map toggle failed:', err);
+            setLocationMapStatus('Map unavailable right now. Please use text search.', 'error');
+        });
+    }
 }
 
 function restoreFocusOutsideModal(modal, preferredTarget) {
@@ -1692,6 +1731,7 @@ export function openLocationModal() {
         m.removeAttribute('inert');
         if (titleEl) m.setAttribute('aria-labelledby', titleEl.id);
         m.classList.add('open');
+        setLocationMapPanelState(false);
         scheduleLocationNameFit();
         if (locationSearchDebounceTimer) {
             clearTimeout(locationSearchDebounceTimer);
@@ -1864,6 +1904,7 @@ export function closeLocationModal(e) {
 
     restoreFocusOutsideModal(m, lastLocationFocus);
     cancelRequest(RequestKeys.LOCATION_PREVIEW, 'modal closed');
+    setLocationMapPanelState(false);
     if (locationNameFitRaf) {
         window.cancelAnimationFrame(locationNameFitRaf);
         locationNameFitRaf = 0;
@@ -1967,6 +2008,10 @@ export function setupWindowHelpers() {
             renderAllForecasts({ layout: true });
             renderClimateHeatmap();
             scheduleLocationNameFit();
+            setLocationMapPanelState(false);
+            if (locationPickerMap) {
+                window.setTimeout(() => locationPickerMap.resize(), 90);
+            }
         }, 150); // Debounce
     });
 }
