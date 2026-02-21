@@ -312,7 +312,9 @@ function renderPendingLocationSelection() {
         nameEl.textContent = 'None selected';
         subEl.textContent = 'Click on the map or choose a city below.';
         altitudeEl.textContent = 'Altitude: --';
+        altitudeEl.hidden = true;
         coordsEl.textContent = '--';
+        coordsEl.hidden = true;
         clearMetrics();
         confirmBtn.disabled = true;
         scheduleLocationNameFit();
@@ -327,7 +329,9 @@ function renderPendingLocationSelection() {
     nameEl.textContent = pendingLocationSelection.name;
     subEl.textContent = getLocationSubtext(pendingLocationSelection);
     altitudeEl.textContent = `Altitude: ${altitudeText}`;
+    altitudeEl.hidden = false;
     coordsEl.textContent = `${pendingLocationSelection.lat.toFixed(4)}, ${pendingLocationSelection.lon.toFixed(4)}`;
+    coordsEl.hidden = false;
     confirmBtn.disabled = false;
 
     if (pendingLocationPreview.status === 'loading') {
